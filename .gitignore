@@ -1,0 +1,6 @@
+build/
+dist/
+slimta.egg-info/
+.venv/
+*.pyc
+*.pyo
