@@ -7,8 +7,11 @@ slimta
 .. automodule:: slimta
    :members:
 
+-------------------
+
+**Sub-Modules:**
+
 .. toctree::
-   :hidden:
 
    slimta.edge
    slimta.smtp

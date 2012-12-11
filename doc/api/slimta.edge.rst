@@ -9,8 +9,11 @@ slimta.edge
 .. autoclass:: slimta.edge.Edge
    :members: _handle
 
+-------------------
+
+**Sub-Modules:**
+
 .. toctree::
-   :hidden:
 
    slimta.edge.smtp
 
