@@ -2,5 +2,6 @@ build/
 dist/
 slimta.egg-info/
 .venv/
+.coverage
 *.pyc
 *.pyo
