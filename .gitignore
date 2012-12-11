@@ -3,5 +3,6 @@ dist/
 slimta.egg-info/
 .venv/
 .coverage
+coverage.xml
 *.pyc
 *.pyo
