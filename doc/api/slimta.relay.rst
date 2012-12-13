@@ -5,7 +5,7 @@ slimta.relay
 ============
 
 .. automodule:: slimta.relay
-   :members
+   :members:
 
 -------------------
 

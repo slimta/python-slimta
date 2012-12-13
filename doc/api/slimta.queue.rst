@@ -5,7 +5,7 @@ slimta.queue
 ============
 
 .. automodule:: slimta.queue
-   :members
+   :members:
 
 -------------------
 

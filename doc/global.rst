@@ -9,4 +9,5 @@
 .. |Greenlet| replace:: :class:`~gevent.Greenlet`
 .. |Queue| replace:: :class:`~slimta.queue.Queue`
 .. |QueueStorage| replace:: :class:`~slimta.queue.QueueStorage`
+.. |Relay| replace:: :class:`~slimta.relay.Relay`
 
