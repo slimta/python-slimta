@@ -94,7 +94,7 @@ pygments_style = 'sphinx'
 #html_theme = 'nature'
 #html_theme = "agogo"
 #html_theme = "basic"
-html_theme = "agogo"
+html_theme = "default"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
