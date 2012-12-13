@@ -36,6 +36,7 @@ from slimta.edge import Edge
 from slimta.smtp.server import Server
 from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import MessageTooBig
+from slimta.queue import QueueError
 
 __all__ = ['SmtpEdge']
 
@@ -138,11 +139,11 @@ class Handlers(object):
         if 'from' not in message:
             message['from'] = self.envelope.sender
 
-        if self.handoff:
-            self.handoff(self.envelope, reply)
-        else:
-            reply.code = '250'
-            reply.message = '2.6.0 Message discarded'
+        try:
+            self.handoff(self.envelope)
+        except QueueError:
+            reply.code = '550'
+            reply.message = '5.6.0 Error Queuing Message'
 
         self.envelope = None
 
@@ -168,6 +169,8 @@ class SmtpEdge(Edge):
       the beginning of the session or after a `STARTTLS` command.
 
     :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
+    :param queue: |Queue| object for handing off messages, as described in
+                  |Edge|.
     :param handoff: Called with new messages, as described in |Edge|.
     :param pool: Optional greenlet pool, as described in |Edge|.
     :param validators: Object with ``handle_xxxx()`` methods as described.
@@ -179,16 +182,16 @@ class SmtpEdge(Edge):
 
     """
 
-    def __init__(self, listener, handoff, pool=None, validators=None,
+    def __init__(self, listener, queue, pool=None, validators=None,
                                  command_timeout=None, data_timeout=None):
-        super(SmtpEdge, self).__init__(listener, handoff, pool)
+        super(SmtpEdge, self).__init__(listener, queue, pool)
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validators = validators
 
     def _handle(self, socket, address):
         try:
-            handlers = Handlers(address, self.validators, self.handoff)
+            handlers = Handlers(address, self.validators, self._handoff)
             smtp_server = Server(socket, handlers,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)

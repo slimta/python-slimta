@@ -38,6 +38,9 @@ class Edge(gevent.Greenlet):
 
     :param listener: Usually a (ip, port) tuple defining the interface and
                      port upon which to listen for connections.
+    :param queue: |Queue| object used by :meth:`_handoff()` to ensure the
+                  envelope is properly queued before acknowledged by the edge
+                  service.
     :param handoff: Should be called by :meth:`_handle()` when a new message
                     is received, passed in an :class:`Envelope` containing
                     the message and a :class:`Reply` for changing the reply
@@ -47,11 +50,24 @@ class Edge(gevent.Greenlet):
 
     """
 
-    def __init__(self, listener, handoff, pool=None):
+    def __init__(self, listener, queue, pool=None):
         super(Edge, self).__init__()
         spawn = pool or 'default'
         self.server = StreamServer(listener, self._handle, spawn=spawn)
-        self.handoff = handoff
+        self.queue = queue
+
+    def _handoff(self, envelope):
+        """When :meth:`_handle()` finishes receiving a message, it should pass
+        the new |Envelope| object to this method. If calling this method returns
+        without exception, it should be deemed successful. Edge services may
+        intercept raised :class:`~slimta.queue.QueueError` exceptions to return
+        appropriate error messages.
+
+        :param envelope: |Envelope| containing the received message.
+        :raises: :class:`~slimta.queue.QueueError`
+
+        """
+        self.queue.enqueue(envelope)
 
     def _handle(self, socket, address):
         """Override this function to receive messages on the socket and call
