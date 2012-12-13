@@ -7,4 +7,6 @@
 .. |Envelope| replace:: :class:`~slimta.envelope.Envelope`
 .. |Bounce| replace:: :class:`~slimta.bounce.Bounce`
 .. |Greenlet| replace:: :class:`~gevent.Greenlet`
+.. |Queue| replace:: :class:`~slimta.queue.Queue`
+.. |QueueStorage| replace:: :class:`~slimta.queue.QueueStorage`
 

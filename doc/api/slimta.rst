@@ -14,6 +14,8 @@ slimta
 .. toctree::
 
    slimta.edge
+   slimta.queue
+   slimta.relay
    slimta.smtp
    slimta.envelope
    slimta.bounce
