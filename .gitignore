@@ -4,5 +4,6 @@ slimta.egg-info/
 .venv/
 .coverage
 coverage.xml
+examples/*.db
 *.pyc
 *.pyo
