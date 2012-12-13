@@ -24,8 +24,6 @@ metadata.
 
 """
 
-import uuid
-
 __all__ = ['Envelope']
 
 
@@ -37,14 +35,10 @@ class Envelope(object):
     :param recipients: List of addresses to receive the message.
     :param message: :class:`email.message.Message` object containing message
                     contents and headers.
-    :param id: Optional ID string, defaults to a newly generated ID.
 
     """
 
-    def __init__(self, sender=None, recipients=None, message=None, id=None):
-        #: ID string that should be unique to the message.
-        self.id = id or uuid.uuid4().hex
-
+    def __init__(self, sender=None, recipients=None, message=None):
         #: Sending address of the message.
         self.sender = sender
 
