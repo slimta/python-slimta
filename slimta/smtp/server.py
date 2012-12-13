@@ -167,7 +167,10 @@ class Server(object):
         command, arg = 'BANNER', None
         while True:
             try:
-                self._handle_command(command, arg)
+                if command:
+                    self._handle_command(command, arg)
+                else:
+                    unknown_command.send(self.io)
             except StopIteration:
                 break
             except ConnectionLost:
@@ -270,7 +273,6 @@ class Server(object):
             return
 
         match = size_pattern.search(arg, end+1)
-        print match, arg, end+1
         if match:
             try:
                 size = int(match.group(1))
