@@ -67,6 +67,27 @@ class Reply(object):
         #: which is useful for asynchronous replies such as timeouts.
         self.newline_first = False
 
+    def __str__(self):
+        """Converts the reply into a single string.
+
+        :returns: The code, ENHANCEDSTATUSCODES_ string, and the message,
+                  separated by spaces.
+        :rtype: string
+
+        """
+        return ' '.join((self.code, self.message))
+
+    def __nonzero__(self):
+        """Defines the truth-testing operation for |Reply| objects. This will
+        evaluate ``True`` if the object value set to its ``code`` attribute
+        other than ``None``. This is useful for checking replies that may be
+        buffered and not yet populatd..
+
+        :rtype: True or False
+
+        """
+        return self.code is not None
+
     def copy(self, reply):
         """Direct-copies the given reply code and message into the current
         object. This is generally useful for sending pre-defined responses.
@@ -96,6 +117,16 @@ class Reply(object):
         if self.newline_first:
             io.buffered_send('\r\n')
         io.send_reply(self)
+
+    def is_error(self):
+        """Checks if the SMTP reply indicates an error, which will be True if
+        the code begins with a ``4`` or ``5``.
+
+        :rtype: True or False
+
+        """
+        code_class = self.code[0]
+        return code_class == '4' or code_class == '5'
 
     @property
     def code(self):
