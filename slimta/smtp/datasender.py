@@ -20,43 +20,52 @@
 #
 
 import re
+from itertools import chain
 
 __all__ = ['DataSender']
 
 
 class DataSender(object):
 
-    def __init__(self, data):
-        self.data = data
-        self.data_len = len(data)
-        if self.data_len == 0 or data[-1] == '\n':
+    def __init__(self, *parts):
+        self.parts = parts
+        self._calc_end_marker()
+
+    def _calc_last_two(self):
+        ret = ''
+        for part in reversed(self.parts):
+            ret = part[-2:] + ret
+            if len(ret) >= 2:
+                ret = ret[-2:]
+                break
+        return ret
+
+    def _calc_end_marker(self):
+        last_two = self._calc_last_two()
+        if not last_two or last_two == '\r\n':
             self.end_marker = '.\r\n'
         else:
             self.end_marker = '\r\n.\r\n'
 
-    def _process(self):
-        done = False
-        data = self.data
-        data_len = self.data_len
+    def _process_part(self, part):
+        part_len = len(part)
         i = 0
-        if data_len > 0 and data[0] == '.':
+        if part_len > 0 and part[0] == '.':
             yield '.'
-        while not done:
-            if i >= data_len:
-                done = True
-                yield self.end_marker
+        while i < part_len:
+            index = part.find('\n.', i)
+            if index == -1:
+                yield part if i == 0 else part[i:]
+                i = part_len
             else:
-                index = data.find('\n.', i)
-                if index == -1:
-                    yield data if i == 0 else data[i:]
-                    i = data_len
-                else:
-                    yield data[i:index+2]
-                    yield '.'
-                    i = index+2
+                yield part[i:index+2]
+                yield '.'
+                i = index+2
 
     def __iter__(self):
-        return self._process()
+        iterables = [self._process_part(part) for part in self.parts]
+        iterables.append((self.end_marker, ))
+        return chain.from_iterable(iterables)
 
     def send(self, io):
         for piece in self:

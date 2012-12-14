@@ -21,7 +21,9 @@
 
 """An SMTP client library that supports PIPELINING commands."""
 
+from gevent import Timeout
 from gevent.ssl import SSLSocket
+from gevent.socket import wait_read
 
 from io import IO
 from extensions import Extensions
@@ -60,6 +62,37 @@ class Client(object):
             except IndexError:
                 return None
             reply.recv(self.io)
+
+    def has_reply_waiting(self):
+        """Checks if the underlying socket has data waiting to be received,
+        which means a reply is waiting to be read.
+
+        :rtype: True or False
+
+        """
+        sock_fd = self.io.socket.fileno()
+        try:
+            wait_read(sock_fd, 0.1, Timeout())
+        except Timeout:
+            return False
+        else:
+            return True
+
+    def get_reply(self, command='[TIMEOUT]'):
+        """Gets a reply from the server that was not triggered by the client
+        sending a command. This is most useful for receiving timeout
+        notifications.
+
+        :param command: Optional command name to associate with the reply.
+        :returns: |Reply| object populated with the response.
+
+        """
+        reply = Reply(command=command)
+        self.reply_queue.append(reply)
+
+        self._flush_pipeline()
+
+        return reply
 
     def get_banner(self):
         """Waits for the SMTP banner at the beginning of the connection.
@@ -136,12 +169,26 @@ class Client(object):
 
         return helo
 
+    def encrypt(self, tls):
+        """Encrypts the underlying socket with the information given by ``tls``.
+        This call should only be used directly against servers that expect to be
+        immediately encrypted. If encryption is negotiated with
+        :meth:`starttls()` there is no need to call this method.
+
+        :param tls: Dictionary of keyword arguments for
+                    :class:`~gevent.ssl.SSLSocket`.
+
+        """
+        self.io.encrypt_socket(tls)
+
     def starttls(self, tls):
         """Sends the STARTTLS command with identifier string and waits for the
         reply. When the reply is received and the code is 220, the socket is
         encrypted with the parameters in ``tls``. This should be followed by a
         another call to :meth:`ehlo()`.
 
+        :param tls: Dictionary of keyword arguments for
+                    :class:`~gevent.ssl.SSLSocket`.
         :returns: |Reply| object populated with the response.
 
         """
@@ -209,13 +256,13 @@ class Client(object):
         """
         return self.custom_command('DATA')
 
-    def send_data(self, data):
+    def send_data(self, *data):
         """Processes and sends message data. At the end of the message data,
         the client will send a line with a single ``.`` to indicate the end of
         the message.  If the server does *not* support PIPELINING, the returned
         reply object is populated immediately.
 
-        :param data: The message data.
+        :param data: The message data parts.
         :type data: string or unicode
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
@@ -225,7 +272,7 @@ class Client(object):
         send_data = Reply(command='[SEND_DATA]')
         self.reply_queue.append(send_data)
 
-        data_sender = DataSender(data)
+        data_sender = DataSender(*data)
         data_sender.send(self.io)
 
         if 'PIPELINING' not in self.extensions:
