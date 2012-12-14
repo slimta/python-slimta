@@ -34,7 +34,7 @@ from gevent.event import Event
 from gevent.pool import Pool
 
 from slimta import SlimtaError
-from slimta.relay import RelayError
+from slimta.relay import PermanentRelayError, TransientRelayError
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
@@ -102,7 +102,7 @@ class QueueStorage(object):
         identifier sring.
 
         :param id: The unique identfier string of the requested |Envelope|.
-        :returns: The |Envelope| object.
+        :returns: Tuple with the |Envelope| object and number of attempts.
         :raises: :class:`KeyError`, :class:`QueueError`
 
         """
@@ -194,7 +194,7 @@ class Queue(Greenlet):
             return id
         finally:
             if wait == 0:
-                self._pool_spawn('relay', self._attempt, id, envelope)
+                self._pool_spawn('relay', self._attempt, id, envelope, 0)
             else:
                 self._add_queued((when, id))
 
@@ -216,17 +216,19 @@ class Queue(Greenlet):
             self.store.set_timestamp(id, when)
             self._add_queued((when, id))
 
-    def _attempt(self, id, envelope):
+    def _attempt(self, id, envelope, attempts):
         try:
-            self.relay.attempt(envelope)
-        except RelayError:
+            self.relay.attempt(envelope, attempts)
+        except TransientRelayError:
             self._pool_spawn('store', self._retry_later, id, envelope)
+        except PermanentRelayError:
+            self._perm_fail(id, envelope)
         else:
             self._pool_spawn('store', self.store.remove, id)
 
     def _dequeue(self, id):
-        envelope = self.store.get(id)
-        self._pool_spawn('relay', self._attempt, id, envelope)
+        envelope, attempts = self.store.get(id)
+        self._pool_spawn('relay', self._attempt, id, envelope, attempts)
 
     def _check_ready(self, now):
         last_i = 0
