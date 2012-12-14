@@ -194,7 +194,7 @@ class Client(object):
         """
         reply = self.custom_command('STARTTLS')
         if reply.code == '220':
-            self.io.encrypt_socket(tls)
+            self.encrypt(tls)
         return reply
 
     def mailfrom(self, address, data_size=None):

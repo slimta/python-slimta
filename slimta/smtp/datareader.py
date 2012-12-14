@@ -99,6 +99,8 @@ class DataReader(object):
             return False
 
         piece = self.io.socket.recv(4096)
+        from pprint import pformat
+        print 'data: [['+pformat(piece)+']]'
         if piece == '':
             raise ConnectionLost()
 

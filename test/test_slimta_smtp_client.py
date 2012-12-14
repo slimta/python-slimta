@@ -8,6 +8,15 @@ from mock.socket import MockSocket
 
 class TestSmtpClient(unittest.TestCase):
 
+    def test_get_reply(self):
+        sock = MockSocket([('recv', '421 Test\r\n')])
+        client = Client(sock)
+        reply = client.get_reply('[TEST]')
+        self.assertEqual('421', reply.code)
+        self.assertEqual('4.0.0 Test', reply.message)
+        self.assertEqual('[TEST]', reply.command)
+        sock.assert_done(self)
+
     def test_get_banner(self):
         sock = MockSocket([('recv', '220 Go\r\n')])
         client = Client(sock)

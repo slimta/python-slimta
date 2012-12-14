@@ -22,6 +22,7 @@
 import re
 import cStringIO
 from gevent.ssl import SSLSocket
+from pprint import pformat
 
 from slimta.smtp import ConnectionLost, BadReply
 from slimta.smtp.reply import Reply
@@ -48,6 +49,7 @@ class IO(object):
 
     def buffered_recv(self):
         received = self.socket.recv(4096)
+        print 'received: [['+pformat(received)+']]'
         if received == '':
             raise ConnectionLost()
         self.recv_buffer += received
@@ -60,6 +62,7 @@ class IO(object):
         if send == '':
             return
         self.socket.sendall(send)
+        print 'sent: [['+pformat(send)+']]'
         self.send_buffer = cStringIO.StringIO()
 
     def recv_reply(self):

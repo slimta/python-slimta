@@ -12,7 +12,20 @@ class TestSmtpReply(unittest.TestCase):
         self.assertEqual(None, r.code)
         self.assertEqual(None, r.message)
         self.assertEqual(None, r.enhanced_status_code)
+        self.assertFalse(r)
         self.assertEqual('SOMECOMMAND', r.command)
+
+    def test_str(self):
+        r = Reply('250', '2.1.0 Ok')
+        self.assertEqual('250 2.1.0 Ok', str(r))
+
+    def test_is_error(self):
+        replies = [Reply(str(i)+'50', 'Test') for i in range(1, 6)]
+        self.assertFalse(replies[0].is_error())
+        self.assertFalse(replies[1].is_error())
+        self.assertFalse(replies[2].is_error())
+        self.assertTrue(replies[3].is_error())
+        self.assertTrue(replies[4].is_error())
 
     def test_copy(self):
         r1 = Reply('250', '2.1.0 Ok')
