@@ -105,23 +105,20 @@ class Server(object):
         self.data_timeout = data_timeout or command_timeout
 
     def _recv_command(self):
-        if self.command_timeout:
-            timeout = Timeout(self.command_timeout)
-            timeout.start()
+        timeout = Timeout(self.command_timeout)
+        timeout.start()
         try:
             return self.io.recv_command()
         finally:
-            if self.command_timeout:
-                timeout.cancel()
+            timeout.cancel()
 
     def _get_message_data(self):
         max_size = self.extensions.getparam('SIZE', filter=int)
         reader = DataReader(self.io, max_size)
 
         err = None
-        if self.data_timeout:
-            timeout = Timeout(self.data_timeout)
-            timeout.start()
+        timeout = Timeout(self.data_timeout)
+        timeout.start()
         try:
             data = reader.recv()
         except ConnectionLost:
@@ -130,8 +127,7 @@ class Server(object):
             data = None
             err = e
         finally:
-            if self.data_timeout:
-                timeout.cancel()
+            timeout.cancel()
 
         reply = Reply('250', '2.6.0 Message Accepted for Delivery')
         self._call_custom_handler('HAVE_DATA', reply, data, err)
