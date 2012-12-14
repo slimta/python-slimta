@@ -33,19 +33,25 @@ class Envelope(object):
 
     :param sender: The address that sent the message.
     :param recipients: List of addresses to receive the message.
-    :param message: :class:`email.message.Message` object containing message
-                    contents and headers.
+    :param headers: The message headers.
+    :type headers: :class:`email.message.Message`
+    :param message: String containing the message contents after the headers.
 
     """
 
-    def __init__(self, sender=None, recipients=None, message=None):
+    def __init__(self, sender=None, recipients=None,
+                       headers=None, message=None):
         #: Sending address of the message.
         self.sender = sender
 
         #: List of recipient addresses of the message.
         self.recipients = recipients or []
 
-        #: :class:`email.message.Message` object with message headers and data.
+        #: :class:`email.message.Message` object for accessing and modifying
+        #: message headers.
+        self.headers = headers
+
+        #: String of message data, not including headers.
         self.message = message
 
         #: Hostname of the :mod:`slimta` server that received the message. 
