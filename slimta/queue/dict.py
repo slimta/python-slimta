@@ -76,7 +76,8 @@ class DictStorage(QueueStorage):
             yield (meta[0], key)
 
     def get(self, id):
-        return self.env_db[id]
+        meta = self.meta_db[id]
+        return self.env_db[id], meta[1]
 
     def remove(self, id):
         try:
