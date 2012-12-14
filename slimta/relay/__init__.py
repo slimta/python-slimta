@@ -26,11 +26,27 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 
 from slimta import SlimtaError
 
-__all__ = ['RelayError']
+__all__ = ['RelayError', 'PermanentRelayError', 'TransientRelayError']
 
 
 class RelayError(SlimtaError):
     """Base exception for all custom relay exceptions."""
+    pass
+
+
+class PermanentRelayError(RelayError):
+    """Base exception for all relay errors that indicate a message will not
+    be successfully delivered no matter how many times delivery is attempted.
+
+    """
+    pass
+
+
+class TransientRelayError(RelayError):
+    """Base exception for all relay errors that indicate the message may be
+    successful if tried again later.
+
+    """
     pass
 
 
