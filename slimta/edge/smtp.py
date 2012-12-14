@@ -24,6 +24,7 @@ Attempts to follow the SMTP server RFCs.
 
 """
 
+import re
 import time
 import email.parser
 
@@ -35,10 +36,12 @@ from slimta.envelope import Envelope
 from slimta.edge import Edge
 from slimta.smtp.server import Server
 from slimta.smtp.reply import unknown_command, bad_sequence
-from slimta.smtp import MessageTooBig
+from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 
 __all__ = ['SmtpEdge']
+
+header_boundary = re.compile(r'\r?\n\r?\n')
 
 
 class Handlers(object):
@@ -132,12 +135,9 @@ class Handlers(object):
         elif err:
             raise err
 
-        self.envelope.edge_hostname = gethostname()
+        self.envelope.receiver = gethostname()
         self.envelope.timestamp = time.time()
-        self.envelope.message = message = email.parser.Parser().parsestr(data)
-
-        if 'from' not in message:
-            message['from'] = self.envelope.sender
+        self.envelope.headers, self.envelope.message = self._parse_data(data)
 
         try:
             self.handoff(self.envelope)
@@ -146,6 +146,17 @@ class Handlers(object):
             reply.message = '5.6.0 Error Queuing Message'
 
         self.envelope = None
+
+    def _parse_data(self, data):
+        match = header_boundary.search(data)
+        if not match:
+            header_data = data
+            payload = ''
+        else:
+            header_data = data[:match.end(0)]
+            payload = data[match.end(0):]
+        headers = email.parser.Parser().parsestr(header_data, True)
+        return headers, payload
 
 
 class SmtpEdge(Edge):
@@ -196,6 +207,8 @@ class SmtpEdge(Edge):
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)
             smtp_server.handle()
+        except ConnectionLost:
+            pass
         finally:
             socket.close()
 
