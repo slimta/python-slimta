@@ -5,13 +5,13 @@ from slimta.edge.smtp import SmtpEdge
 from slimta.queue import Queue
 from slimta.queue.dict import DictStorage
 from slimta.relay import RelayError
-from slimta.relay.smtp import StaticSmtpRelay
+from slimta.relay.smtp.static import StaticSmtpRelay
 
 def backoff(envelope, attempts):
     if attempts <= 5:
         return 5.0 * attempts
 
-relay = StaticSmtpRelay('mx1.emailsrvr.com', 25, pool_size=5)
+relay = StaticSmtpRelay('mx1.emailsrvr.com', 25, pool_size=2)
 
 env_db = shelve.open('envelope.db')
 meta_db = shelve.open('meta.db')

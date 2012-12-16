@@ -19,16 +19,13 @@
 # THE SOFTWARE.
 #
 
-"""Relays messages to a destination using the SMTP protocol. Moving messages
-from hop top hop with SMTP is the foundation of how email works. Picking the
-next hop is typically done with MX records in DNS, but often configurations will
+"""Package implementing the ability to route messages to their next hop
+with the standard SMTP protocol. Moving messages from hop top hop with
+SMTP is the foundation of how email works. Picking the next hop is
+typically done with MX records in DNS, but often configurations will
 involve local static routing.
 
 """
-
-from gevent.queue import PriorityQueue
-from gevent.event import AsyncResult
-from gevent.coros import Semaphore, DummySemaphore
 
 from slimta.relay import RelayError, TransientRelayError, PermanentRelayError
 
@@ -60,49 +57,6 @@ class SmtpPermanentRelayError(SmtpRelayError, PermanentRelayError):
 
     def __init__(self, reply):
         super(SmtpPermanentRelayError, self).__init__('Permanent', reply)
-
-
-class StaticSmtpRelay(object):
-
-    def __init__(self, host, port=25, pool_size=None, client_class=None):
-        if client_class:
-            self.client_class = client_class
-        else:
-            from slimta.relay.smtp.client import SmtpRelayClient
-            self.client_class = SmtpRelayClient
-        self.host = host
-        self.port = port
-        self.queue = PriorityQueue()
-        self.limit = Semaphore(pool_size) if pool_size else DummySemaphore()
-        self.pool = set()
-
-    def _remove_client(self, client):
-        self.pool.remove(client)
-        self.limit.release()
-        if not self.queue.empty() and not self.pool:
-            self._add_client()
-
-    def _add_client(self):
-        self.limit.acquire()
-        client = self.client_class((self.host, self.port), self.queue,
-                                   idle_timeout=10)
-        client.start()
-        client.link(self._remove_client)
-        self.pool.add(client)
-
-    def _check_idle(self):
-        if not self.limit.locked():
-            for client in self.pool:
-                if client.idle:
-                    break
-            else:
-                    self._add_client()
-
-    def attempt(self, envelope, attempts):
-        self._check_idle()
-        result = AsyncResult()
-        self.queue.put((1, result, envelope))
-        return result.get()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
