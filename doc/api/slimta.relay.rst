@@ -13,3 +13,5 @@ slimta.relay
 
 .. toctree::
 
+   slimta.relay.smtp
+

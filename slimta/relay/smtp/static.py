@@ -28,10 +28,12 @@ out.
 from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
+from slimta.relay import Relay
+
 __all__ = ['StaticSmtpRelay']
 
 
-class StaticSmtpRelay(object):
+class StaticSmtpRelay(Relay):
     """Manages the relaying of messages to a specific ``host:port``. Connections
     may be recycled when possible, to send multiple messages over a single
     channel.

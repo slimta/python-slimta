@@ -32,7 +32,7 @@ import time
 from gevent import monkey; monkey.patch_all()
 import dns.resolver
 
-from slimta.relay import PermanentRelayError
+from slimta.relay import PermanentRelayError, Relay
 from slimta.relay.smtp.static import StaticSmtpRelay
 
 __all__ = ['MxSmtpRelay']
@@ -85,7 +85,7 @@ class MxRecord(object):
         return not self._expiration or time.time >= self._expiration
 
 
-class MxSmtpRelay(object):
+class MxSmtpRelay(Relay):
     """Delivers messages based on the MX records of their recipients. Keeps an
     expiring cache of resolved MX records to prevent DNS overuse, and uses a
     :class:`~slimta.relay.smtp.static.StaticSmtpRelay` object for each

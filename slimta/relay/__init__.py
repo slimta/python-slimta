@@ -26,7 +26,7 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 
 from slimta import SlimtaError
 
-__all__ = ['RelayError', 'PermanentRelayError', 'TransientRelayError']
+__all__ = ['RelayError', 'PermanentRelayError', 'TransientRelayError', 'Relay']
 
 
 class RelayError(SlimtaError):
@@ -48,6 +48,24 @@ class TransientRelayError(RelayError):
 
     """
     pass
+
+
+class Relay(object):
+    """Base class for objects that implement the relaying pattern. Included
+    implementations are :class:`~slimta.relay.smtp.mx.MxSmtpRelay` and
+    :class:`~slimta.relay.smtp.static.StaticSmtpRelay`.
+
+    """
+
+    def attempt(self, envelope, attempts):
+        """This method must be overriden by sub-classes in order to be passed
+        in to the |Queue| constructor.
+
+        :param envelope: |Envelope| to attempt delivery for.
+        :param attempts: Number of times the envelope has attempted delivery.
+
+        """
+        raise NotImplemented()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
