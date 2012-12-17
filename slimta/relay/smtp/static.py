@@ -28,8 +28,6 @@ out.
 from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
-from slimta.relay import RelayError, TransientRelayError, PermanentRelayError
-
 __all__ = ['StaticSmtpRelay']
 
 
@@ -74,7 +72,7 @@ class StaticSmtpRelay(object):
         for client in self.pool:
             if client.idle:
                 return
-        if len(self.pool) < self.pool_size:
+        if not self.pool_size or len(self.pool) < self.pool_size:
             self._add_client()
 
     def attempt(self, envelope, attempts):
