@@ -152,10 +152,11 @@ class MxSmtpRelay(Relay):
             record = self.mx_records.setdefault(domain, MxRecord(domain))
             dest = self.choose_mx(record.get(), attempts)
             port = 25
-        if dest in self.relayers:
-            relayer = self.relayers[dest]
-        else:
+        try:
+            relayer = self.relayers[(dest, port)]
+        except KeyError:
             relayer = self.new_static_relay(dest, port)
+            self.relayers[(dest, port)] = relayer
         return relayer.attempt(envelope, attempts)
 
 
