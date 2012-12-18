@@ -147,13 +147,41 @@ class Queue(Greenlet):
         self.backoff = backoff or self._default_backoff
         self.wake = Event()
         self.queued = []
+        self.prequeue_policies = []
+        self.postqueue_policies = []
         self._use_pool('store_pool', store_pool)
         self._use_pool('relay_pool', relay_pool)
+
+    def add_prequeue_policy(self, policy):
+        """Adds a |Policy| to be executed before messages are persisted to
+        storage.
+
+        :param policy: |Policy| object to execute.
+
+        """
+        self.prequeue_policies.append(policy)
+
+    def add_postqueue_policy(self, policy):
+        """Adds a |Policy| to be executed after messages are persisted to
+        storage, before each delivery attempt.
+
+        :param policy: |Policy| object to execute.
+
+        """
+        self.postqueue_policies.append(policy)
 
     @staticmethod
     def _default_backoff(envelope, attempts):
         if attempts < 5:
             return 60.0*attempts
+
+    def _run_prequeue_policies(self, envelope):
+        for policy in self.prequeue_policies:
+            policy.apply(envelope)
+
+    def _run_postqueue_policies(self, envelope):
+        for policy in self.postqueue_policies:
+            policy.apply(envelope)
 
     def _use_pool(self, attr, pool):
         if pool is None:
@@ -189,6 +217,7 @@ class Queue(Greenlet):
         wait = self.backoff(envelope, 0)
         assert wait is not None, "Cannot permanently fail first attempt."
         when = now + wait
+        self._run_prequeue_policies(envelope)
         try:
             id = self._pool_run('store', self.store.write, envelope, when)
             return id
@@ -217,6 +246,7 @@ class Queue(Greenlet):
             self._add_queued((when, id))
 
     def _attempt(self, id, envelope, attempts):
+        self._run_postqueue_policies(envelope)
         try:
             self.relay.attempt(envelope, attempts)
         except TransientRelayError:
