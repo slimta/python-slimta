@@ -31,7 +31,9 @@ __all__ = ['RelayError', 'PermanentRelayError', 'TransientRelayError', 'Relay']
 
 class RelayError(SlimtaError):
     """Base exception for all custom relay exceptions."""
-    pass
+    def __init__(self, msg, reply):
+        super(RelayError, self).__init__(msg)
+        self.reply = reply
 
 
 class PermanentRelayError(RelayError):

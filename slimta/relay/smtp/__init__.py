@@ -35,9 +35,8 @@ __all__ = ['SmtpRelayError']
 class SmtpRelayError(RelayError):
 
     def __init__(self, type, reply):
-        self.reply = reply
         msg = '{0} failure on {1}: {2}'.format(type, reply.command, str(reply))
-        super(SmtpRelayError, self).__init__(msg)
+        super(SmtpRelayError, self).__init__(msg, reply)
 
     @staticmethod
     def factory(reply):

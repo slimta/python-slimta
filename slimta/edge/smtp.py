@@ -24,13 +24,13 @@ Attempts to follow the SMTP server RFCs.
 
 """
 
-import re
 import time
-import email.parser
 
 import gevent
 from gevent.server import StreamServer
-from gevent.socket import gethostname
+from gevent.socket import getfqdn
+from gevent import monkey; monkey.patch_all()
+from dns import resolver, reversename
 
 from slimta.envelope import Envelope
 from slimta.edge import Edge
@@ -41,8 +41,6 @@ from slimta.queue import QueueError
 
 __all__ = ['SmtpEdge']
 
-header_boundary = re.compile(r'\r?\n\r?\n')
-
 
 class Handlers(object):
 
@@ -50,6 +48,7 @@ class Handlers(object):
         self.protocol = 'SMTP'
         self.security = 'none'
         self.address = address
+        self.reverse_address = None
         self.validators = validators
         self.handoff = handoff
 
@@ -79,7 +78,23 @@ class Handlers(object):
         elif old == 'ESMTPS' and change == 'AUTH':
             self.protocol = 'ESMTPSA'
 
+    def _ptr_lookup(self):
+        print self.address
+        ptraddr = reversename.from_address(self.address[0])
+        try:
+            answers = resolver.query(ptraddr, 'PTR')
+        except resolver.NXDOMAIN:
+            pass
+        try:
+            self.reverse_address = str(answers[0])
+        except IndexError:
+            pass
+
+    def _trigger_ptr_lookup(self):
+        self._ptr_lookup_thread = gevent.spawn(self._ptr_lookup)
+
     def BANNER(self, reply):
+        self._trigger_ptr_lookup()
         self._call_validator('banner', reply, self.address)
 
     def EHLO(self, reply, ehlo_as):
@@ -135,9 +150,15 @@ class Handlers(object):
         elif err:
             raise err
 
-        self.envelope.receiver = gethostname()
+        self.envelope.client['ip'] = self.address[0]
+        self.envelope.client['host'] = self.reverse_address
+        self.envelope.client['name'] = self.ehlo_as
+        self.envelope.client['protocol'] = self.protocol
+        self._ptr_lookup_thread.kill(block=False)
+
+        self.envelope.receiver = getfqdn()
         self.envelope.timestamp = time.time()
-        self.envelope.headers, self.envelope.message = self._parse_data(data)
+        self.envelope.parse(data)
 
         try:
             self.handoff(self.envelope)
@@ -146,17 +167,6 @@ class Handlers(object):
             reply.message = '5.6.0 Error Queuing Message'
 
         self.envelope = None
-
-    def _parse_data(self, data):
-        match = header_boundary.search(data)
-        if not match:
-            header_data = data
-            payload = ''
-        else:
-            header_data = data[:match.end(0)]
-            payload = data[match.end(0):]
-        headers = email.parser.Parser().parsestr(header_data, True)
-        return headers, payload
 
 
 class SmtpEdge(Edge):

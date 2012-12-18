@@ -24,7 +24,14 @@ metadata.
 
 """
 
+import re
+import cStringIO
+import email.generator
+import email.parser
+
 __all__ = ['Envelope']
+
+header_boundary = re.compile(r'\r?\n\r?\n')
 
 
 class Envelope(object):
@@ -54,11 +61,52 @@ class Envelope(object):
         #: String of message data, not including headers.
         self.message = message
 
+        #: Information about the client that sent the message. Utilized keys
+        #: include:
+        #: * ``ip``: The IP of the client.
+        #: * ``host``: The reverse-lookup of the client IP.
+        #: * ``name``: The client name, as given by its ``EHLO`` or alternative.
+        #: * ``protocol``: The protocol used by the client, generally a variant
+        #:                 of ``"SMTP"``.
+        #: * ``auth``: The name the client successfully authenticated with, or
+        #:             ``None``.
+        self.client = {}
+
         #: Hostname of the :mod:`slimta` server that received the message. 
         self.receiver = None
 
         #: Timestamp when the message was received.
         self.timestamp = None
+
+    def flatten(self):
+        """Produces two strings representing the headers and message body.
+
+        :returns: Tuple of two strings: ``(header_data, message_data)``
+
+        """
+        outfp = cStringIO.StringIO()
+        email.generator.Generator(outfp).flatten(self.headers, False)
+        header_data = outfp.getvalue().replace('\r', '').replace('\n', '\r\n')
+        return header_data, self.message
+
+    def parse(self, data):
+        """Parses the given string to populate the :attr:`headers` and
+        :attr:`message` attributes.
+
+        :param data: The complete message, headers and message body.
+        :type data: string
+
+        """
+        match = header_boundary.search(data)
+        if not match:
+            header_data = data
+            payload = ''
+        else:
+            header_data = data[:match.end(0)]
+            payload = data[match.end(0):]
+        headers = email.parser.Parser().parsestr(header_data, True)
+        self.headers = headers
+        self.message = payload
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

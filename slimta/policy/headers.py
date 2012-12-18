@@ -25,8 +25,10 @@ RFC headers.
 """
 
 import uuid
-from time import strftime, gmtime
+from time import strftime, gmtime, localtime
 from math import floor
+
+from gevent.socket import getfqdn
 
 from slimta.policy import Policy
 
@@ -42,16 +44,16 @@ class AddDateHeader(Policy):
     def __init__(self):
         pass
 
-    def build_date(self, time):
+    def build_date(self, timestamp):
         """Returns a date string in the format desired for the header. This
         method can be overridden to control the format.
 
-        :param time: Timestamp (as returned by :func:`time.time()`) to convert
-                     into date string.
+        :param timestamp: Timestamp (as returned by :func:`time.time()`) to
+                          convert into date string.
         :returns: Date string for the header.
 
         """
-        return strftime('%a, %d %b %Y %T %z', time)
+        return strftime('%a, %d %b %Y %T %Z', localtime(timestamp))
 
     def apply(self, envelope):
         if 'date' not in envelope.headers:
@@ -62,18 +64,19 @@ class AddMessageIdHeader(Policy):
     """Checks for the existence of the RFC-specified ``Message-Id`` header,
     adding it if it does not exist.
 
-    :param hostname: The hostname to use in the generated headers.
+    :param hostname: The hostname to use in the generated headers. By default,
+                     :func:`~gevent.socket.getfqdn()` is used.
 
     """
 
-    def __init__(self, hostname):
-        self.hostname = hostname
+    def __init__(self, hostname=None):
+        self.hostname = hostname or getfqdn()
 
     def apply(self, envelope):
         if 'message-id' not in envelope.headers:
-            mid = '<{0}.{1}@{2}>'.format(uuid.uuid4().hex,
-                                         floor(envelope.timestamp),
-                                         self.hostname)
+            mid = '<{0}.{1:.0f}@{2}>'.format(uuid.uuid4().hex,
+                                             floor(envelope.timestamp),
+                                             self.hostname)
             envelope.headers['Message-Id'] = mid
 
 
@@ -92,8 +95,11 @@ class AddReceivedHeader(Policy):
         self.use_utc = use_utc
 
     def _build_from_section(self, envelope, parts):
-        template = 'from {0} ({1} [{2}]{3})'
-        parts.append(template.format())
+        template = 'from {0} ({1} [{2}])'
+        ehlo = envelope.client.get('name', None) or 'unknown'
+        host = envelope.client.get('host', None) or 'unknown'
+        ip = envelope.client.get('ip', None) or 'unknown'
+        parts.append(template.format(ehlo, host, ip))
 
     def _build_by_section(self, envelope, parts):
         template = 'by {0} (slimta {1})'
@@ -101,11 +107,9 @@ class AddReceivedHeader(Policy):
 
     def _build_with_section(self, envelope, parts):
         template = 'with {0}'
-        parts.append(template.format())
-
-    def _build_id_section(self, envelope, parts):
-        template = 'id {0}'
-        parts.append(template.format())
+        protocol = envelope.client.get('protocol', None)
+        if protocol:
+            parts.append(template.format(protocol))
 
     def _build_for_section(self, envelope, parts):
         template = 'for <{0}>'
@@ -117,7 +121,6 @@ class AddReceivedHeader(Policy):
         self._build_from_section(envelope, parts)
         self._build_by_section(envelope, parts)
         self._build_with_section(envelope, parts)
-        self._build_id_section(envelope, parts)
         self._build_for_section(envelope, parts)
 
         t = gmtime(envelope.timestamp) if self.use_utc else envelope.timestamp

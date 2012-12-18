@@ -6,6 +6,8 @@ from slimta.queue import Queue
 from slimta.queue.dict import DictStorage
 from slimta.relay import RelayError
 from slimta.relay.smtp.mx import MxSmtpRelay
+from slimta.policy.headers import *
+from slimta.policy.forward import Forward
 
 def backoff(envelope, attempts):
     if attempts <= 5:
@@ -17,6 +19,10 @@ env_db = shelve.open('envelope.db')
 meta_db = shelve.open('meta.db')
 queue_storage = DictStorage(env_db, meta_db)
 queue = Queue(queue_storage, relay, backoff)
+
+queue.add_prequeue_policy(AddDateHeader())
+queue.add_prequeue_policy(AddMessageIdHeader())
+queue.add_prequeue_policy(AddReceivedHeader())
 
 edge = SmtpEdge(('127.0.0.1', 1337), queue)
 edge.start()

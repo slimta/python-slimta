@@ -34,6 +34,7 @@ import dns.resolver
 
 from slimta.relay import PermanentRelayError, Relay
 from slimta.relay.smtp.static import StaticSmtpRelay
+from slimta.smtp.reply import Reply
 
 __all__ = ['MxSmtpRelay']
 
@@ -50,7 +51,8 @@ class NoDomainError(PermanentRelayError):
     """
     def __init__(self, recipient):
         msg = 'Recipient address has no domain: '+recipient
-        super(NoDomainError, self).__init__(msg)
+        reply = Reply('550', '5.1.5 '+msg, command='RCPT')
+        super(NoDomainError, self).__init__(msg, reply)
         self.recipient = recipient
 
 

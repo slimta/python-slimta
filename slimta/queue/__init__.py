@@ -35,6 +35,7 @@ from gevent.pool import Pool
 
 from slimta import SlimtaError
 from slimta.relay import PermanentRelayError, TransientRelayError
+from slimta.bounce import Bounce
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
@@ -192,7 +193,7 @@ class Queue(Greenlet):
             setattr(self, attr, Pool(pool))
 
     def _pool_run(self, which, func, *args, **kwargs):
-        pool = getattr(self, which+'_pool')
+        pool = getattr(self, which+'_pool', None)
         if pool:
             ret = pool.spawn(func, *args, **kwargs)
             return ret.get()
@@ -200,7 +201,7 @@ class Queue(Greenlet):
             return func(*args, **kwargs)
 
     def _pool_spawn(self, which, func, *args, **kwargs):
-        pool = getattr(self, which+'_pool') or gevent
+        pool = getattr(self, which+'_pool', None) or gevent
         return pool.spawn(func, *args, **kwargs)
 
     def _add_queued(self, entry):
@@ -231,15 +232,19 @@ class Queue(Greenlet):
         for entry in self.store.load():
             self._add_queued(entry)
 
-    def _perm_fail(self, id, envelope):
-        self._pool_spawn('store', self.store.remove, id)
-        print 'Permanently failed:', id
+    def _bounce(self, envelope, reply):
+        bounce = Bounce(envelope, reply)
+        return self.enqueue(bounce)
 
-    def _retry_later(self, id, envelope):
+    def _perm_fail(self, id, envelope, reply):
+        self._pool_spawn('store', self.store.remove, id)
+        self._pool_spawn('bounce', self._bounce, envelope, reply)
+
+    def _retry_later(self, id, envelope, reply):
         attempts = self.store.increment_attempts(id)
         wait = self.backoff(envelope, attempts)
         if wait is None:
-            self._perm_fail(id, envelope)
+            self._perm_fail(id, envelope, reply)
         else:
             when = time.time() + wait
             self.store.set_timestamp(id, when)
@@ -249,10 +254,10 @@ class Queue(Greenlet):
         self._run_postqueue_policies(envelope)
         try:
             self.relay.attempt(envelope, attempts)
-        except TransientRelayError:
-            self._pool_spawn('store', self._retry_later, id, envelope)
-        except PermanentRelayError:
-            self._perm_fail(id, envelope)
+        except TransientRelayError, e:
+            self._pool_spawn('store', self._retry_later, id, envelope, e.reply)
+        except PermanentRelayError, e:
+            self._perm_fail(id, envelope, e.reply)
         else:
             self._pool_spawn('store', self.store.remove, id)
 

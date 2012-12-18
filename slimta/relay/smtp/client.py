@@ -20,8 +20,6 @@
 #
 
 import time
-import email.generator
-import cStringIO
 
 import gevent
 from gevent import Timeout, Greenlet
@@ -120,11 +118,9 @@ class SmtpRelayClient(Greenlet):
             raise SmtpRelayError.factory(data)
 
     def _send_message_data(self, envelope):
-        outfp = cStringIO.StringIO()
-        email.generator.Generator(outfp).flatten(envelope.headers, False)
-        header_data = outfp.getvalue().replace('\r', '').replace('\n', '\r\n')
+        header_data, message_data = envelope.flatten()
         with Timeout(self.data_timeout):
-            send_data = self.client.send_data(header_data, envelope.message)
+            send_data = self.client.send_data(header_data, message_data)
         self.client._flush_pipeline()
         if send_data.is_error():
             raise SmtpRelayError.factory(send_data)

@@ -20,9 +20,13 @@
 #
 
 import re
+import uuid
+import time
 import email.generator
 import email.parser
 import cStringIO
+
+from gevent.socket import getfqdn
 
 from envelope import Envelope
 
@@ -101,11 +105,23 @@ class Bounce(Envelope):
     #: is processed the same way as ``header_template``.
     footer_template = default_footer_template
 
-    def __init__(self, envelope, reply, id=None):
-        message = self._build_message(envelope, reply)
-        super(Bounce, self).__init__(id=id, sender=self.sender,
-                                     recipients=[envelope.sender],
-                                     message=message)
+    #: The client information used when sending bounce messages. Injected as the
+    #: :attr:`~slimta.envelope.Envelope.client` attribute of bounce messages.
+    client = {'name': 'postmaster',
+              'ip': '127.0.0.1',
+              'host': 'localhost'}
+
+    #: String injected as the :attr:`~slimta.envelope.Envelope.receiver`
+    #: attribute of bounce messages.
+    receiver = getfqdn()
+
+    def __init__(self, envelope, reply):
+        super(Bounce, self).__init__(sender=self.sender,
+                                     recipients=[envelope.sender])
+        self._build_message(envelope, reply)
+        self.timestamp = time.time()
+        self.client = Bounce.client
+        self.receiver = Bounce.receiver
 
     def _get_substitution_table(self, envelope, reply):
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
@@ -122,10 +138,11 @@ class Bounce(Envelope):
         sub_table = self._get_substitution_table(envelope, reply)
         new_payload = cStringIO.StringIO()
         new_payload.write(self.header_template.format(**sub_table))
-        email.generator.Generator(new_payload).flatten(envelope.message)
+        header_data, message_data = envelope.flatten()
+        new_payload.write(header_data)
+        new_payload.write(message_data)
         new_payload.write(self.footer_template.format(**sub_table))
-        new_payload.seek(0)
-        return email.parser.Parser().parse(new_payload)
+        self.parse(new_payload.getvalue())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
