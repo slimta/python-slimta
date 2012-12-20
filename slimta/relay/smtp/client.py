@@ -92,6 +92,10 @@ class SmtpRelayClient(Greenlet):
             self._starttls()
             self._ehlo()
 
+    def _rset(self):
+        with Timeout(self.command_timeout):
+            rset = self.client.rset()
+
     def _mailfrom(self, sender):
         with Timeout(self.command_timeout):
             mailfrom = self.client.mailfrom(sender)
@@ -135,15 +139,19 @@ class SmtpRelayClient(Greenlet):
                 data = self.client.data()
             self._check_replies(mailfrom, rcpttos, data)
         except SmtpRelayError, e:
+            self._rset()
             result.set_exception(e)
             if data and not data.is_error():
                 with Timeout(self.data_timeout):
                     self.client.send_empty_data()
-            return
+            return False
         try:
             self._send_message_data(envelope)
         except SmtpRelayError, e:
+            self._rset()
             result.set_exception(e)
+            return False
+        return True
 
     def _check_server_timeout(self):
         if self.client.has_reply_waiting():
@@ -174,8 +182,8 @@ class SmtpRelayClient(Greenlet):
                 if self._check_server_timeout():
                     self.queue.put((0, result, envelope))
                     break
-                self._send_envelope(result, envelope)
-                result.set(True)
+                if self._send_envelope(result, envelope):
+                    result.set(True)
                 if self.idle_timeout is None:
                     break
         except (Empty, Timeout):
