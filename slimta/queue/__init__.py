@@ -131,8 +131,8 @@ class Queue(Greenlet):
     :param backoff: Function that, given an |Envelope| and number of delivery
                     attempts, will return the number of seconds before the next
                     attempt. If it returns ``None``, the message will be
-                    permanently failed. By default, this function will allow 5
-                    delivery attempts at 0-4 minute intervals.
+                    permanently failed. The default backoff function simply
+                    returns ``None`` and messages are never retried.
     :param bounce_factory: Function that produces a |Bounce| object given the
                            same parameters as the |Bounce| constructor. If the
                            function returns ``None``, no bounce is delivered. By
@@ -178,8 +178,7 @@ class Queue(Greenlet):
 
     @staticmethod
     def _default_backoff(envelope, attempts):
-        if attempts < 5:
-            return 60.0*attempts
+        pass
 
     def _run_prequeue_policies(self, envelope):
         for policy in self.prequeue_policies:
