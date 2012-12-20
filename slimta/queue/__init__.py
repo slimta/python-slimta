@@ -238,13 +238,13 @@ class Queue(Greenlet):
 
     def _perm_fail(self, id, envelope, reply):
         self._pool_spawn('store', self.store.remove, id)
-        reply.message += ' (Too many retries)'
         self._pool_spawn('bounce', self._bounce, envelope, reply)
 
     def _retry_later(self, id, envelope, reply):
         attempts = self.store.increment_attempts(id)
         wait = self.backoff(envelope, attempts)
         if wait is None:
+            reply.message += ' (Too many retries)'
             self._perm_fail(id, envelope, reply)
         else:
             when = time.time() + wait
