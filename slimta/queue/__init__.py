@@ -133,6 +133,10 @@ class Queue(Greenlet):
                     attempt. If it returns ``None``, the message will be
                     permanently failed. By default, this function will allow 5
                     delivery attempts at 0-4 minute intervals.
+    :param bounce_factory: Function that produces a |Bounce| object given the
+                           same parameters as the |Bounce| constructor. If the
+                           function returns ``None``, no bounce is delivered. By
+                           default, a new |Bounce| is created in every case.
     :param store_pool: Number of simultaneous operations performable against the
                        ``store`` object. Default is unlimited.
     :param relay_pool: Number of simultaneous operations performable against the
@@ -140,12 +144,13 @@ class Queue(Greenlet):
 
     """
 
-    def __init__(self, store, relay, backoff=None,
+    def __init__(self, store, relay, backoff=None, bounce_factory=None,
                        store_pool=None, relay_pool=None):
         super(Queue, self).__init__()
         self.store = store
         self.relay = relay
         self.backoff = backoff or self._default_backoff
+        self.bounce_factory = bounce_factory or Bounce
         self.wake = Event()
         self.queued = []
         self.prequeue_policies = []
@@ -233,8 +238,9 @@ class Queue(Greenlet):
             self._add_queued(entry)
 
     def _bounce(self, envelope, reply):
-        bounce = Bounce(envelope, reply)
-        return self.enqueue(bounce)
+        bounce = self.bounce_factory(envelope, reply)
+        if bounce:
+            return self.enqueue(bounce)
 
     def _perm_fail(self, id, envelope, reply):
         self._pool_spawn('store', self.store.remove, id)
