@@ -28,6 +28,7 @@ other data should have the prefixed ``.`` removed.
 
 import re
 import cStringIO
+from pprint import pformat
 
 from slimta.smtp import ConnectionLost, MessageTooBig
 
@@ -98,9 +99,7 @@ class DataReader(object):
         if self.EOD is not None:
             return False
 
-        piece = self.io.socket.recv(4096)
-        from pprint import pformat
-        print 'data: [['+pformat(piece)+']]'
+        piece = self.io.raw_recv()
         if piece == '':
             raise ConnectionLost()
 

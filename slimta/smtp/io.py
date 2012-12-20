@@ -21,11 +21,13 @@
 
 import re
 import cStringIO
-from gevent.ssl import SSLSocket
 from pprint import pformat
+
+from gevent.ssl import SSLSocket
 
 from slimta.smtp import ConnectionLost, BadReply
 from slimta.smtp.reply import Reply
+from slimta import logging
 
 __all__ = ['IO']
 
@@ -34,22 +36,33 @@ code_pattern = re.compile(r'^\d\d\d')
 command_pattern = re.compile(r'^([a-zA-Z]+)\s*$')
 command_arg_pattern = re.compile(r'^([a-zA-Z]+)\s+(.+?)\s*$')
 
+log = logging.getSocketLogger(__name__)
+
 
 class IO(object):
 
     def __init__(self, socket):
         self.socket = socket
+        self.peer = socket.getpeername()
 
         self.send_buffer = cStringIO.StringIO()
         self.recv_buffer = ''
+
+    def raw_send(self, data):
+        self.socket.sendall(data)
+        log.send(self.socket, data)
+
+    def raw_recv(self):
+        data = self.socket.recv(4096)
+        log.recv(self.socket, data)
+        return data
 
     def encrypt_socket(self, tls):
         self.socket = SSLSocket(self.socket, **tls)
         return self.socket.do_handshake()
 
     def buffered_recv(self):
-        received = self.socket.recv(4096)
-        print 'received: [['+pformat(received)+']]'
+        received = self.raw_recv()
         if received == '':
             raise ConnectionLost()
         self.recv_buffer += received
@@ -61,8 +74,7 @@ class IO(object):
         send = self.send_buffer.getvalue()
         if send == '':
             return
-        self.socket.sendall(send)
-        print 'sent: [['+pformat(send)+']]'
+        self.raw_send(send)
         self.send_buffer = cStringIO.StringIO()
 
     def recv_reply(self):

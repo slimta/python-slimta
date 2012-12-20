@@ -27,14 +27,18 @@ a listening socket under various protocols.
 import gevent
 from gevent.server import StreamServer
 
+from slimta import logging
+
 __all__ = ['Edge']
+
+log = logging.getSocketLogger(__name__)
 
 
 class Edge(gevent.Greenlet):
     """This class implements a :class:`~gevent.Greenlet` serving a
     :class:`~gevent.server.StreamServer` until killed. Connections are accepted
-    on the socket and passed to :meth:`._handle()`, which should be overriden
-    by implementers of this base class.
+    on the socket and passed to :meth:`.handle()`, which should be overriden
+    by implementers of this base class. The socket will be closed automatically.
 
     :param listener: Usually a (ip, port) tuple defining the interface and
                      port upon which to listen for connections.
@@ -70,6 +74,14 @@ class Edge(gevent.Greenlet):
         self.queue.enqueue(envelope)
 
     def _handle(self, socket, address):
+        log.accept(self.server.socket, socket, address)
+        try:
+            self.handle(socket, address)
+        finally:
+            log.close(socket)
+            socket.close()
+
+    def handle(self, socket, address):
         """Override this function to receive messages on the socket and call
         `self.handoff()`.
 

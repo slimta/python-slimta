@@ -79,7 +79,6 @@ class Handlers(object):
             self.protocol = 'ESMTPSA'
 
     def _ptr_lookup(self):
-        print self.address
         ptraddr = reversename.from_address(self.address[0])
         try:
             answers = resolver.query(ptraddr, 'PTR')
@@ -210,7 +209,7 @@ class SmtpEdge(Edge):
         self.data_timeout = data_timeout
         self.validators = validators
 
-    def _handle(self, socket, address):
+    def handle(self, socket, address):
         try:
             handlers = Handlers(address, self.validators, self._handoff)
             smtp_server = Server(socket, handlers,
@@ -219,8 +218,6 @@ class SmtpEdge(Edge):
             smtp_server.handle()
         except ConnectionLost:
             pass
-        finally:
-            socket.close()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -1,6 +1,9 @@
 
-from pprint import pprint
+from gevent import monkey; monkey.patch_thread()
+
 import shelve
+import logging
+
 from slimta.edge.smtp import SmtpEdge
 from slimta.queue import Queue
 from slimta.queue.dict import DictStorage
@@ -8,6 +11,9 @@ from slimta.relay import RelayError
 from slimta.relay.smtp.mx import MxSmtpRelay
 from slimta.policy.headers import *
 from slimta.policy.forward import Forward
+from slimta.bounce import Bounce
+
+logging.basicConfig(level=logging.DEBUG)
 
 relay = MxSmtpRelay()
 
