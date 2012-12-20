@@ -35,6 +35,7 @@ from gevent.pool import Pool
 
 from slimta import SlimtaError
 from slimta.relay import PermanentRelayError, TransientRelayError
+from slimta.smtp.reply import Reply
 from slimta.bounce import Bounce
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
@@ -219,18 +220,12 @@ class Queue(Greenlet):
 
     def enqueue(self, envelope):
         now = time.time()
-        wait = self.backoff(envelope, 0)
-        assert wait is not None, "Cannot permanently fail first attempt."
-        when = now + wait
         self._run_prequeue_policies(envelope)
         try:
-            id = self._pool_run('store', self.store.write, envelope, when)
+            id = self._pool_run('store', self.store.write, envelope, now)
             return id
         finally:
-            if wait == 0:
-                self._pool_spawn('relay', self._attempt, id, envelope, 0)
-            else:
-                self._add_queued((when, id))
+            self._pool_spawn('relay', self._attempt, id, envelope, 0)
 
     def _load_all(self):
         for entry in self.store.load():
@@ -243,6 +238,7 @@ class Queue(Greenlet):
 
     def _perm_fail(self, id, envelope, reply):
         self._pool_spawn('store', self.store.remove, id)
+        reply.message += ' (Too many retries)'
         self._pool_spawn('bounce', self._bounce, envelope, reply)
 
     def _retry_later(self, id, envelope, reply):
