@@ -19,6 +19,18 @@
 # THE SOFTWARE.
 #
 
+"""Package implementing the ability for client and server SMTP sessions to
+authenticate.
+
+For servers, use |Auth| as a base class and override the
+:meth:`~Auth.verify_secret()` and :meth:`~Auth.get_secret()` methods as needed.
+To modify which auth mechanisms are advertised in clear- and encrypted
+channels, you can override the :meth:`~Auth.get_available_mechanisms()` method
+as well. Your |Auth| sub-class may be passed in to your
+:class:`~slimta.smtp.server.Server` or :class:`~slimta.edge.smtp.SmtpEdge`.
+
+"""
+
 import re
 
 from slimta.smtp import SmtpError
@@ -67,17 +79,19 @@ class CredentialsInvalidError(ServerAuthError):
 
 
 class Auth(object):
-    """An object which can be associated with SMTP client or server connections
-    to handle authentication by various supported mechanisms.
+    """Base class that handles the authentication for an SMTP client or server
+    session. This class should be inherited with its methods overridden as
+    necessary.
 
-    :param mechanisms: Classes in :mod:`~slimta.smtp.authmechanisms` that should
-                       be supported by the client or server.
+    :param session: One of either a :class:`~slimta.smtp.server.Server` or a
+                    :class:`~slimta.smtp.client.Client` object for the session.
 
     """
 
-    def __init__(self, *mechanisms):
-        self.mechanisms = [mechanism(self.verify_secret, self.get_secret)
-                           for mechanism in mechanisms]
+    def __init__(self, session):
+        self.session = session
+        from slimta.smtp.auth.mechanisms import supported
+        self.supported_mechanisms = supported
 
     def verify_secret(self, authcid, secret, authzid=None):
         """For SMTP server authentication, this method should be overriden
@@ -117,33 +131,38 @@ class Auth(object):
         """
         raise CredentialsInvalidError()
 
-    def for_server(self, server):
-        return ServerAuth(self.mechanisms, server)
+    def get_available_mechanisms(self, secure=False):
+        """Returns a list of mechanism classes from the
+        :mod:`~slimta.smtp.auth.mechanisms` module that are available on the
+        session. This usually depends on whether the connection is ``secure``,
+        as plain-text mechanisms should not be used unencrypted.
 
+        Unless overridden, this method will return attempt to use all built-in
+        auth mechanisms.
 
-class ServerAuth(object):
+        :param secure: Whether or not the session is encrypted.
+        :type secure: ``True`` or ``False``.
+        :returns: List of available mechanism classes.
 
-    def __init__(self, mechanisms, server):
-        self.mechanisms = mechanisms
-        self.server = server
+        """
+        if secure:
+            return self.supported_mechanisms
+        else:
+            return [mech for mech in self.supported_mechanisms if mech.secure]
 
     def __str__(self):
-        return ' '.join([mech.name for mech in self.available_mechanisms()])
+        available = self.get_available_mechanisms(self.session.encrypted)
+        return ' '.join([mech.name for mech in available])
 
-    def available_mechanisms(self):
-        if self.server.encrypted:
-            return self.mechanisms
-        else:
-            return [mech for mech in self.mechanisms if mech.secure]
-
-    def attempt(self, io, reply, arg):
+    def server_attempt(self, io, arg):
         match = arg_pattern.match(arg)
         if not match:
             raise InvalidMechanismError(arg)
         mechanism_name = match.group(1).upper()
-        for mechanism in self.available_mechanisms():
+        for mechanism in self.get_available_mechanisms():
             if mechanism.name == mechanism_name:
-                return mechanism.server_attempt(io, match.group(2))
+                mech_obj = mechanism(self.verify_secret, self.get_secret)
+                return mech_obj.server_attempt(io, match.group(2))
         raise InvalidMechanismError(arg)
 
 

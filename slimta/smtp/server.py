@@ -73,7 +73,7 @@ class Server(object):
     :param handlers: Object with methods that will be called when
                      corresponding SMTP commands are received. These methods
                      can modify the |Reply| before the command response is sent.
-    :param auth: Optional |Auth| object to enable authentication.
+    :param auth_class: Optional |Auth| sub-class to enable authentication.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
@@ -86,7 +86,7 @@ class Server(object):
 
     """
 
-    def __init__(self, socket, handlers, auth=None,
+    def __init__(self, socket, handlers, auth_class=None,
                        tls=None, tls_immediately=False,
                        command_timeout=None, data_timeout=None):
         self.handlers = handlers
@@ -103,8 +103,8 @@ class Server(object):
         self.extensions.add('ENHANCEDSTATUSCODES')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
-        if auth:
-            self.extensions.add('AUTH', auth.for_server(self))
+        if auth_class:
+            self.extensions.add('AUTH', auth_class(self))
 
         self.io = IO(socket)
 
@@ -275,7 +275,7 @@ class Server(object):
 
         reply = Reply('235', '2.7.0 Authentication successful')
         try:
-            result = auth.attempt(self.io, reply, arg)
+            result = auth.server_attempt(self.io, arg)
         except ServerAuthError, e:
             reply.copy(e.reply)
             result = None

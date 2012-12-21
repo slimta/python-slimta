@@ -13,7 +13,6 @@ from slimta.policy.headers import *
 from slimta.policy.forward import Forward
 from slimta.bounce import Bounce
 from slimta.smtp.auth import Auth, CredentialsInvalidError
-from slimta.smtp.authmechanisms import Plain, Login, CramMd5
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -29,8 +28,6 @@ queue.add_prequeue_policy(AddMessageIdHeader())
 queue.add_prequeue_policy(AddReceivedHeader())
 
 class TestAuth(Auth):
-    def __init__(self):
-        super(TestAuth, self).__init__(Login)
     def verify_secret(self, cid, secret, zid=None):
         if cid == 'testuser' and secret == 'testpass':
             return 'testuser'
@@ -43,7 +40,7 @@ class TestAuth(Auth):
             raise CredentialsInvalidError()
 
 tls = {'keyfile': 'cert.pem', 'certfile': 'cert.pem'}
-edge = SmtpEdge(('127.0.0.1', 1337), queue, auth=TestAuth(), tls=tls)
+edge = SmtpEdge(('127.0.0.1', 1337), queue, auth=TestAuth, tls=tls)
 edge.start()
 queue.start()
 try:

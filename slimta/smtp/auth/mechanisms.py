@@ -19,6 +19,8 @@
 # THE SOFTWARE.
 #
 
+"""Module containing the built-in supported authentication mechanisms."""
+
 import re
 import time
 import uuid
@@ -49,8 +51,15 @@ class Mechanism(object):
 
 
 class Plain(Mechanism):
+    """``PLAIN`` authentication mechanism. This is the primary mechanism to use
+    on encrypted channels. See `RFC 4616`_ for details.
 
+    """
+
+    #: This mechanism identifies itself as ``PLAIN``.
     name = 'PLAIN'
+
+    #: This mechanism is **not** secure for use on unencrypted channels.
     secure = False
 
     pattern = re.compile(r'^([^\x00]*)\x00([^\x00]+)\x00([^\x00]*)$')
@@ -71,8 +80,15 @@ class Plain(Mechanism):
 
 
 class Login(Mechanism):
+    """``LOGIN`` authentication mechanism. Simply a back-and-forth request from
+    the client for its username and password, base64-encoded.
 
+    """
+
+    #: This mechanism identifies itself as ``LOGIN``.
     name = 'LOGIN'
+
+    #: This mechanism is **not** secure for use on unencrypted channels.
     secure = False
 
     def server_attempt(self, io, initial_response):
@@ -89,8 +105,18 @@ class Login(Mechanism):
 
 
 class CramMd5(Mechanism):
+    """``CRAM-MD5`` authentication mechanism. With this mechanism, the server
+    presents an arbitrary challenge string and the client must MD5 hash that
+    string using their password as a key. This means the password is not ever
+    communicated in a reversible form. However, it also means the server must
+    have access to un-hashed passwords, which is not always possible or desired.
 
+    """
+
+    #: This mechanism identifies itself as ``CRAM-MD5``.
     name = 'CRAM-MD5'
+
+    #: This mechanism is secure for use on unencrypted channels.
     secure = True
 
     pattern = re.compile(r'^(.*) ([^ ]+)$')
@@ -125,6 +151,9 @@ class CramMd5(Mechanism):
             raise CredentialsInvalidError()
 
         return identity
+
+
+supported = [Plain, Login, CramMd5]
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
