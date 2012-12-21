@@ -108,15 +108,18 @@ class Reply(object):
         """
         self.code, self.message = io.recv_reply()
 
-    def send(self, io):
+    def send(self, io, flush=False):
         """Sends the reply to the session.
 
         :param io: :class:`IO` object to use to send the reply.
+        :param flush: If ``True``, flush the send buffer after sending.
 
         """
         if self.newline_first:
             io.buffered_send('\r\n')
         io.send_reply(self)
+        if flush:
+            io.flush_send()
 
     def is_error(self):
         """Checks if the SMTP reply indicates an error, which will be True if
