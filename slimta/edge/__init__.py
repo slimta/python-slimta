@@ -60,8 +60,8 @@ class Edge(gevent.Greenlet):
         self.server = StreamServer(listener, self._handle, spawn=spawn)
         self.queue = queue
 
-    def _handoff(self, envelope):
-        """When :meth:`_handle()` finishes receiving a message, it should pass
+    def handoff(self, envelope):
+        """When :meth:`.handle()` finishes receiving a message, it should pass
         the new |Envelope| object to this method. If calling this method returns
         without exception, it should be deemed successful. Edge services may
         intercept raised :class:`~slimta.queue.QueueError` exceptions to return
@@ -71,7 +71,7 @@ class Edge(gevent.Greenlet):
         :raises: :class:`~slimta.queue.QueueError`
 
         """
-        self.queue.enqueue(envelope)
+        return self.queue.enqueue(envelope)
 
     def _handle(self, socket, address):
         log.accept(self.server.socket, socket, address)
@@ -83,7 +83,7 @@ class Edge(gevent.Greenlet):
 
     def handle(self, socket, address):
         """Override this function to receive messages on the socket and call
-        `self.handoff()`.
+        :meth:`.handoff()` with received |Envelope| objects.
 
         :param socket: The socket for the connected client.
         :param address: The address of the connected client.

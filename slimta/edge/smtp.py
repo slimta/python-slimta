@@ -154,10 +154,12 @@ class Handlers(object):
         self.envelope.parse(data)
 
         try:
-            self.handoff(self.envelope)
+            id = self.handoff(self.envelope)
         except QueueError:
             reply.code = '550'
-            reply.message = '5.6.0 Error Queuing Message'
+            reply.message = '5.6.0 Error queuing message'
+        else:
+            reply.message = '2.6.0 Message accepted for delivery; '+id
 
         self.envelope = None
 
@@ -205,14 +207,14 @@ class SmtpEdge(Edge):
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validators = validators
-        self.auth = auth
+        self.auth_class = auth_class
         self.tls = tls
         self.tls_immediately = tls_immediately
 
     def handle(self, socket, address):
         try:
-            handlers = Handlers(address, self.validators, self._handoff)
-            smtp_server = Server(socket, handlers, self.auth,
+            handlers = Handlers(address, self.validators, self.handoff)
+            smtp_server = Server(socket, handlers, self.auth_class,
                                  self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)

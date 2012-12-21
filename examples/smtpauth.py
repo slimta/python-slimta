@@ -40,7 +40,7 @@ class TestAuth(Auth):
             raise CredentialsInvalidError()
 
 tls = {'keyfile': 'cert.pem', 'certfile': 'cert.pem'}
-edge = SmtpEdge(('127.0.0.1', 1337), queue, auth=TestAuth, tls=tls)
+edge = SmtpEdge(('127.0.0.1', 1337), queue, auth_class=TestAuth, tls=tls)
 edge.start()
 queue.start()
 try:
