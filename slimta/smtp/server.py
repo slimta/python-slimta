@@ -83,7 +83,8 @@ class Server(object):
 
     """
 
-    def __init__(self, socket, handlers, tls=None, tls_immediately=False,
+    def __init__(self, socket, handlers, auth=None,
+                       tls=None, tls_immediately=False,
                        command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
@@ -91,12 +92,16 @@ class Server(object):
         self.have_mailfrom = None
         self.have_rcptto = None
         self.ehlo_as = None
+        self.auth_result = None
+        self.encrypted = False
 
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
+        if self.auth:
+            self.extensions.add('AUTH', auth.new_extension(self))
 
         self.io = IO(socket)
         self.tls = tls
@@ -138,6 +143,11 @@ class Server(object):
         self.have_mailfrom = None
         self.have_rcptto = None
 
+    def _encrypt_session(self):
+        self.io.encrypt_socket(self.tls)
+        self._call_custom_handler('TLSHANDSHAKE')
+        self.encrypted = True
+
     def _handle_command(self, which, arg):
         method = '_command_'+which
         if hasattr(self, method):
@@ -157,8 +167,7 @@ class Server(object):
 
         """
         if self.tls and self.tls_immediately:
-            self.io.encrypt_socket(self.tls)
-            self._call_custom_command('TLSHANDSHAKE')
+            self._encrypt_session(self.tls)
 
         command, arg = 'BANNER', None
         while True:
@@ -242,10 +251,30 @@ class Server(object):
         reply.send(self.io)
 
         if reply.code == '220':
-            self.io.encrypt_socket(tls)
-            self._call_custom_command('TLSHANDSHAKE')
+            self._encrypt_session()
             self.ehlo_as = None
             self.extensions.drop('STARTTLS')
+
+    def _command_AUTH(self, arg):
+        if 'AUTH' not in self.extensions:
+            unknown_command.send(self.io)
+            return
+        if not self.ehlo_as or self.auth_result or self.have_mailfrom:
+            bad_sequence.send(self.io)
+            return
+        auth = self.extensions.getparam('AUTH')
+
+        reply = Reply('235', '2.7.0 Authentication successful')
+        attempt = auth.new_attempt(reply, arg)
+        for challenge_str in attempt:
+            Reply('334', challenge_str).send(self.io, flush=True)
+            attempt.submit_response(self.io.recv_line())
+        result = attempt.get_result()
+
+        self._call_custom_handler('AUTH', reply, result)
+
+        if reply.code == '235':
+            self.auth_result = result
 
     def _command_MAIL(self, arg):
         match = from_pattern.match(arg)

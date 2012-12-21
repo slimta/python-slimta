@@ -27,6 +27,7 @@ __all__ = ['Plain', 'Login', 'CramMd5']
 class Plain(object):
 
     name = 'PLAIN'
+    secure = False
 
     def __init__(self, secret_func):
         self.secret_func = secret_func
@@ -38,6 +39,7 @@ class Plain(object):
 class Login(object):
 
     name = 'LOGIN'
+    secure = False
 
     def __init__(self, secret_func):
         self.secret_func = secret_func
@@ -48,7 +50,8 @@ class Login(object):
 
 class CramMd5(object):
 
-    name = 'CRAMMD5'
+    name = 'CRAM-MD5'
+    secure = True
 
     def __init__(self, secret_func, hostname=None):
         self.secret_func = secret_func
