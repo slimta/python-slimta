@@ -84,7 +84,7 @@ class Extensions(object):
         :param param: Optional parameter string associated with the extension.
 
         """
-        self.extensions[ext.upper()] = str(param) if param else None
+        self.extensions[ext.upper()] = param
 
     def drop(self, ext):
         """Drops the given extension, if it exists.
@@ -116,7 +116,11 @@ class Extensions(object):
             else:
                 ext_match = parse_pattern.match(match.group(1))
                 if ext_match:
-                    self.add(ext_match.group(1), ext_match.group(2))
+                    arg = ext_match.group(2)
+                    if arg:
+                        self.add(ext_match.group(1), ext_match.group(2))
+                    else:
+                        self.add(ext_match.group(1))
         return header or string
 
     def build_string(self, header):
@@ -131,7 +135,7 @@ class Extensions(object):
         lines = [header]
         for k, v in self.extensions.iteritems():
             if v:
-                lines.append(' '.join((k, v)))
+                lines.append(' '.join((k, str(v))))
             else:
                 lines.append(k)
         return '\r\n'.join(lines)

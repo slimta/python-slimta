@@ -43,7 +43,6 @@ class IO(object):
 
     def __init__(self, socket):
         self.socket = socket
-        self.peer = socket.getpeername()
 
         self.send_buffer = cStringIO.StringIO()
         self.recv_buffer = ''
