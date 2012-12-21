@@ -187,7 +187,8 @@ class SmtpEdge(Edge):
                   |Edge|.
     :param pool: Optional greenlet pool, as described in |Edge|.
     :param validators: Object with ``handle_xxxx()`` methods as described.
-    :param auth: Optional |Auth| object to enable server authentication.
+    :param auth_class: Optional |Auth| sub-class to enable server
+                       authentication.
     :param command_timeout: Seconds before the connection times out waiting
                             for a command.
     :param data_timeout: Seconds before the connection times out while
@@ -196,9 +197,10 @@ class SmtpEdge(Edge):
 
     """
 
-    def __init__(self, listener, queue, pool=None, validators=None, auth=None,
-                                 tls=None, tls_immediately=False,
-                                 command_timeout=None, data_timeout=None):
+    def __init__(self, listener, queue, pool=None,
+                       validators=None, auth_class=None,
+                       tls=None, tls_immediately=False,
+                       command_timeout=None, data_timeout=None):
         super(SmtpEdge, self).__init__(listener, queue, pool)
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
