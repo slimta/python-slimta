@@ -19,7 +19,12 @@
 # THE SOFTWARE.
 #
 
-"""Module containing the built-in supported authentication mechanisms."""
+"""Module containing the built-in supported authentication mechanisms.
+
+.. _RFC 4616: http://tools.ietf.org/html/rfc4616
+.. _RFC 2195: http://tools.ietf.org/html/rfc2195
+
+"""
 
 import re
 import time
@@ -52,7 +57,9 @@ class Mechanism(object):
 
 class Plain(Mechanism):
     """``PLAIN`` authentication mechanism. This is the primary mechanism to use
-    on encrypted channels. See `RFC 4616`_ for details.
+    on encrypted channels.
+    
+    See `RFC 4616`_ for details.
 
     """
 
@@ -110,6 +117,8 @@ class CramMd5(Mechanism):
     string using their password as a key. This means the password is not ever
     communicated in a reversible form. However, it also means the server must
     have access to un-hashed passwords, which is not always possible or desired.
+
+    See `RFC 2195`_ for details.
 
     """
 

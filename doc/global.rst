@@ -10,4 +10,5 @@
 .. |Queue| replace:: :class:`~slimta.queue.Queue`
 .. |QueueStorage| replace:: :class:`~slimta.queue.QueueStorage`
 .. |Relay| replace:: :class:`~slimta.relay.Relay`
+.. |Auth| replace:: :class:`~slimta.smtp.auth.Auth`
 
