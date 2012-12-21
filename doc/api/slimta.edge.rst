@@ -5,9 +5,7 @@ slimta.edge
 ===========
 
 .. automodule:: slimta.edge
-
-.. autoclass:: slimta.edge.Edge
-   :members: _handle, _handoff
+   :members:
 
 -------------------
 
