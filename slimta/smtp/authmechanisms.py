@@ -19,46 +19,112 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
+import uuid
+import hmac
+import hashlib
+import base64
+
 from gevent.socket import getfqdn
+
+from slimta.smtp.reply import Reply
+from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError
 
 __all__ = ['Plain', 'Login', 'CramMd5']
 
 
-class Plain(object):
+class Mechanism(object):
+
+    def __init__(self, verify_secret, get_secret):
+        self.verify_secret = verify_secret
+        self.get_secret = get_secret
+
+    def _send_challenge_get_response(self, io, challenge_str):
+        Reply('334', challenge_str).send(io, flush=True)
+        return io.recv_line()
+
+    def server_attempt(self, io, initial_response):
+        raise NotImplemented()
+
+
+class Plain(Mechanism):
 
     name = 'PLAIN'
     secure = False
 
-    def __init__(self, secret_func):
-        self.secret_func = secret_func
+    pattern = re.compile(r'^([^\x00]*)\x00([^\x00]+)\x00([^\x00]*)$')
 
-    def challenge(data, last_response, final_reply):
-        pass
+    def server_attempt(self, io, initial_response):
+        if not initial_response:
+            initial_response = self._send_challenge_get_response(io, '')
+
+        decoded = base64.b64decode(initial_response)
+        match = self.pattern.match(decoded)
+        if not match:
+            msg = 'Invalid PLAIN authentication string'
+            reply = Reply('501', '5.5.2 '+msg)
+            raise ServerAuthError(msg, reply)
+        zid, cid, secret = match.groups()
+
+        return self.verify_secret(cid, secret, zid)
 
 
-class Login(object):
+class Login(Mechanism):
 
     name = 'LOGIN'
     secure = False
 
-    def __init__(self, secret_func):
-        self.secret_func = secret_func
+    def server_attempt(self, io, initial_response):
+        if not initial_response:
+            # base64.b64encode('Username:')
+            ret = self._send_challenge_get_response(io, 'VXNlcm5hbWU6')
+            username = base64.b64decode(ret)
+        else:
+            username = base64.b64decode(initial_response)
+        # base64.b64encode('Password:')
+        ret = self._send_challenge_get_response(io, 'UGFzc3dvcmQ6')
+        password = base64.b64decode(ret)
+        return self.verify_secret(username, password)
 
-    def challenge(data, last_response, final_reply):
-        pass
 
-
-class CramMd5(object):
+class CramMd5(Mechanism):
 
     name = 'CRAM-MD5'
     secure = True
 
-    def __init__(self, secret_func, hostname=None):
-        self.secret_func = secret_func
+    pattern = re.compile(r'^(.*) ([^ ]+)$')
+
+    def __init__(self, verify_secret, get_secret, hostname=None):
+        super(CramMd5, self).__init__(verify_secret, get_secret)
         self.hostname = hostname or getfqdn()
 
-    def challenge(data, last_response, final_reply):
-        pass
+    def _build_initial_challenge(self):
+        uid = uuid.uuid4().hex
+        timestamp = time.time()
+        return '<{0}.{1:.0f}@{2}>'.format(uid, timestamp, self.hostname)
+
+    def server_attempt(self, io, initial_response):
+        challenge = self._build_initial_challenge()
+        encoded_challenge = base64.b64encode(challenge)
+        response = self._send_challenge_get_response(io, encoded_challenge)
+
+        decoded = base64.b64decode(response)
+        match = self.pattern.match(decoded)
+        if not match:
+            msg = 'Invalid CRAM-MD5 response'
+            reply = Reply('501', '5.5.2 '+msg)
+            raise ServerAuthError(msg, reply)
+        username, digest = match.groups()
+        print username, digest
+        secret, identity = self.get_secret(username)
+
+        expected = hmac.new(secret, challenge, hashlib.md5).hexdigest()
+        print expected
+        if expected != digest:
+            raise CredentialsInvalidError()
+
+        return identity
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

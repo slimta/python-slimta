@@ -26,15 +26,17 @@ certain situations (typically when a client sends various commands).
 """
 
 import re
+
 from gevent.ssl import SSLSocket
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from gevent.timeout import Timeout as TimeoutHappened
 
-from slimta.smtp import SMTPError, ConnectionLost
+from slimta.smtp import SmtpError, ConnectionLost
 from slimta.smtp.datareader import DataReader
 from slimta.smtp.io import IO
 from slimta.smtp.extensions import Extensions
+from slimta.smtp.auth import ServerAuthError
 from slimta.smtp.reply import *
 
 __all__ = ['Server']
@@ -71,6 +73,7 @@ class Server(object):
     :param handlers: Object with methods that will be called when
                      corresponding SMTP commands are received. These methods
                      can modify the |Reply| before the command response is sent.
+    :param auth: Optional |Auth| object to enable authentication.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
@@ -100,11 +103,17 @@ class Server(object):
         self.extensions.add('ENHANCEDSTATUSCODES')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
-        if self.auth:
-            self.extensions.add('AUTH', auth.new_extension(self))
+        if auth:
+            self.extensions.add('AUTH', auth.for_server(self))
 
         self.io = IO(socket)
-        self.tls = tls
+
+        if tls:
+            self.tls = tls.copy()
+            self.tls.setdefault('server_side', True)
+        else:
+            self.tls = None
+        self.tls_immediately = tls_immediately
 
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
@@ -128,7 +137,7 @@ class Server(object):
             data = reader.recv()
         except ConnectionLost:
             raise
-        except SMTPError, e:
+        except SmtpError, e:
             data = None
             err = e
         finally:
@@ -248,7 +257,7 @@ class Server(object):
         reply = Reply('220', '2.7.0 Go ahead')
         self._call_custom_handler('STARTTLS', reply, self.extensions)
 
-        reply.send(self.io)
+        reply.send(self.io, flush=True)
 
         if reply.code == '220':
             self._encrypt_session()
@@ -265,11 +274,12 @@ class Server(object):
         auth = self.extensions.getparam('AUTH')
 
         reply = Reply('235', '2.7.0 Authentication successful')
-        attempt = auth.new_attempt(reply, arg)
-        for challenge_str in attempt:
-            Reply('334', challenge_str).send(self.io, flush=True)
-            attempt.submit_response(self.io.recv_line())
-        result = attempt.get_result()
+        try:
+            result = auth.attempt(self.io, reply, arg)
+        except ServerAuthError, e:
+            reply.copy(e.reply)
+            result = None
+        reply.send(self.io)
 
         self._call_custom_handler('AUTH', reply, result)
 

@@ -54,7 +54,7 @@ class Handlers(object):
 
         self.envelope = None
         self.ehlo_as = None
-        self.authed = None
+        self.auth_result = None
 
     def _call_validator(self, command, *args):
         method = 'handle_'+command
@@ -83,7 +83,7 @@ class Handlers(object):
         try:
             answers = resolver.query(ptraddr, 'PTR')
         except resolver.NXDOMAIN:
-            pass
+            answers = []
         try:
             self.reverse_address = str(answers[0])
         except IndexError:
@@ -109,21 +109,15 @@ class Handlers(object):
             self.ehlo_as = ehlo_as
             self.envelope = None
 
-    def TLSHANDSHAKE(self, reply, extensions):
-        self._call_validator('tls', reply)
+    def TLSHANDSHAKE(self):
+        self._call_validator('tls')
         self._modify_protocol_string('STARTTLS')
         self.security = 'TLS'
 
-    def AUTH(self, reply, server):
-        if 'AUTH' not in server.extensions:
-            reply.copy(unknown_command)
-            return
-        if not self.ehlo_as or self.authed or server.have_mailfrom:
-            reply.copy(bad_sequence)
-            return
-
-        reply.code = '235'
-        reply.message = '2.7.0 Authentication successful'
+    def AUTH(self, reply, result):
+        if result:
+            self._modify_protocol_string('AUTH')
+        self.auth_result = result
 
     def RSET(self, reply):
         self.envelope = None
@@ -191,9 +185,9 @@ class SmtpEdge(Edge):
     :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
     :param queue: |Queue| object for handing off messages, as described in
                   |Edge|.
-    :param handoff: Called with new messages, as described in |Edge|.
     :param pool: Optional greenlet pool, as described in |Edge|.
     :param validators: Object with ``handle_xxxx()`` methods as described.
+    :param auth: Optional |Auth| object to enable server authentication.
     :param command_timeout: Seconds before the connection times out waiting
                             for a command.
     :param data_timeout: Seconds before the connection times out while
@@ -202,17 +196,22 @@ class SmtpEdge(Edge):
 
     """
 
-    def __init__(self, listener, queue, pool=None, validators=None,
+    def __init__(self, listener, queue, pool=None, validators=None, auth=None,
+                                 tls=None, tls_immediately=False,
                                  command_timeout=None, data_timeout=None):
         super(SmtpEdge, self).__init__(listener, queue, pool)
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validators = validators
+        self.auth = auth
+        self.tls = tls
+        self.tls_immediately = tls_immediately
 
     def handle(self, socket, address):
         try:
             handlers = Handlers(address, self.validators, self._handoff)
-            smtp_server = Server(socket, handlers,
+            smtp_server = Server(socket, handlers, self.auth,
+                                 self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)
             smtp_server.handle()

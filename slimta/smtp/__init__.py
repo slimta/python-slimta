@@ -23,23 +23,23 @@
 
 from slimta import SlimtaError
 
-__all__ = ['SMTPError',
+__all__ = ['SmtpError',
            'ConnectionLost',
            'MessageTooBig',
            'BadReply']
 
 
-class SMTPError(SlimtaError):
+class SmtpError(SlimtaError):
     """Base exception for all custom SMTP exceptions."""
     pass
 
 
-class ConnectionLost(SMTPError):
+class ConnectionLost(SmtpError):
     """Thrown when the socket is closed prematurely."""
     pass
 
 
-class MessageTooBig(SMTPError):
+class MessageTooBig(SmtpError):
     """Thrown when a message exceeds the maximum size given by the SMTP ``SIZE``
     extension, if supported.
 
@@ -47,7 +47,7 @@ class MessageTooBig(SMTPError):
     pass
 
 
-class BadReply(SMTPError):
+class BadReply(SmtpError):
     """Thrown when an SMTP server replies with a syntax-invalid code.
 
     :param data: The data that was expected to start with an SMTP code, made
