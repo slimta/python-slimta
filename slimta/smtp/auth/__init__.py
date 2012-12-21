@@ -141,7 +141,7 @@ class Auth(object):
         auth mechanisms.
 
         :param secure: Whether or not the session is encrypted.
-        :type secure: ``True`` or ``False``.
+        :type secure: ``True`` or ``False``
         :returns: List of available mechanism classes.
 
         """
