@@ -82,6 +82,9 @@ class MockSocket(object):
         self.script = script
         self.i = 0
 
+    def fileno(self):
+        return -1
+
     def send(self, data):
         expected_command, expected_data = self.script[self.i]
         if expected_command != 'send':
