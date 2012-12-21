@@ -45,10 +45,6 @@ class Edge(gevent.Greenlet):
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge
                   service.
-    :param handoff: Should be called by :meth:`.handle()` when a new message
-                    is received, passed in an :class:`Envelope` containing
-                    the message and a :class:`Reply` for changing the reply
-                    to the message.
     :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                  use for new greenlets.
 
