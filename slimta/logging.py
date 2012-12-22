@@ -26,6 +26,8 @@ from __future__ import absolute_import
 import logging
 from pprint import pformat
 
+from gevent.socket import SHUT_WR, SHUT_RD
+
 __all__ = ['getSocketLogger']
 
 
@@ -109,6 +111,24 @@ class SocketLogger(object):
         fd = socket.fileno()
         peer = self._stringify_address(address or socket.getpeername())
         msg = 'fd:{0}:connect {1}'.format(fd, peer)
+        self.log.debug(msg)
+
+    def shutdown(self, socket, how):
+        """Logs a socket :meth:`~socket.socket.shutdown()` operation along
+        with which part of the socket was shut down. Logged at the
+        ``DEBUG`` level.
+
+        :param socket: The socket that was shutdown.
+        :param how: The ``how`` parameter, as passed to ``shutdown()``.
+
+        """
+        fd = socket.fileno()
+        how_str = 'both'
+        if how == SHUT_WR:
+            how_str = 'write'
+        elif how == SHUT_RD:
+            how_str = 'read'
+        msg = 'fd:{0}:shutdown {1}'.format(fd, how_str)
         self.log.debug(msg)
 
     def close(self, socket):

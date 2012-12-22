@@ -15,4 +15,5 @@ slimta.policy
 
    slimta.policy.headers
    slimta.policy.forward
+   slimta.policy.spamassassin
 
