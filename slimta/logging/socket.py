@@ -19,29 +19,13 @@
 # THE SOFTWARE.
 #
 
-"""Utilities to make logging consistent and easy in :mod:`slimta` packages."""
+"""Utilities to make logging consistent and easy for any socket interaction."""
 
-from __future__ import absolute_import
-
-import logging
 from pprint import pformat
 
 from gevent.socket import SHUT_WR, SHUT_RD
 
-__all__ = ['getSocketLogger']
-
-
-def getSocketLogger(name):
-    """Wraps the result of :func:python:`logging.getLogger()` in a
-    :class:`SocketLogger` object to provide limited and consistent logging
-    output for socket operations.
-
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
-    :rtype: :class:`SocketLogger`
-
-    """
-    logger = logging.getLogger(name)
-    return SocketLogger(logger)
+__all__ = ['SocketLogger']
 
 
 class SocketLogger(object):

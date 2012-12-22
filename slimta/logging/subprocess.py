@@ -1,0 +1,70 @@
+# Copyright (c) 2012 Ian C. Good
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+"""Utilities to make logging consistent and easy for any any subprocess
+operations.
+
+"""
+
+from pprint import pformat
+
+__all__ = ['SubprocessLogger']
+
+
+class SubprocessLogger(object):
+    """Provides a limited set of log methods that :mod:`slimta` packages may
+    use. This prevents free-form logs from mixing in with standard, machine-
+    parseable logs.
+
+    :param log: :class:python:`logging.Logger` object to log through.
+
+    """
+
+    def __init__(self, log):
+        self.log = log
+
+    def popen(self, process, args):
+        pid = process.pid
+        msg = 'pid:{0}:popen {1}'.format(pid, pformat(args))
+        self.log.debug(msg)
+
+    def stdin(self, process, data):
+        pid = process.pid
+        msg = 'pid:{0}:stdin {1}'.format(pid, pformat(data))
+        self.log.debug(msg)
+
+    def stdout(self, process, data):
+        pid = process.pid
+        msg = 'pid:{0}:stdout {1}'.format(pid, pformat(data))
+        self.log.debug(msg)
+
+    def stderr(self, process, data):
+        pid = process.pid
+        msg = 'pid:{0}:stderr {1}'.format(pid, pformat(data))
+        self.log.debug(msg)
+
+    def exit(self, process):
+        pid = process.pid
+        msg = 'pid:{0}:exit {1!s}'.format(pid, process.returncode)
+        self.log.debug(msg)
+
+
+# vim:et:fdm=marker:sts=4:sw=4:ts=4
