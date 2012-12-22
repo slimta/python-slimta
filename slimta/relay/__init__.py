@@ -26,11 +26,10 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 
 from slimta import SlimtaError
 
-__all__ = ['RelayError', 'PermanentRelayError', 'TransientRelayError', 'Relay']
+__all__ = ['PermanentRelayError', 'TransientRelayError', 'Relay']
 
 
 class RelayError(SlimtaError):
-    """Base exception for all custom relay exceptions."""
     def __init__(self, msg, reply):
         super(RelayError, self).__init__(msg)
         self.reply = reply
@@ -65,6 +64,7 @@ class Relay(object):
 
         :param envelope: |Envelope| to attempt delivery for.
         :param attempts: Number of times the envelope has attempted delivery.
+        :raises: :class:`PermanentRelayError`, :class:`TransientRelayError`
 
         """
         raise NotImplemented()
