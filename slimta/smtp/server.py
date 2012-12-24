@@ -78,6 +78,10 @@ class Server(object):
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
                             immediately.
+    :param tls_wrapper: Optional function that takes a socket and the ``tls``
+                        dictionary, creates a new encrypted socket, performs
+                        the TLS handshake, and returns it. The default uses
+                        :class:`~gevent.ssl.SSLSocket`.
     :type tls_immediately: True or False
     :param command_timeout: Optional timeout waiting for a command to be
                             sent from the client.
@@ -87,7 +91,7 @@ class Server(object):
     """
 
     def __init__(self, socket, handlers, auth_class=None,
-                       tls=None, tls_immediately=False,
+                       tls=None, tls_immediately=False, tls_wrapper=None,
                        command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
@@ -106,7 +110,7 @@ class Server(object):
         if auth_class:
             self.extensions.add('AUTH', auth_class(self))
 
-        self.io = IO(socket)
+        self.io = IO(socket, tls_wrapper)
 
         if tls:
             self.tls = tls.copy()
@@ -176,7 +180,7 @@ class Server(object):
 
         """
         if self.tls and self.tls_immediately:
-            self._encrypt_session(self.tls)
+            self._encrypt_session()
 
         command, arg = 'BANNER', None
         while True:
@@ -193,7 +197,8 @@ class Server(object):
                 timed_out.send(self.io)
                 self.io.flush_send()
                 break
-            except Exception:
+            except Exception, e:
+                print str(e)
                 unhandled_error.send(self.io)
                 raise
             finally:

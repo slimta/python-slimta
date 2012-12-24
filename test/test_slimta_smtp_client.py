@@ -8,6 +8,9 @@ from mock.socket import MockSocket
 
 class TestSmtpClient(unittest.TestCase):
 
+    def setUp(self):
+        self.tls_args = {'test': 'test'}
+
     def test_get_reply(self):
         sock = MockSocket([('recv', '421 Test\r\n')])
         client = Client(sock)
@@ -58,6 +61,17 @@ class TestSmtpClient(unittest.TestCase):
         self.assertEqual('250', reply.code)
         self.assertEqual('Hello', reply.message)
         self.assertEqual('HELO', reply.command)
+        sock.assert_done(self)
+
+    def test_starttls(self):
+        sock = MockSocket([('send', 'STARTTLS\r\n'),
+                           ('recv', '220 Go ahead\r\n'),
+                           ('encrypt', self.tls_args)])
+        client = Client(sock, tls_wrapper=sock.tls_wrapper)
+        reply = client.starttls(self.tls_args)
+        self.assertEqual('220', reply.code)
+        self.assertEqual('2.0.0 Go ahead', reply.message)
+        self.assertEqual('STARTTLS', reply.command)
         sock.assert_done(self)
 
     def test_starttls_noencrypt(self):

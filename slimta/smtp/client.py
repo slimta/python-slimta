@@ -43,11 +43,15 @@ class Client(object):
     available by the server.
 
     :param socket: Connected socket to use for the client.
+    :param tls_wrapper: Optional function that takes a socket and the ``tls``
+                        dictionary, creates a new encrypted socket, performs
+                        the TLS handshake, and returns it. The default uses
+                        :class:`~gevent.ssl.SSLSocket`.
 
     """
 
-    def __init__(self, socket):
-        self.io = IO(socket)
+    def __init__(self, socket, tls_wrapper=None):
+        self.io = IO(socket, tls_wrapper)
         self.reply_queue = []
 
         #: :class:`Extensions` object of the client, populated once the EHLO

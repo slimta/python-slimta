@@ -41,8 +41,10 @@ log = logging.getSocketLogger(__name__)
 
 class IO(object):
 
-    def __init__(self, socket):
+    def __init__(self, socket, tls_wrapper=None):
         self.socket = socket
+        if tls_wrapper:
+            self._tls_wrapper = tls_wrapper
 
         self.send_buffer = cStringIO.StringIO()
         self.recv_buffer = ''
@@ -56,9 +58,13 @@ class IO(object):
         log.recv(self.socket, data)
         return data
 
+    def _tls_wrapper(self, socket, tls):
+        sslsock = SSLSocket(socket, **tls)
+        sslsock.do_handshake()
+        return sslsock
+
     def encrypt_socket(self, tls):
-        self.socket = SSLSocket(self.socket, **tls)
-        return self.socket.do_handshake()
+        self.socket = self._tls_wrapper(self.socket, tls)
 
     def buffered_recv(self):
         received = self.raw_recv()

@@ -9,12 +9,15 @@ from mock.socket import MockSocket
 
 class TestSmtpServer(unittest.TestCase):
 
+    def setUp(self):
+        self.tls_args = {'server_side': True}
+
     def test_starttls_extension(self):
         s = Server(None, None)
         self.assertFalse('STARTTLS' in s.extensions)
-        s = Server(None, None, tls=True, tls_immediately=False)
+        s = Server(None, None, tls=self.tls_args, tls_immediately=False)
         self.assertTrue('STARTTLS' in s.extensions)
-        s = Server(None, None, tls=True, tls_immediately=True)
+        s = Server(None, None, tls=self.tls_args, tls_immediately=True)
         self.assertFalse('STARTTLS' in s.extensions)
 
     def test_recv_command(self):
@@ -60,6 +63,16 @@ class TestSmtpServer(unittest.TestCase):
         self.assertEqual(('test', ), cm.exception.args)
         sock.assert_done(self)
 
+    def test_tls_immediately(self):
+        sock = MockSocket([('encrypt', self.tls_args),
+                           ('send', '220 ESMTP server\r\n'),
+                           ('recv', 'QUIT\r\n'),
+                           ('send', '221 2.0.0 Bye\r\n')])
+        s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
+                               tls_wrapper=sock.tls_wrapper)
+        s.handle()
+        sock.assert_done(self)
+
     def test_ehlo(self):
         sock = MockSocket([('send', '220 ESMTP server\r\n'),
                            ('recv', 'EHLO there\r\n'),
@@ -82,6 +95,37 @@ class TestSmtpServer(unittest.TestCase):
         s = Server(sock, None)
         s.handle()
         self.assertEqual('there', s.ehlo_as)
+        sock.assert_done(self)
+
+    def test_starttls(self):
+        sock = MockSocket([('send', '220 ESMTP server\r\n'),
+                           ('recv', 'EHLO there\r\n'),
+                           ('send', '250-Hello there\r\n250 STARTTLS\r\n'),
+                           ('recv', 'STARTTLS\r\n'),
+                           ('send', '220 2.7.0 Go ahead\r\n'),
+                           ('encrypt', self.tls_args),
+                           ('recv', 'QUIT\r\n'),
+                           ('send', '221 2.0.0 Bye\r\n')])
+        s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
+        s.extensions.reset()
+        s.extensions.add('STARTTLS')
+        s.handle()
+        self.assertEqual(None, s.ehlo_as)
+        sock.assert_done(self)
+
+    def test_starttls_bad(self):
+        sock = MockSocket([('send', '220 ESMTP server\r\n'),
+                           ('recv', 'STARTTLS\r\n'),
+                           ('send', '503 5.5.1 Bad sequence of commands\r\n'),
+                           ('recv', 'STARTTLS badarg\r\n'),
+                           ('send', '501 5.5.4 Syntax error in parameters or arguments\r\n'),
+                           ('recv', 'QUIT\r\n'),
+                           ('send', '221 2.0.0 Bye\r\n')])
+        s = Server(sock, None, tls=self.tls_args)
+        s.extensions.reset()
+        s.extensions.add('STARTTLS')
+        s.handle()
+        self.assertEqual(None, s.ehlo_as)
         sock.assert_done(self)
 
     def test_mailfrom(self):
@@ -274,6 +318,23 @@ class TestSmtpServer(unittest.TestCase):
         s.have_mailfrom = True
         s.handle()
         sock.assert_done(self)
+
+    def test_bad_commands(self):
+        sock = MockSocket([('send', '220 ESMTP server\r\n'),
+                           ('recv', '\r\n'),
+                           ('send', '500 5.5.2 Syntax error, command unrecognized\r\n'),
+                           ('recv', 'BADCMD\r\n'),
+                           ('send', '500 5.5.2 Syntax error, command unrecognized\r\n'),
+                           ('recv', 'STARTTLS\r\n'),
+                           ('send', '500 5.5.2 Syntax error, command unrecognized\r\n'),
+                           ('recv', 'AUTH\r\n'),
+                           ('send', '500 5.5.2 Syntax error, command unrecognized\r\n'),
+                           ('recv', 'QUIT\r\n'),
+                           ('send', '221 2.0.0 Bye\r\n')])
+        s = Server(sock, None)
+        s.handle()
+        sock.assert_done(self)
+
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

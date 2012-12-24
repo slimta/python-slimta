@@ -85,6 +85,15 @@ class MockSocket(object):
     def fileno(self):
         return -1
 
+    def tls_wrapper(self, socket, tls):
+        expected_command, expected_data = self.script[self.i]
+        if expected_command != 'encrypt':
+            raise SequenceError(expected_command, 'encrypt', tls)
+        if tls != expected_data:
+            raise ExpectationError(expected_data, tls)
+        self.i += 1
+        return socket
+
     def send(self, data):
         expected_command, expected_data = self.script[self.i]
         if expected_command != 'send':
