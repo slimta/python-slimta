@@ -24,6 +24,7 @@ operations.
 
 """
 
+from functools import partial
 from pprint import pformat
 
 __all__ = ['SubprocessLogger']
@@ -39,32 +40,18 @@ class SubprocessLogger(object):
     """
 
     def __init__(self, log):
-        self.log = log
+        from slimta.logging import logline
+        self.log = partial(logline, log.debug, 'pid')
 
     def popen(self, process, args):
-        pid = process.pid
-        msg = 'pid:{0}:popen {1}'.format(pid, pformat(args))
-        self.log.debug(msg)
+        self.log(process.pid, 'popen', args=args)
 
-    def stdin(self, process, data):
-        pid = process.pid
-        msg = 'pid:{0}:stdin {1}'.format(pid, pformat(data))
-        self.log.debug(msg)
-
-    def stdout(self, process, data):
-        pid = process.pid
-        msg = 'pid:{0}:stdout {1}'.format(pid, pformat(data))
-        self.log.debug(msg)
-
-    def stderr(self, process, data):
-        pid = process.pid
-        msg = 'pid:{0}:stderr {1}'.format(pid, pformat(data))
-        self.log.debug(msg)
+    def stdio(self, process, stdin, stdout, stderr):
+        self.log(process.pid, 'stdio', stdin=stdin, stdout=stdout,
+                                       stderr=stderr)
 
     def exit(self, process):
-        pid = process.pid
-        msg = 'pid:{0}:exit {1!s}'.format(pid, process.returncode)
-        self.log.debug(msg)
+        self.log(process.pid, 'exit', returncode=process.returncode)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

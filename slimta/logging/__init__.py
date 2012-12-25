@@ -24,7 +24,9 @@
 import threading
 threading._DummyThread._Thread__stop = lambda x: 42
 
+import re
 import logging
+from ast import literal_eval
 
 from slimta.logging.socket import SocketLogger
 from slimta.logging.subprocess import SubprocessLogger
@@ -56,6 +58,48 @@ def getSubprocessLogger(name):
     """
     logger = logging.getLogger(name)
     return SubprocessLogger(logger)
+
+
+def logline(log, type, typeid, operation, **data):
+    if not data:
+        log('{0}:{1}:{2}'.format(type, typeid, operation))
+    else:
+        data_str = ' '.join(['='.join((key, repr(val)))
+                             for key, val in data.iteritems()])
+        log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
+
+
+parseline_pattern = re.compile(r'^([^:]+):([^:]+):(\S+) ?(.*)$')
+data_item_pattern = re.compile('^([^=]+)=')
+
+def _parseline_data(remaining, data):
+    match = data_item_pattern.match(remaining)
+    if not match:
+        return data
+    key = match.group(1)
+    end_i = space_i = match.end(0)
+    while True:
+        space_i = remaining.find(' ', space_i+1)
+        if space_i == -1:
+            try:
+                data[key] = literal_eval(remaining[end_i:])
+            except Exception:
+                pass
+            return data
+        else:
+            try:
+                data[key] = literal_eval(remaining[end_i:space_i])
+            except Exception:
+                pass
+            else:
+                return _parseline_data(remaining[space_i+1:], data)
+
+def parseline(line):
+    match = parseline_pattern.match(line)
+    if not match:
+        raise ValueError(line)
+    type, id, op, data_str = match.groups()
+    return type, id, op, _parseline_data(data_str, {})
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

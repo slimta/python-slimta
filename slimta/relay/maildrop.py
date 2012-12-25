@@ -59,9 +59,7 @@ class MaildropRelay(Relay):
             p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             log.popen(p, args)
             stdout, stderr = p.communicate(stdin)
-        log.stdin(p, stdin)
-        log.stdout(p, stdout)
-        log.stderr(p, stderr)
+        log.stdio(p, stdin, stdout, stderr)
         log.exit(p)
         if p.returncode == 0:
             return 0, None

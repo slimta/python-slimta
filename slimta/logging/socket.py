@@ -21,6 +21,7 @@
 
 """Utilities to make logging consistent and easy for any socket interaction."""
 
+from functools import partial
 from pprint import pformat
 
 from gevent.socket import SHUT_WR, SHUT_RD
@@ -38,12 +39,8 @@ class SocketLogger(object):
     """
 
     def __init__(self, log):
-        self.log = log
-
-    def _stringify_address(self, address):
-        if isinstance(address, tuple):
-            return '{0}:{1!s}'.format(*address)
-        return address
+        from slimta.logging import logline
+        self.log = partial(logline, log.debug, 'fd')
 
     def send(self, socket, data):
         """Logs a socket :meth:`~socket.socket.send()` operation along with the
@@ -53,9 +50,7 @@ class SocketLogger(object):
         :param data: The data that was sent.
 
         """
-        fd = socket.fileno()
-        msg = 'fd:{0}:send {1}'.format(fd, pformat(data))
-        self.log.debug(msg)
+        self.log(socket.fileno(), 'send', data=data)
 
     def recv(self, socket, data):
         """Logs a socket :meth:`~socket.socket.recv()` operation along with the
@@ -65,9 +60,7 @@ class SocketLogger(object):
         :param data: The data that was received.
 
         """
-        fd = socket.fileno()
-        msg = 'fd:{0}:recv {1}'.format(fd, pformat(data))
-        self.log.debug(msg)
+        self.log(socket.fileno(), 'recv', data=data)
 
     def accept(self, server, client, address=None):
         """Logs a socket :meth:`~socket.socket.accept()` operation along with
@@ -78,11 +71,9 @@ class SocketLogger(object):
         :param address: If known, the peer address of the client socket.
 
         """
-        server_fd = server.fileno()
-        client_fd = client.fileno()
-        client_peer = self._stringify_address(address or client.getpeername())
-        msg = 'fd:{0}:accept {1} {2}'.format(server_fd, client_fd, client_peer)
-        self.log.debug(msg)
+        client_peer = address or client.getpeername()
+        self.log(server.fileno(), 'accept', clientfd=client.fileno(),
+                                            peer=client_peer)
 
     def connect(self, socket, address=None):
         """Logs a socket :meth:`~socket.socket.connect()` operation along with
@@ -92,10 +83,8 @@ class SocketLogger(object):
         :param address: If known, the peer address the socket connected to.
 
         """
-        fd = socket.fileno()
-        peer = self._stringify_address(address or socket.getpeername())
-        msg = 'fd:{0}:connect {1}'.format(fd, peer)
-        self.log.debug(msg)
+        peer = address or socket.getpeername()
+        self.log(socket.fileno(), 'connect', peer=peer)
 
     def shutdown(self, socket, how):
         """Logs a socket :meth:`~socket.socket.shutdown()` operation along
@@ -106,14 +95,12 @@ class SocketLogger(object):
         :param how: The ``how`` parameter, as passed to ``shutdown()``.
 
         """
-        fd = socket.fileno()
         how_str = 'both'
         if how == SHUT_WR:
             how_str = 'write'
         elif how == SHUT_RD:
             how_str = 'read'
-        msg = 'fd:{0}:shutdown {1}'.format(fd, how_str)
-        self.log.debug(msg)
+        self.log(socket.fileno(), 'shutdown', how=how_str)
 
     def close(self, socket):
         """Logs a socket :meth:`~socket.socket.close()` operation along with
@@ -122,9 +109,7 @@ class SocketLogger(object):
         :param socket: The socket that was closed.
 
         """
-        fd = socket.fileno()
-        msg = 'fd:{0}:close'.format(fd)
-        self.log.debug(msg)
+        self.log(socket.fileno(), 'close')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
