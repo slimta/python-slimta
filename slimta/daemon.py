@@ -99,18 +99,18 @@ def drop_privileges(user=None, group=None):
     :param group: group name (from /etc/group) or GID.
 
     """
-    if user:
-        try:
-            uid = int(user)
-        except ValueError:
-            uid = getpwnam(user).pw_uid
-        os.setuid(uid)
     if group:
         try:
             gid = int(group)
         except ValueError:
             gid = getgrnam(group).gr_gid
         os.setgid(gid)
+    if user:
+        try:
+            uid = int(user)
+        except ValueError:
+            uid = getpwnam(user).pw_uid
+        os.setuid(uid)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
