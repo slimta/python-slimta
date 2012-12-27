@@ -191,6 +191,10 @@ class SmtpEdge(Edge):
     :param validators: Object with ``handle_xxxx()`` methods as described.
     :param auth_class: Optional |Auth| sub-class to enable server
                        authentication.
+    :param tls: Optional dictionary of TLS settings passed directly as
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param tls_immediately: If True, connections will be encrypted
+                            immediately before the SMTP banner.
     :param command_timeout: Seconds before the connection times out waiting
                             for a command.
     :param data_timeout: Seconds before the connection times out while
