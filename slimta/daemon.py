@@ -103,13 +103,13 @@ def drop_privileges(user=None, group=None):
         try:
             uid = int(user)
         except ValueError:
-            uid = pwd.getpwnam(user).pw_uid
+            uid = getpwnam(user).pw_uid
         os.setuid(uid)
     if group:
         try:
             gid = int(group)
         except ValueError:
-            gid = grp.getgrnam(group).gr_gid
+            gid = getgrnam(group).gr_gid
         os.setgid(gid)
 
 
