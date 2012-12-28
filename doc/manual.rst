@@ -10,6 +10,9 @@ Usage Manual
    manual/envelopes
    manual/bounces
    manual/edge
+   manual/queue
+   manual/relay
+   manual/policies
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
@@ -18,3 +21,18 @@ Usage Manual
 * :doc:`manual/edge`
 
   * :ref:`SMTP <edge-smtp>`
+
+* :doc:`manual/queue`
+* :doc:`manual/relay`
+
+  * :ref:`SMTP <relay-smtp>`
+  * :ref:`Maildrop <relay-maildrop>`
+
+* :doc:`manual/policies`
+
+  * :ref:`Date Header <policy-add-date-header>`
+  * :ref:`Message-Id Header <policy-add-message-id-header>`
+  * :ref:`Received Header <policy-add-received-header>`
+  * :ref:`Recipient Forwarding <policy-forwarding>`
+  * :ref:`SpamAssassin <policy-spamassassin>`
+
