@@ -63,6 +63,7 @@ class Envelope(object):
 
         #: Information about the client that sent the message. Utilized keys
         #: include:
+        #:
         #: * ``ip``: The IP of the client.
         #: * ``host``: The reverse-lookup of the client IP.
         #: * ``name``: The client name, as given by its ``EHLO`` or alternative.

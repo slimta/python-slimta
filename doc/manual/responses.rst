@@ -1,22 +1,30 @@
 
 .. include:: /global.rst
 
+.. _ENHANCEDSTATUSCODES: http://tools.ietf.org/html/rfc2034
+
 Deciphering Message Delivery Responses
 ======================================
 
-Most :doc:`buses <bus>` in *slimta* take table arrays of :mod:`~slimta.message`
-objects as requests and expect table arrays of :mod:`~slimta.message.response`
-objects as responses. These :mod:`~slimta.message.response` objects are very
-important to deciding whether the message was successfully handled or needs
-further processing.
+Because *slimta* is an email server, responses are always given as or translated
+to SMTP-style code and message. That is, a 3-digit code and a free-form message
+describing the success or what caused the failure. The |Reply| objects that
+represent the responses have ``code`` and ``message`` properties for accessing
+ad setting these values.
 
-Responses have two attributes, ``code`` and ``message``. The ``code``
-corresponds to a three digit string using SMTP reply codes. For example, codes
-that start with *2* are considered success codes, codes that start with *4* are
-temporary failures, and codes that start with *5* are permanent errors.
+The 3-digit code will start with *2* for responses indicating success, such as
+when a message was accepted by the destination. Codes that start with *4* or *5*
+indicate some sort of failure, *4* indicating a transient failure where retrying
+may resolve the issue, *5* indicating a permanent failure where a retry will not
+succeed.
 
-The ``message`` attribute is a more generic, human-readable description of the
-error or success. No format can be assumed about this string, it is only useful
-to a human through logging or other display. If :doc:`bounces <bounces>` are
-generated, this message may help the message sender figure out what went wrong.
+When using non-SMTP transports such as HTTP or :mod:`~slimta.relay.maildrop`,
+responses will be translated to or from the expected format of the transport. 
+HTTP, for example, uses *4xx* error codes for client errors (often permanent)
+and *5xx* error codes for server errors (often transient).
+
+If a response message begins with an ENHANCEDSTATUSCODES_ string, it is made
+available by the ``enhanced_status_code`` property. This value *can* be used
+programmatically, though *slimta* does not currently do so. No other part of the
+response message should be parsed programmatically.
 

@@ -6,6 +6,7 @@
 .. |IO| replace:: :class:`~slimta.smtp.io.IO`
 .. |Envelope| replace:: :class:`~slimta.envelope.Envelope`
 .. |Bounce| replace:: :class:`~slimta.bounce.Bounce`
+.. |Policy| replace:: :class:`~slimta.policy.Policy`
 .. |Greenlet| replace:: :class:`~gevent.Greenlet`
 .. |Queue| replace:: :class:`~slimta.queue.Queue`
 .. |QueueStorage| replace:: :class:`~slimta.queue.QueueStorage`
