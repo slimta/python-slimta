@@ -26,7 +26,8 @@ Usage Manual
 * :doc:`manual/queue`
 * :doc:`manual/relay`
 
-  * :ref:`SMTP <relay-smtp>`
+  * :ref:`SMTP Smart-Hosting <relay-smtp-smarthost>`
+  * :ref:`SMTP MX <relay-smtp-mx>`
   * :ref:`Maildrop <relay-maildrop>`
 
 * :doc:`manual/policies`
