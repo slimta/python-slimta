@@ -47,10 +47,10 @@ class DictStorage(QueueStorage):
 
     """
 
-    def __init__(self, envelope_db, meta_db):
+    def __init__(self, envelope_db=None, meta_db=None):
         super(DictStorage, self).__init__()
-        self.env_db = envelope_db
-        self.meta_db = meta_db
+        self.env_db = envelope_db or {}
+        self.meta_db = meta_db or {}
 
     def write(self, envelope, timestamp):
         while True:
