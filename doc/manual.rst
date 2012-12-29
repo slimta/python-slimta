@@ -8,7 +8,6 @@ Usage Manual
    manual/terminology
    manual/system
    manual/envelopes
-   manual/bounces
    manual/edge
    manual/queue
    manual/relay
@@ -17,7 +16,9 @@ Usage Manual
 * :doc:`manual/terminology`
 * :doc:`manual/system`
 * :doc:`manual/envelopes`
-* :doc:`manual/bounces`
+
+  * :ref:`Bounces <envelope-bounces>`
+
 * :doc:`manual/edge`
 
   * :ref:`SMTP <edge-smtp>`
