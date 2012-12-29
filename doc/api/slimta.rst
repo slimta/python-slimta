@@ -20,5 +20,5 @@ slimta
    slimta.envelope
    slimta.bounce
    slimta.policy
-   slimta.daemon
+   slimta.system
 

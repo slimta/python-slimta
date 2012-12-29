@@ -1,9 +1,9 @@
 
 .. include:: /global.rst
 
-slimta.daemon
+slimta.system
 =============
 
-.. automodule:: slimta.daemon
+.. automodule:: slimta.system
    :members:
 
