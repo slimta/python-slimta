@@ -21,25 +21,18 @@ Generating Bounce Messages
 |Bounce| objects are used to build *bounce* messages from the original
 |Envelope| object and that message's |Reply| object.
 
-The |Bounce| module allows for customization of the format of this bounce
+The |Bounce| class allows for customization of the format of this bounce
 message.
 
-The static class member ``sender`` is the sender address to use. *Bounce*
-messages are not "from" anyone, and thus the (RFC mandated) default is ``""``.
+The static class member :attr:`~slimta.bounce.Bounce.sender` is the sender
+address to use. *Bounce* messages are not "from" anyone, and thus the (RFC
+mandated) default is an empty string (``""``).
 
-The *bounce* :class:`~email.message.Message` object is generated using the
-original message's flattened :class:`~email.message.Message` surrounded by the
-header and footer templates given in the |Bounce| class's ``header_template``
-and ``footer_template`` static members.
-
-The header and footer templates can contain the following variables, which will
-be replaced with the associated data, if available:
-
-* ``$(boundary)`` -- A generated string useful as a MIME boundary.
-* ``$(sender)`` -- The origin message's sender address.
-* ``$(client_name)`` -- The reverse-lookup of the client's IP, rarely available.
-* ``$(client_ip)`` -- The client IP address string.
-* ``$(protocol)`` -- The protocol used to receive the message.
-* ``$(code)`` -- The error code from delivery attempt(s).
-* ``$(message)`` -- The error message from delivery attempt(s).
+The |Bounce| class is a sub-class of |Envelope| and can thus be used wherever a
+regular |Envelope| is required. The |Bounce| message is generated using the
+original message's flattened message data surrounded by the header and footer
+templates given in the |Bounce| class's static
+:attr:`~slimta.bounce.Bounce.header_template` and
+:attr:`~slimta.bounce.Bounce.footer_template` members. See the API documentation
+of these attributes for information on how they work.
 

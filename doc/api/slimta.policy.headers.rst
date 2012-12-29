@@ -4,6 +4,6 @@
 slimta.policy.headers
 =====================
 
-.. automodule:: slimta.headers
+.. automodule:: slimta.policy.headers
    :members:
 

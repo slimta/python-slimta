@@ -15,9 +15,10 @@ Daemonization
 
 Running *slimta* in the background as a daemon is relatively easy::
 
-   pid = slimta.daemonize()
+   pid = slimta.daemon.daemonize()
 
-:func:`slimta.daemonize()` can be described with the following pseudo-code::
+:func:`slimta.daemon.daemonize()` can be described with the following
+pseudo-code::
 
    fork()
    setsid()
@@ -28,8 +29,8 @@ Running *slimta* in the background as a daemon is relatively easy::
    return getpid()
 
 Often it is not desired to leave standard I/O streams connected to the terminal.
-Before calling :func:`~slimta.daemonize()`, you should first call
-:func:`slimta.redirect_stdio()`.
+Before calling :func:`~slimta.daemon.daemonize()`, you should first call
+:func:`slimta.daemon.redirect_stdio()`.
 
 Dropping System Privileges
 """"""""""""""""""""""""""
@@ -38,6 +39,6 @@ Most ports that *slimta* systems will often need to open require root
 privileges, such as port 25. However, once these sockets are open, there is
 little reason to retain those privileges.
 
-A call to :func:`slimta.drop_privileges()` is *highly* recommended after opening
-all ports, if running *slimta* as root.
+A call to :func:`slimta.daemon.drop_privileges()` is *highly* recommended after
+opening all ports, if running *slimta* as root.
 
