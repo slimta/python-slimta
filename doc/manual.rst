@@ -12,6 +12,7 @@ Usage Manual
    manual/queue
    manual/relay
    manual/policies
+   manual/integration
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
@@ -37,4 +38,6 @@ Usage Manual
   * :ref:`Received Header <policy-add-received-header>`
   * :ref:`Recipient Forwarding <policy-forwarding>`
   * :ref:`SpamAssassin <policy-spamassassin>`
+
+* :doc:`manual/integration`
 
