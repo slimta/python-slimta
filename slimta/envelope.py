@@ -25,6 +25,7 @@ metadata.
 """
 
 import re
+import copy
 import cStringIO
 import email.generator
 import email.parser
@@ -78,6 +79,24 @@ class Envelope(object):
 
         #: Timestamp when the message was received.
         self.timestamp = None
+
+    def split(self):
+        """Splits by recipient, returning a list of new :class:`Envelope`
+        object copies where each has only one recipient. Each new object has
+        its own copy of :attr:`headers`, but other attributes may be shared
+        between each new instance.
+
+        :returns: List of :class:`Envelope` objects, one for each recipient
+                  in the :attr:`recipients` of the current :class:`Envelope`.
+
+        """
+        ret = []
+        for rcpt in self.recipients:
+            new_env = copy.copy(self)
+            new_env.recipients = [rcpt]
+            new_env.headers = copy.deepcopy(self.headers)
+            ret.append(new_env)
+        return ret
 
     def flatten(self):
         """Produces two strings representing the headers and message body.
