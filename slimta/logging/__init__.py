@@ -65,7 +65,7 @@ def logline(log, type, typeid, operation, **data):
         log('{0}:{1}:{2}'.format(type, typeid, operation))
     else:
         data_str = ' '.join(['='.join((key, repr(val)))
-                             for key, val in data.iteritems()])
+                             for key, val in sorted(data.iteritems())])
         log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 
 
