@@ -36,7 +36,8 @@ import base64
 from gevent.socket import getfqdn
 
 from slimta.smtp.reply import Reply
-from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError
+from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError, \
+                             AuthenticationCanceled
 
 __all__ = ['Plain', 'Login', 'CramMd5']
 
@@ -49,7 +50,10 @@ class Mechanism(object):
 
     def _send_challenge_get_response(self, io, challenge_str):
         Reply('334', challenge_str).send(io, flush=True)
-        return io.recv_line()
+        ret = io.recv_line()
+        if ret == '*':
+            raise AuthenticationCanceled()
+        return ret
 
     def server_attempt(self, io, initial_response):
         raise NotImplemented()
@@ -128,11 +132,10 @@ class CramMd5(Mechanism):
     #: This mechanism is secure for use on unencrypted channels.
     secure = True
 
-    pattern = re.compile(r'^(.*) ([^ ]+)$')
+    #: This is the hostname used when generating the initial challenge.
+    hostname = getfqdn()
 
-    def __init__(self, verify_secret, get_secret, hostname=None):
-        super(CramMd5, self).__init__(verify_secret, get_secret)
-        self.hostname = hostname or getfqdn()
+    pattern = re.compile(r'^(.*) ([^ ]+)$')
 
     def _build_initial_challenge(self):
         uid = uuid.uuid4().hex
@@ -151,11 +154,9 @@ class CramMd5(Mechanism):
             reply = Reply('501', '5.5.2 '+msg)
             raise ServerAuthError(msg, reply)
         username, digest = match.groups()
-        print username, digest
         secret, identity = self.get_secret(username)
 
         expected = hmac.new(secret, challenge, hashlib.md5).hexdigest()
-        print expected
         if expected != digest:
             raise CredentialsInvalidError()
 

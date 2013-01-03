@@ -38,7 +38,8 @@ from slimta.smtp.reply import Reply
 
 __all__ = ['CredentialsInvalidError', 'Auth']
 
-arg_pattern = re.compile(r'^([a-zA-Z0-9_-]+)\s*(.*)$')
+noarg_pattern = re.compile(r'^([a-zA-Z0-9_-]+)$')
+witharg_pattern = re.compile(r'^([a-zA-Z0-9_-]+)\s+(.*)$')
 
 
 class AuthError(SmtpError):
@@ -154,15 +155,23 @@ class Auth(object):
         available = self.get_available_mechanisms(self.session.encrypted)
         return ' '.join([mech.name for mech in available])
 
+    def _parse_arg(self, arg):
+        match = noarg_pattern.match(arg)
+        if match:
+            return match.group(1).upper(), None
+        match = witharg_pattern.match(arg)
+        if match:
+            return match.group(1).upper(), match.group(2)
+        raise InvalidMechanismError(arg)
+
     def server_attempt(self, io, arg):
-        match = arg_pattern.match(arg)
-        if not match:
-            raise InvalidMechanismError(arg)
-        mechanism_name = match.group(1).upper()
-        for mechanism in self.get_available_mechanisms():
+        mechanism_name, mechanism_arg = self._parse_arg(arg)
+        for mechanism in self.get_available_mechanisms(self.session.encrypted):
             if mechanism.name == mechanism_name:
                 mech_obj = mechanism(self.verify_secret, self.get_secret)
-                return mech_obj.server_attempt(io, match.group(2))
+                if mechanism_arg == '*':
+                    raise AuthenticationCanceled()
+                return mech_obj.server_attempt(io, mechanism_arg)
         raise InvalidMechanismError(arg)
 
 
