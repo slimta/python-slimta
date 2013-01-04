@@ -39,7 +39,8 @@ hostname = getfqdn()
 class SmtpRelayClient(Greenlet):
 
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
-                       tls=None, tls_immediately=False, tls_required=False,
+                       tls=None, tls_immediately=False,
+                       tls_required=False, tls_wrapper=None,
                        connect_timeout=None, command_timeout=None,
                        data_timeout=None, idle_timeout=None):
         super(SmtpRelayClient, self).__init__()
@@ -54,6 +55,7 @@ class SmtpRelayClient(Greenlet):
         self.tls = tls
         self.tls_immediately = tls_immediately
         self.tls_required = tls_required
+        self.tls_wrapper = tls_wrapper
         self.connect_timeout = connect_timeout
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
@@ -67,7 +69,7 @@ class SmtpRelayClient(Greenlet):
     def _connect(self):
         with Timeout(self.connect_timeout):
             self.socket = self._socket_creator(self.address)
-        self.client = Client(self.socket)
+        self.client = Client(self.socket, self.tls_wrapper)
 
     def _banner(self):
         with Timeout(self.command_timeout):
@@ -85,7 +87,7 @@ class SmtpRelayClient(Greenlet):
         with Timeout(self.command_timeout):
             starttls = self.client.starttls(self.tls)
         if starttls.is_error() and self.tls_required:
-            raise SmtpRelayError.factory(ehlo)
+            raise SmtpRelayError.factory(starttls)
 
     def _handshake(self):
         if self.tls and self.tls_immediately:
