@@ -77,8 +77,6 @@ class Bounce(Envelope):
 
     :param envelope: The |Envelope| object of the original failed message.
     :param reply: The |Reply| object that caused the failure.
-    :param id: Optional ID of the new message.
-    :type id: string
 
     """
 
