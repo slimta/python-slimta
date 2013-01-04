@@ -198,7 +198,6 @@ class Server(object):
                 self.io.flush_send()
                 break
             except Exception, e:
-                print str(e)
                 unhandled_error.send(self.io)
                 raise
             finally:
