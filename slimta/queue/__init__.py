@@ -191,7 +191,7 @@ class Queue(Greenlet):
 
     def _use_pool(self, attr, pool):
         if pool is None:
-            setattr(self, attr, None)
+            pass
         elif isinstance(pool, Pool):
             setattr(self, attr, pool)
         else:
@@ -206,7 +206,7 @@ class Queue(Greenlet):
             return func(*args, **kwargs)
 
     def _pool_spawn(self, which, func, *args, **kwargs):
-        pool = getattr(self, which+'_pool', None) or gevent
+        pool = getattr(self, which+'_pool', gevent)
         return pool.spawn(func, *args, **kwargs)
 
     def _add_queued(self, entry):
@@ -221,11 +221,9 @@ class Queue(Greenlet):
     def enqueue(self, envelope):
         now = time.time()
         self._run_prequeue_policies(envelope)
-        try:
-            id = self._pool_run('store', self.store.write, envelope, now)
-            return id
-        finally:
-            self._pool_spawn('relay', self._attempt, id, envelope, 0)
+        id = self._pool_run('store', self.store.write, envelope, now)
+        self._pool_spawn('relay', self._attempt, id, envelope, 0)
+        return id
 
     def _load_all(self):
         for entry in self.store.load():
@@ -285,7 +283,6 @@ class Queue(Greenlet):
             self.wake.wait()
             self.wake.clear()
             return
-        now = time.time()
         first_timestamp = first[0]
         if first_timestamp > now:
             self.wake.wait(first_timestamp-now)
