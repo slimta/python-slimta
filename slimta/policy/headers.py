@@ -53,7 +53,7 @@ class AddDateHeader(Policy):
         :returns: Date string for the header.
 
         """
-        return strftime('%a, %d %b %Y %T %Z', localtime(timestamp))
+        return strftime('%a, %d %b %Y %H:%M:%S %Z', localtime(timestamp))
 
     def apply(self, envelope):
         if 'date' not in envelope.headers:
@@ -90,9 +90,8 @@ class AddReceivedHeader(Policy):
 
     """
 
-    def __init__(self, date_format='%a, %d %b %Y %H:%M:%S +0000', use_utc=True):
+    def __init__(self, date_format='%a, %d %b %Y %H:%M:%S +0000'):
         self.date_format = date_format
-        self.use_utc = use_utc
 
     def _build_from_section(self, envelope, parts):
         template = 'from {0} ({1} [{2}])'
@@ -123,7 +122,7 @@ class AddReceivedHeader(Policy):
         self._build_with_section(envelope, parts)
         self._build_for_section(envelope, parts)
 
-        t = gmtime(envelope.timestamp) if self.use_utc else envelope.timestamp
+        t = gmtime(envelope.timestamp)
         date = strftime(self.date_format, t)
 
         data = ' '.join(parts) + '; ' + date
