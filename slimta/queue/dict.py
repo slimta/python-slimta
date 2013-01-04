@@ -31,7 +31,7 @@ import gevent
 from gevent import Greenlet
 from gevent.pool import Pool
 
-from slimta.queue import *
+from slimta.queue import QueueStorage 
 
 __all__ = ['DictStorage']
 
@@ -49,8 +49,8 @@ class DictStorage(QueueStorage):
 
     def __init__(self, envelope_db=None, meta_db=None):
         super(DictStorage, self).__init__()
-        self.env_db = envelope_db or {}
-        self.meta_db = meta_db or {}
+        self.env_db = envelope_db if envelope_db is not None else {}
+        self.meta_db = meta_db if meta_db is not None else {}
 
     def write(self, envelope, timestamp):
         while True:
