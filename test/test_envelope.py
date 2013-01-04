@@ -3,6 +3,8 @@ import unittest
 from email.message import Message
 
 from slimta.envelope import Envelope
+from slimta.bounce import Bounce
+from slimta.smtp.reply import Reply
 
 
 class TestEnvelope(unittest.TestCase):
@@ -72,5 +74,43 @@ test test\r
                          env2.headers.get_all('To'))
         self.assertEquals('test test\r\n', env2.message)
 
+    def test_bounce(self):
+        env = Envelope('sender@example.com', ['rcpt1@example.com',
+                                              'rcpt2@example.com'])
+        env.parse("""\
+From: sender@example.com
+To: rcpt1@example.com
+To: rcpt2@example.com
+
+test test\r
+""")
+        reply = Reply('550', '5.0.0 Rejected')
+
+        Bounce.header_template = """\
+X-Reply-Code: {code}
+X-Reply-Message: {message}
+X-Orig-Sender: {sender}
+
+"""
+        Bounce.footer_template = """\
+
+EOM
+"""
+        bounce = Bounce(env, reply)
+
+        self.assertEqual('', bounce.sender)
+        self.assertEqual(['sender@example.com'], bounce.recipients)
+        self.assertEqual('550', bounce.headers['X-Reply-Code'])
+        self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
+        self.assertEqual('sender@example.com', bounce.headers['X-Orig-Sender'])
+        self.assertEqual("""\
+From: sender@example.com\r
+To: rcpt1@example.com\r
+To: rcpt2@example.com\r
+\r
+test test\r
+
+EOM
+""", bounce.message)
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
