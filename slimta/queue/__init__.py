@@ -119,7 +119,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented
+        raise NotImplemented()
 
 
 class Queue(Greenlet):
