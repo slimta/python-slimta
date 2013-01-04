@@ -5,7 +5,22 @@ from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
 from slimta.smtp.server import Server
+from slimta.smtp.auth import Auth, CredentialsInvalidError
+from slimta.smtp.auth.mechanisms import Plain
 from slimta.smtp import ConnectionLost
+
+
+class FakeAuth(Auth):
+
+    def verify_secret(self, cid, secret, zid=None):
+        if cid != 'testuser' or secret != 'testpassword':
+            raise CredentialsInvalidError()
+        if zid is not None and zid != 'testzid':
+            raise CredentialsInvalidError()
+        return (cid, zid)
+
+    def get_available_mechanisms(self, encrypted=False):
+        return [Plain]
 
 
 class TestSmtpServer(MoxTestBase):
@@ -137,6 +152,21 @@ class TestSmtpServer(MoxTestBase):
         s.extensions.add('STARTTLS')
         s.handle()
         self.assertEqual(None, s.ehlo_as)
+
+    def test_auth(self):
+        self.sock.sendall('220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn('EHLO there\r\n')
+        self.sock.sendall('250-Hello there\r\n250 AUTH PLAIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn('AUTH PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
+        self.sock.sendall('235 2.7.0 Authentication successful\r\n')
+        self.sock.recv(IsA(int)).AndReturn('QUIT\r\n')
+        self.sock.sendall('221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.extensions.reset()
+        s.extensions.add('AUTH', FakeAuth(s))
+        s.handle()
+        self.assertEqual(('testuser', 'testzid'), s.auth_result)
 
     def test_mailfrom(self):
         self.sock.sendall('220 ESMTP server\r\n')
