@@ -45,7 +45,7 @@ __all__ = ['SmtpEdge']
 class Handlers(object):
 
     def __init__(self, address, validators, handoff):
-        self.protocol = 'SMTP'
+        self.extended_smtp = False
         self.security = 'none'
         self.address = address
         self.reverse_address = None
@@ -61,22 +61,16 @@ class Handlers(object):
         if hasattr(self.validators, method):
             getattr(self.validators, method)(*args)
 
-    def _modify_protocol_string(self, change):
-        old = self.protocol
-        if old == 'SMTP' and change == 'EHLO':
-            self.protocol = 'ESMTP'
-        elif old == 'SMTP' and change == 'STARTTLS':
-            self.protocol = 'SMTPS'
-        elif old == 'SMTPS' and change == 'EHLO':
-            self.protocol = 'ESMTPS'
-        elif old == 'ESMTP' and change == 'STARTTLS':
-            self.protocol = 'ESMTPS'
-        elif old == 'ESMTP' and change == 'AUTH':
-            self.protocol = 'ESMTPA'
-        elif old == 'ESMTPA' and change == 'STARTTLS':
-            self.protocol = 'ESMTPSA'
-        elif old == 'ESMTPS' and change == 'AUTH':
-            self.protocol = 'ESMTPSA'
+    @property
+    def protocol(self):
+        proto = 'SMTP'
+        if self.extended_smtp:
+            proto = 'ESMTP'
+        if self.security == 'TLS':
+            proto += 'S'
+        if self.auth_result is not None:
+            proto += 'A'
+        return proto
 
     def _ptr_lookup(self):
         ptraddr = reversename.from_address(self.address[0])
@@ -98,25 +92,22 @@ class Handlers(object):
 
     def EHLO(self, reply, ehlo_as):
         self._call_validator('ehlo', reply, ehlo_as)
-        self._modify_protocol_string('EHLO')
+        self.extended_smtp = True
         if reply.code == '250':
             self.ehlo_as = ehlo_as
             self.envelope = None
 
     def HELO(self, reply, helo_as):
-        self._call_validator('helo', reply, ehlo_as)
+        self._call_validator('helo', reply, helo_as)
         if reply.code == '250':
-            self.ehlo_as = ehlo_as
+            self.ehlo_as = helo_as
             self.envelope = None
 
     def TLSHANDSHAKE(self):
         self._call_validator('tls')
-        self._modify_protocol_string('STARTTLS')
         self.security = 'TLS'
 
     def AUTH(self, reply, result):
-        if result:
-            self._modify_protocol_string('AUTH')
         self.auth_result = result
 
     def RSET(self, reply):
@@ -137,7 +128,7 @@ class Handlers(object):
 
     def HAVE_DATA(self, reply, data, err):
         if isinstance(err, MessageTooBig):
-            reply.code == '552'
+            reply.code = '552'
             reply.message = '5.3.4 Message exceeded size limit'
             return
         elif err:
@@ -147,7 +138,8 @@ class Handlers(object):
         self.envelope.client['host'] = self.reverse_address
         self.envelope.client['name'] = self.ehlo_as
         self.envelope.client['protocol'] = self.protocol
-        self._ptr_lookup_thread.kill(block=False)
+        if hasattr(self, '_ptr_lookup_thread'):
+            self._ptr_lookup_thread.kill(block=False)
 
         self.envelope.receiver = getfqdn()
         self.envelope.timestamp = time.time()
