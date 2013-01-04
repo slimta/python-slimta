@@ -1,14 +1,20 @@
 
 import unittest
 
+from mox import MoxTestBase, IsA
+from gevent.socket import socket
+
 from slimta.smtp.datareader import DataReader
 from slimta.smtp.io import IO
 from slimta.smtp import ConnectionLost, MessageTooBig
 
-from mock.socket import MockSocket
 
+class TestSmtpDataReader(MoxTestBase):
 
-class TestSmtpDataReader(unittest.TestCase):
+    def setUp(self):
+        super(TestSmtpDataReader, self).setUp()
+        self.sock = self.mox.CreateMock(socket)
+        self.sock.fileno = lambda: -1
 
     def test_append_line(self):
         dr = DataReader(None)
@@ -45,16 +51,16 @@ class TestSmtpDataReader(unittest.TestCase):
         self.assertEqual(None, dr.EOD)
 
     def test_recv_piece(self):
-        sock = MockSocket([('recv', 'one\r\ntwo'),
-                           ('recv', '\r\nthree\r\n.\r\nstuff\r\n')])
-        dr = DataReader(IO(sock))
+        self.sock.recv(IsA(int)).AndReturn('one\r\ntwo')
+        self.sock.recv(IsA(int)).AndReturn('\r\nthree\r\n.\r\nstuff\r\n')
+        self.mox.ReplayAll()
+        dr = DataReader(IO(self.sock))
         self.assertTrue(dr.recv_piece())
         self.assertFalse(dr.recv_piece())
         self.assertEqual(['one\r\n', 'two\r\n', 'three\r\n',
                           '.\r\n', 'stuff\r\n', ''], dr.lines)
         self.assertEqual(3, dr.EOD)
         self.assertEqual(5, dr.i)
-        sock.assert_done(self)
 
     def test_recv_piece_already_eod(self):
         dr = DataReader(None)
@@ -62,16 +68,16 @@ class TestSmtpDataReader(unittest.TestCase):
         self.assertFalse(dr.recv_piece())
 
     def test_recv_piece_connectionlost(self):
-        sock = MockSocket([('recv', '')])
-        dr = DataReader(IO(sock))
+        self.sock.recv(IsA(int)).AndReturn('')
+        self.mox.ReplayAll()
+        dr = DataReader(IO(self.sock))
         self.assertRaises(ConnectionLost, dr.recv_piece)
-        sock.assert_done(self)
 
     def test_recv_piece_messagetoobig(self):
-        sock = MockSocket([('recv', '1234567890')])
-        dr = DataReader(IO(sock), 9)
+        self.sock.recv(IsA(int)).AndReturn('1234567890')
+        self.mox.ReplayAll()
+        dr = DataReader(IO(self.sock), 9)
         self.assertRaises(MessageTooBig, dr.recv_piece)
-        sock.assert_done(self)
 
     def test_return_all(self):
         io = IO(None)
@@ -82,13 +88,13 @@ class TestSmtpDataReader(unittest.TestCase):
         self.assertEqual('three\r\n', io.recv_buffer)
 
     def test_recv(self):
-        sock = MockSocket([('recv', '\r\nthree\r\n'),
-                           ('recv', '.\r\nstuff\r\n')])
-        io = IO(sock)
+        self.sock.recv(IsA(int)).AndReturn('\r\nthree\r\n')
+        self.sock.recv(IsA(int)).AndReturn('.\r\nstuff\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         io.recv_buffer = 'one\r\ntwo'
         dr = DataReader(io)
         self.assertEqual('one\r\ntwo\r\nthree\r\n', dr.recv())
-        sock.assert_done(self)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
