@@ -1,12 +1,13 @@
 
 import unittest
 
+from mox import MoxTestBase, IsA
+from gevent.socket import socket
+
 from slimta.smtp.io import IO
 from slimta.smtp.auth import Auth, CredentialsInvalidError, ServerAuthError, \
                              InvalidMechanismError, AuthenticationCanceled
 from slimta.smtp.auth.mechanisms import *
-
-from mock.socket import MockSocket
 
 
 class StaticCramMd5(CramMd5):
@@ -40,7 +41,12 @@ class FakeSession(object):
         self.encrypted = encrypted
 
 
-class TestSmtpAuth(unittest.TestCase):
+class TestSmtpAuth(MoxTestBase):
+
+    def setUp(self):
+        super(TestSmtpAuth, self).setUp()
+        self.sock = self.mox.CreateMock(socket)
+        self.sock.fileno = lambda: -1
 
     def test_get_available_mechanisms(self):
         auth = Auth(None)
@@ -69,84 +75,82 @@ class TestSmtpAuth(unittest.TestCase):
             auth.server_attempt(None, 'B@D')
 
     def test_plain_noarg(self):
-        sock = MockSocket([('send', '334 \r\n'),
-                           ('recv', 'dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 \r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         auth.server_attempt(io, 'PLAIN')
-        sock.assert_done(self)
 
     def test_plain(self):
-        sock = MockSocket([])
-        io = IO(sock)
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
-        sock.assert_done(self)
 
     def test_plain_badcreds(self):
-        sock = MockSocket([])
-        io = IO(sock)
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         with self.assertRaises(CredentialsInvalidError):
             auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgBiYWRwYXNzd29yZA==')
         with self.assertRaises(ServerAuthError):
             auth.server_attempt(io, 'PLAIN dGVzdGluZw==')
-        sock.assert_done(self)
 
     def test_plain_canceled(self):
-        sock = MockSocket([('send', '334 \r\n'),
-                           ('recv', '*\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 \r\n')
+        self.sock.recv(IsA(int)).AndReturn('*\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         with self.assertRaises(AuthenticationCanceled):
             auth.server_attempt(io, 'PLAIN')
-        sock.assert_done(self)
         with self.assertRaises(AuthenticationCanceled):
             auth.server_attempt(io, 'PLAIN *')
 
     def test_login_noarg(self):
-        sock = MockSocket([('send', '334 VXNlcm5hbWU6\r\n'),
-                           ('recv', 'dGVzdHVzZXI=\r\n'),
-                           ('send', '334 UGFzc3dvcmQ6\r\n'),
-                           ('recv', 'dGVzdHBhc3N3b3Jk\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 VXNlcm5hbWU6\r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXI=\r\n')
+        self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         auth.server_attempt(io, 'LOGIN')
-        sock.assert_done(self)
 
     def test_login(self):
-        sock = MockSocket([('send', '334 UGFzc3dvcmQ6\r\n'),
-                           ('recv', 'dGVzdHBhc3N3b3Jk\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         auth.server_attempt(io, 'LOGIN dGVzdHVzZXI=')
-        sock.assert_done(self)
 
     def test_crammd5(self):
-        sock = MockSocket([('send', '334 PHRlc3RAZXhhbXBsZS5jb20+\r\n'),
-                           ('recv', 'dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
-        sock.assert_done(self)
 
     def test_crammd5_badcreds(self):
-        sock = MockSocket([('send', '334 PHRlc3RAZXhhbXBsZS5jb20+\r\n'),
-                           ('recv', 'dGVzdHVzZXIgMTIzNDU2Nzg5MA==\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
+        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgMTIzNDU2Nzg5MA==\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         with self.assertRaises(CredentialsInvalidError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
-        sock.assert_done(self)
 
     def test_crammd5_malformed(self):
-        sock = MockSocket([('send', '334 PHRlc3RAZXhhbXBsZS5jb20+\r\n'),
-                           ('recv', 'bWFsZm9ybWVk\r\n')])
-        io = IO(sock)
+        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
+        self.sock.recv(IsA(int)).AndReturn('bWFsZm9ybWVk\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
         auth = FakeAuth(FakeSession(True))
         with self.assertRaises(ServerAuthError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
-        sock.assert_done(self)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
