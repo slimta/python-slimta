@@ -22,8 +22,6 @@
 import re
 import uuid
 import time
-import email.generator
-import email.parser
 import cStringIO
 
 from gevent.socket import getfqdn

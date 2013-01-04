@@ -27,8 +27,8 @@ metadata.
 import re
 import copy
 import cStringIO
-import email.generator
-import email.parser
+from email.generator import Generator
+from email.parser import Parser
 
 __all__ = ['Envelope']
 
@@ -105,7 +105,7 @@ class Envelope(object):
 
         """
         outfp = cStringIO.StringIO()
-        email.generator.Generator(outfp).flatten(self.headers, False)
+        Generator(outfp).flatten(self.headers, False)
         header_data = outfp.getvalue().replace('\r', '').replace('\n', '\r\n')
         return header_data, self.message
 
@@ -124,7 +124,7 @@ class Envelope(object):
         else:
             header_data = data[:match.end(0)]
             payload = data[match.end(0):]
-        headers = email.parser.Parser().parsestr(header_data, True)
+        headers = Parser().parsestr(header_data, True)
         self.headers = headers
         self.message = payload
 
