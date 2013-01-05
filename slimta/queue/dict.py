@@ -57,27 +57,28 @@ class DictStorage(QueueStorage):
             id = uuid.uuid4().hex
             if not self.env_db.has_key(id):
                 self.env_db[id] = envelope
-                self.meta_db[id] = (timestamp, 0)
+                self.meta_db[id] = {'timestamp': timestamp, 'attempts': 0}
                 return id
 
     def set_timestamp(self, id, timestamp):
         meta = self.meta_db[id]
-        self.meta_db[id] = (timestamp, meta[1])
+        meta['timestamp'] = timestamp
+        self.meta_db[id] = meta
 
     def increment_attempts(self, id):
         meta = self.meta_db[id]
-        new = meta[1] + 1
-        self.meta_db[id] = (meta[0], new)
-        return new
+        meta['attempts'] += 1
+        self.meta_db[id] = meta
+        return meta['attempts']
 
     def load(self):
         for key in self.meta_db.keys():
             meta = self.meta_db[key]
-            yield (meta[0], key)
+            yield (meta['timestamp'], key)
 
     def get(self, id):
         meta = self.meta_db[id]
-        return self.env_db[id], meta[1]
+        return self.env_db[id], meta['attempts']
 
     def remove(self, id):
         try:
