@@ -22,7 +22,7 @@
 """Relays an |Envelope| locally with ``courier-maildrop``."""
 
 from gevent import Timeout
-from gevent_subprocess import Popen, PIPE
+import gevent_subprocess
 
 from slimta.smtp.reply import Reply
 from slimta.relay import Relay, PermanentRelayError, TransientRelayError
@@ -56,7 +56,9 @@ class MaildropRelay(Relay):
         stdin = ''.join((header_data, message_data))
         with Timeout(self.timeout):
             args = [self.argv0, '-f', envelope.sender]
-            p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p = gevent_subprocess.Popen(args, stdin=gevent_subprocess.PIPE,
+                                              stdout=gevent_subprocess.PIPE,
+                                              stderr=gevent_subprocess.PIPE)
             log.popen(p, args)
             stdout, stderr = p.communicate(stdin)
         log.stdio(p, stdin, stdout, stderr)
