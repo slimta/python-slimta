@@ -64,7 +64,7 @@ class MxRecord(object):
         self._expiration = None
 
     def get(self):
-        if self._expiration and time.time() < self._expiration:
+        if not self.expired:
             return self._records
         else:
             self._records, self._expiration = self._resolve()
@@ -84,7 +84,7 @@ class MxRecord(object):
 
     @property
     def expired(self):
-        return not self._expiration or time.time >= self._expiration
+        return not self._expiration or time.time() >= self._expiration
 
 
 class MxSmtpRelay(Relay):
@@ -96,9 +96,9 @@ class MxSmtpRelay(Relay):
     """
 
     def __init__(self):
-        self.mx_records = {}
-        self.force_mx = {}
-        self.relayers = {}
+        self._mx_records = {}
+        self._force_mx = {}
+        self._relayers = {}
 
     def _get_rcpt_domain(self, envelope):
         rcpt = envelope.recipients[0]
@@ -144,21 +144,21 @@ class MxSmtpRelay(Relay):
         :param port: Port number on the destination.
 
         """
-        self.force_mx[domain.lower()] = (destination, port)
+        self._force_mx[domain.lower()] = (destination, port)
 
     def attempt(self, envelope, attempts):
         domain = self._get_rcpt_domain(envelope)
-        if domain in self.force_mx:
-            dest, port = self.force_mx[domain]
+        if domain in self._force_mx:
+            dest, port = self._force_mx[domain]
         else:
-            record = self.mx_records.setdefault(domain, MxRecord(domain))
+            record = self._mx_records.setdefault(domain, MxRecord(domain))
             dest = self.choose_mx(record.get(), attempts)
             port = 25
         try:
-            relayer = self.relayers[(dest, port)]
+            relayer = self._relayers[(dest, port)]
         except KeyError:
             relayer = self.new_static_relay(dest, port)
-            self.relayers[(dest, port)] = relayer
+            self._relayers[(dest, port)] = relayer
         return relayer.attempt(envelope, attempts)
 
 
