@@ -15,8 +15,8 @@ class TestDictStorage(unittest.TestCase):
         self.meta = {}
         self.dict = DictStorage(self.env, self.meta)
 
-    def _write_test_envelope(self):
-        env = Envelope('sender@example.com', ['rcpt@example.com'])
+    def _write_test_envelope(self, rcpts=None):
+        env = Envelope('sender@example.com', rcpts or ['rcpt@example.com'])
         env.timestamp = 9876543210
         id = self.dict.write(env, 1234567890)
         return id, env
@@ -25,7 +25,8 @@ class TestDictStorage(unittest.TestCase):
         id, env = self._write_test_envelope()
         self.assertTrue(self.id_pattern.match(id))
         self.assertEqual(env, self.env[id])
-        self.assertEqual((1234567890, 0), self.meta[id])
+        self.assertEqual(1234567890, self.meta[id]['timestamp'])
+        self.assertEqual(0, self.meta[id]['attempts'])
         self.assertEqual('sender@example.com', self.env[id].sender)
         self.assertEqual(['rcpt@example.com'], self.env[id].recipients)
         self.assertEqual(9876543210, self.env[id].timestamp)
@@ -34,14 +35,14 @@ class TestDictStorage(unittest.TestCase):
         id, env = self._write_test_envelope()
         self.dict.set_timestamp(id, 1111)
         self.assertEqual(env, self.env[id])
-        self.assertEqual((1111, 0), self.meta[id])
+        self.assertEqual(1111, self.meta[id]['timestamp'])
 
     def test_increment_attempts(self):
         id, env = self._write_test_envelope()
-        self.dict.increment_attempts(id)
-        self.dict.increment_attempts(id)
+        self.assertEqual(1, self.dict.increment_attempts(id))
+        self.assertEqual(2, self.dict.increment_attempts(id))
         self.assertEqual(env, self.env[id])
-        self.assertEqual((1234567890, 2), self.meta[id])
+        self.assertEqual(2, self.meta[id]['attempts'])
 
     def test_load(self):
         queued = [self._write_test_envelope(),
@@ -52,7 +53,7 @@ class TestDictStorage(unittest.TestCase):
             for queued_id, env in queued:
                 if loaded_id == queued_id:
                     self.assertEqual(env, self.env[loaded_id])
-                    self.assertEqual(timestamp, self.meta[queued_id][0])
+                    self.assertEqual(timestamp, self.meta[queued_id]['timestamp'])
                     break
             else:
                 raise ValueError('Queued does not match loaded')
