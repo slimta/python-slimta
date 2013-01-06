@@ -48,32 +48,6 @@ Subject: important things
         self.assertEqual('important things', env.headers['subject'])
         self.assertEqual('', env.message)
 
-    def test_split(self):
-        env = Envelope('sender@example.com', ['rcpt1@example.com',
-                                              'rcpt2@example.com'])
-        env.parse("""\
-From: sender@example.com
-To: rcpt1@example.com
-To: rcpt2@example.com
-
-test test\r
-""")
-        env1, env2 = env.split()
-
-        self.assertEqual('sender@example.com', env1.sender)
-        self.assertEqual(['rcpt1@example.com'], env1.recipients)
-        self.assertEqual('sender@example.com', env1.headers['from'])
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
-                         env1.headers.get_all('To'))
-        self.assertEquals('test test\r\n', env1.message)
-
-        self.assertEqual('sender@example.com', env2.sender)
-        self.assertEqual(['rcpt2@example.com'], env2.recipients)
-        self.assertEqual('sender@example.com', env2.headers['from'])
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
-                         env2.headers.get_all('To'))
-        self.assertEquals('test test\r\n', env2.message)
-
     def test_bounce(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',
                                               'rcpt2@example.com'])
