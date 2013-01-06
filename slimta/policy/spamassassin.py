@@ -19,10 +19,10 @@
 # THE SOFTWARE.
 #
 
-"""Package containing a |Policy| for connecting to ``spamd`` (SpamAssassin) and
-checking if a message is spammy. If used as a |Policy|, the header
-``X-Spam-Status`` will be ``YES`` if spammy (with matched symbols in
-``X-Spam-Symbols``).
+"""Package containing a |PrequeuePolicy| for connecting to ``spamd``
+(SpamAssassin) and checking if a message is spammy. If used as a
+|PrequeuePolicy|, the header ``X-Spam-Status`` will be ``YES`` if spammy (with
+matched symbols in ``X-Spam-Symbols``).
 
 """
 
@@ -32,7 +32,7 @@ import cStringIO
 from gevent import Timeout
 from gevent.socket import create_connection, SHUT_WR
 
-from slimta.policy import PolicyError, Policy
+from slimta.policy import PolicyError, PrequeuePolicy
 from slimta import logging
 
 __all__ = ['SpamAssassinError', 'SpamAssassin']
@@ -56,7 +56,7 @@ class SpamAssassinError(PolicyError):
         super(SpamAssassinError, self).__init__(msg)
 
 
-class SpamAssassin(Policy):
+class SpamAssassin(PrequeuePolicy):
     """Queries ``spamd`` to check if a given message is spammy.
 
     :param address: Address tuple of the spamd server, defaults to

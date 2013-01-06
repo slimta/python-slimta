@@ -37,7 +37,7 @@ for policies that have to do with delivery, such as forwarding.
 
 from slimta import SlimtaError
 
-__all__ = ['PolicyError', 'Policy']
+__all__ = ['PolicyError', 'PrequeuePolicy', 'PostqueuePolicy']
 
 
 class PolicyError(SlimtaError):
@@ -45,15 +45,39 @@ class PolicyError(SlimtaError):
     pass
 
 
-class Policy(object):
-    """Base class for all policies."""
+class PrequeuePolicy(object):
+    """Base class for pre-queue policies. These are run before a message is
+    persistently queued and may overwrite the original |Envelope| with one or
+    many new |Envelope| objects.
+    
+    """
 
     def apply(self, envelope):
-        """:class:`Policy` sub-classes must override this method, which will
-        be called by the |Queue| before or after storage.
+        """:class:`PrequeuePolicy` sub-classes must override this method, which
+        will be called by the |Queue| before storage.
 
-        :param envelope: The |Envelope| object the policy execution should
-                         apply any changes to.
+        :param envelope: The |Envelope| object the policy execution should apply
+                         any changes to.
+        :returns: Optionally return a new list of |Envelope| objects to replace
+                  the given ``envelope`` going forward. Returning ``None`` or an
+                  empty list will keep using ``envelope``.
+
+        """
+        raise NotImplemented()
+
+
+class PostqueuePolicy(object):
+    """Base class for post-queue policies. These are run after a message is
+    pulled from the queue, immediately before a relay attempt is made.
+
+    """
+
+    def apply(self, envelope):
+        """:class:`PostqueuePolicy` sub-classes must override this method, which
+        will be called by the |Queue| before delivery.
+
+        :param envelope: The |Envelope| object the policy execution should apply
+                         any changes to.
 
         """
         raise NotImplemented()

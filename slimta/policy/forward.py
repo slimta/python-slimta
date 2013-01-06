@@ -23,12 +23,12 @@
 
 import re
 
-from slimta.policy import Policy
+from slimta.policy import PrequeuePolicy
 
 __all__ = ['Forward']
 
 
-class Forward(Policy):
+class Forward(PrequeuePolicy):
     """Each |Envelope| recipient is run through :func:`re.sub()` to see if it
     is modified. If a recipient matches a mapping rule, no further mapping
     rules are processed. Mapping rules are checked in the order that they were
