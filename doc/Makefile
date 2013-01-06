@@ -1,5 +1,5 @@
 
-DOC_OUTPUT=/usr/share/nginx/www/python-slimta
+DOC_OUTPUT=_build
 
 all:
 	sphinx-build -b html . $(DOC_OUTPUT)
