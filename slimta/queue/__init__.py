@@ -32,6 +32,7 @@ from itertools import imap, izip, repeat, chain
 import gevent
 from gevent import Greenlet
 from gevent.event import Event
+from gevent.coros import Semaphore
 from gevent.pool import Pool
 
 from slimta import SlimtaError
@@ -156,6 +157,7 @@ class Queue(Greenlet):
         self.bounce_factory = bounce_factory or Bounce
         self.wake = Event()
         self.queued = []
+        self.queued_lock = Semaphore(1)
         self.prequeue_policies = []
         self.postqueue_policies = []
         self._use_pool('store_pool', store_pool)
@@ -324,12 +326,33 @@ class Queue(Greenlet):
             self.wake.wait(first_timestamp-now)
             self.wake.clear()
 
+    def flush(self):
+        """Attempts to immediately flush all messages waiting in the queue,
+        regardless of their retry timers.
+
+        ***Note:*** This can be a very expensive operation, use with care.
+
+        """
+        self.wake.set()
+        self.wake.clear()
+        self.queued_lock.acquire()
+        try:
+            for entry in self.queued:
+                self._pool_spawn('store', self._dequeue, entry[1])
+            self.queued = []
+        finally:
+            self.queued_lock.release()
+
     def _run(self):
         self._pool_spawn('store', self._load_all)
         while True:
-            now = time.time()
-            self._check_ready(now)
-            self._wait_ready(now)
+            self.queued_lock.acquire()
+            try:
+                now = time.time()
+                self._check_ready(now)
+                self._wait_ready(now)
+            finally:
+                self.queued_lock.release()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

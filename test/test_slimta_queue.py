@@ -195,5 +195,24 @@ class TestQueue(MoxTestBase):
         with gevent.Timeout(1.0):
             queue._wait_ready(20)
 
+    def test_flush(self):
+        self.store.get('three').AndReturn((self.env, 1))
+        self.store.get('two').AndReturn((self.env, 2))
+        self.store.get('one').AndReturn((self.env, 3))
+        self.relay.attempt(self.env, 1)
+        self.store.remove('three')
+        self.relay.attempt(self.env, 2)
+        self.store.remove('two')
+        self.relay.attempt(self.env, 3)
+        self.store.remove('one')
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, store_pool=5, relay_pool=5)
+        queue._add_queued((float('inf'), 'one'))
+        queue._add_queued((0, 'two'))
+        queue._add_queued((float('-inf'), 'three'))
+        queue.flush()
+        queue.store_pool.join()
+        queue.relay_pool.join()
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
