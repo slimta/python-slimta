@@ -7,11 +7,9 @@ import logging
 from slimta.edge.smtp import SmtpEdge
 from slimta.queue import Queue
 from slimta.queue.dict import DictStorage
-from slimta.relay import RelayError
 from slimta.relay.smtp.mx import MxSmtpRelay
 from slimta.policy.headers import *
-from slimta.policy.forward import Forward
-from slimta.bounce import Bounce
+from slimta.policy.split import RecipientDomainSplit
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,6 +22,7 @@ queue = Queue(queue_storage, relay)
 
 queue.add_prequeue_policy(AddDateHeader())
 queue.add_prequeue_policy(AddMessageIdHeader())
+queue.add_prequeue_policy(RecipientDomainSplit())
 queue.add_prequeue_policy(AddReceivedHeader())
 
 edge = SmtpEdge(('127.0.0.1', 1337), queue)
