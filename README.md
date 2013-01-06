@@ -36,9 +36,9 @@ To run one of the included examples:
 
     (.venv)$ python examples/smtpmx.py
 
-***Note:*** Though particular example will create an [open relay][3] on port
-`1337`, it is only accessible from localhost. Hit *Control-C* to exit and kill
-the open relay.
+***Note:*** Though this particular example will create an [open relay][3] on
+port `1337`, it is only accessible from localhost. Hit *Control-C* to exit and
+kill the open relay.
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
