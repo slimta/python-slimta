@@ -86,19 +86,19 @@ class TestEdgeSmtp(MoxTestBase):
     def test_have_data(self):
         env = Envelope()
         handoff = self.mox.CreateMockAnything()
-        handoff(env).AndReturn('testid')
+        handoff(env).AndReturn([(env, 'testid')])
         self.mox.ReplayAll()
         h = Handlers(('127.0.0.1', 0), None, handoff)
         h.envelope = env
         reply = Reply('250')
         h.HAVE_DATA(reply, '', None)
         self.assertEqual('250', reply.code)
-        self.assertEqual('2.6.0 Message accepted for delivery; testid', reply.message)
+        self.assertEqual('2.6.0 Message accepted for delivery', reply.message)
 
     def test_have_data_queueerror(self):
         env = Envelope()
         handoff = self.mox.CreateMockAnything()
-        handoff(env).AndRaise(QueueError())
+        handoff(env).AndReturn([(env, QueueError())])
         self.mox.ReplayAll()
         h = Handlers(('127.0.0.1', 0), None, handoff)
         h.envelope = env
@@ -109,7 +109,7 @@ class TestEdgeSmtp(MoxTestBase):
 
     def test_smtp_edge(self):
         queue = self.mox.CreateMockAnything()
-        queue.enqueue(IsA(Envelope)).AndReturn('testid')
+        queue.enqueue(IsA(Envelope)).AndReturn([(Envelope(), 'testid')])
         self.mox.ReplayAll()
         server = SmtpEdge(('127.0.0.1', 0), queue)
         server.start()

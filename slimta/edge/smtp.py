@@ -145,13 +145,12 @@ class Handlers(object):
         self.envelope.timestamp = time.time()
         self.envelope.parse(data)
 
-        try:
-            id = self.handoff(self.envelope)
-        except QueueError:
+        results = self.handoff(self.envelope)
+        if isinstance(results[0][1], QueueError):
             reply.code = '550'
             reply.message = '5.6.0 Error queuing message'
         else:
-            reply.message = '2.6.0 Message accepted for delivery; '+id
+            reply.message = '2.6.0 Message accepted for delivery'
 
         self.envelope = None
 
@@ -178,7 +177,7 @@ class SmtpEdge(Edge):
 
     :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
     :param queue: |Queue| object for handing off messages, as described in
-                  |Edge|.
+                  :meth:`Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.
     :param validators: Object with ``handle_xxxx()`` methods as described.
     :param auth_class: Optional |Auth| sub-class to enable server

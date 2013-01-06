@@ -8,7 +8,7 @@ from gevent.pool import Pool
 from slimta.queue import Queue, QueueStorage
 from slimta.smtp.reply import Reply
 from slimta.relay import Relay, TransientRelayError, PermanentRelayError
-from slimta.policy import Policy
+from slimta.policy import PrequeuePolicy, PostqueuePolicy
 from slimta.envelope import Envelope
 
 
@@ -21,25 +21,27 @@ class TestQueue(MoxTestBase):
         self.env = Envelope('sender@example.com', ['rcpt@example.com'])
 
     def test_prequeue_policies(self):
-        p1 = self.mox.CreateMock(Policy)
-        p2 = self.mox.CreateMock(Policy)
+        p1 = self.mox.CreateMock(PrequeuePolicy)
+        p2 = self.mox.CreateMock(PrequeuePolicy)
         p1.apply(self.env)
         p2.apply(self.env)
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
         queue.add_prequeue_policy(p1)
         queue.add_prequeue_policy(p2)
+        self.assertRaises(TypeError, queue.add_prequeue_policy, None)
         queue._run_prequeue_policies(self.env)
 
     def test_postqueue_policies(self):
-        p1 = self.mox.CreateMock(Policy)
-        p2 = self.mox.CreateMock(Policy)
+        p1 = self.mox.CreateMock(PostqueuePolicy)
+        p2 = self.mox.CreateMock(PostqueuePolicy)
         p2.apply(self.env)
         p1.apply(self.env)
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
         queue.add_postqueue_policy(p2)
         queue.add_postqueue_policy(p1)
+        self.assertRaises(TypeError, queue.add_postqueue_policy, None)
         queue._run_postqueue_policies(self.env)
 
     def test_add_queued(self):
@@ -72,8 +74,44 @@ class TestQueue(MoxTestBase):
         self.store.remove('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
-        queue.enqueue(self.env)
+        self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
         queue.relay_pool.join()
+
+    def test_enqueue_wait_splitpolicy(self):
+        splitpolicy1 = self.mox.CreateMock(PrequeuePolicy)
+        splitpolicy2 = self.mox.CreateMock(PrequeuePolicy)
+        regpolicy = self.mox.CreateMock(PrequeuePolicy)
+        env1 = Envelope('sender1@example.com', ['rcpt1@example.com'])
+        env2 = Envelope('sender2@example.com', ['rcpt2@example.com'])
+        env3 = Envelope('sender3@example.com', ['rcpt3@example.com'])
+        splitpolicy1.apply(self.env).AndReturn([env1, env2])
+        regpolicy.apply(env1)
+        splitpolicy2.apply(env1)
+        regpolicy.apply(env2)
+        splitpolicy2.apply(env2).AndReturn([env2, env3])
+        self.store.write(env1, IsA(float)).AndReturn('1234')
+        self.store.write(env2, IsA(float)).AndReturn('5678')
+        self.store.write(env3, IsA(float)).AndReturn('90AB')
+        self.relay.attempt(env1, 0).InAnyOrder('relay')
+        self.relay.attempt(env2, 0).InAnyOrder('relay')
+        self.relay.attempt(env3, 0).InAnyOrder('relay')
+        self.store.remove('1234').InAnyOrder('relay')
+        self.store.remove('5678').InAnyOrder('relay')
+        self.store.remove('90AB').InAnyOrder('relay')
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, relay_pool=5)
+        queue.add_prequeue_policy(splitpolicy1)
+        queue.add_prequeue_policy(regpolicy)
+        queue.add_prequeue_policy(splitpolicy2)
+        self.assertEqual([(env1, '1234'), (env2, '5678'), (env3, '90AB')],
+                         queue.enqueue(self.env))
+        queue.relay_pool.join()
+
+    def test_enqueue_randomfail(self):
+        self.store.write(self.env, IsA(float)).AndRaise(gevent.GreenletExit)
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, relay_pool=5)
+        self.assertRaises(gevent.GreenletExit, queue.enqueue, self.env)
 
     def test_enqueue_wait_transientfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
