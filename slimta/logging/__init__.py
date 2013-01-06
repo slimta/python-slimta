@@ -30,8 +30,9 @@ from ast import literal_eval
 
 from slimta.logging.socket import SocketLogger
 from slimta.logging.subprocess import SubprocessLogger
+from slimta.logging.queuestorage import QueueStorageLogger
 
-__all__ = ['getSocketLogger', 'getSubprocessLogger']
+__all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger']
 
 
 def getSocketLogger(name):
@@ -58,6 +59,19 @@ def getSubprocessLogger(name):
     """
     logger = logging.getLogger(name)
     return SubprocessLogger(logger)
+
+
+def getQueueStorageLogger(name):
+    """Wraps the result of :func:python:`logging.getLogger()` in a
+    :class:`QueueStorageLogger` object to provide limited and consistent logging
+    output for |QueueStorage| operations.
+
+    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :rtype: :class:`QueueStorageLogger`
+
+    """
+    logger = logging.getLogger(name)
+    return QueueStorageLogger(logger)
 
 
 def logline(log, type, typeid, operation, **data):

@@ -32,8 +32,11 @@ from gevent import Greenlet
 from gevent.pool import Pool
 
 from slimta.queue import QueueStorage 
+from slimta import logging
 
 __all__ = ['DictStorage']
+
+log = logging.getQueueStorageLogger(__name__)
 
 
 class DictStorage(QueueStorage):
@@ -58,18 +61,22 @@ class DictStorage(QueueStorage):
             if not self.env_db.has_key(id):
                 self.env_db[id] = envelope
                 self.meta_db[id] = {'timestamp': timestamp, 'attempts': 0}
+                log.write(id, envelope)
                 return id
 
     def set_timestamp(self, id, timestamp):
         meta = self.meta_db[id]
         meta['timestamp'] = timestamp
         self.meta_db[id] = meta
+        log.update_meta(id, timestamp=timestamp)
 
     def increment_attempts(self, id):
         meta = self.meta_db[id]
-        meta['attempts'] += 1
+        new_attempts = meta['attempts'] + 1
+        meta['attempts'] = new_attempts
         self.meta_db[id] = meta
-        return meta['attempts']
+        log.update_meta(id, attempts=new_attempts)
+        return new_attempts
 
     def load(self):
         for key in self.meta_db.keys():
@@ -89,6 +96,7 @@ class DictStorage(QueueStorage):
             del self.env_db[id]
         except KeyError:
             pass
+        log.remove(id)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
