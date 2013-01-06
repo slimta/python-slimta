@@ -56,8 +56,7 @@ class TestPolicyHeaders(unittest.TestCase):
         arh.apply(env)
         self.assertRegexpMatches(env.headers['Received'],
                 r'from mail\.example\.com \(unknown \[1.2.3.4\]\) by test.com '
-                r'\(slimta [x0-9]+\.[x0-9]+\.[x0-9]+\) with ESMTPS for '
-                r'<rcpt@example.com>; ')
+                r'\(slimta [^\)]+\) with ESMTPS for <rcpt@example.com>; ')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

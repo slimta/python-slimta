@@ -31,6 +31,7 @@ from math import floor
 from gevent.socket import getfqdn
 
 from slimta.policy import Policy
+from slimta import VERSION
 
 __all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader']
 
@@ -102,7 +103,7 @@ class AddReceivedHeader(Policy):
 
     def _build_by_section(self, envelope, parts):
         template = 'by {0} (slimta {1})'
-        parts.append(template.format(envelope.receiver, 'x.x.x'))
+        parts.append(template.format(envelope.receiver, VERSION))
 
     def _build_with_section(self, envelope, parts):
         template = 'with {0}'
