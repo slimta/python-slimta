@@ -45,5 +45,5 @@ kill the open relay.
 [3]: http://en.wikipedia.org/wiki/Open_mail_relay
 [4]: http://opensource.org/licenses/MIT
 [5]: http://slimta.org/
-[6]: http://python-slimta.readthedocs.org/
+[6]: http://docs.slimta.org/
 

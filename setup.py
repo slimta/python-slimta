@@ -29,7 +29,7 @@ setup(name='slimta',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries',
       license='MIT',
-      url='https://github.com/icgood/python-slimta',
+      url='http://slimta.org/',
       requires=['gevent', 'dnspython'],
       packages=find_packages())
 
