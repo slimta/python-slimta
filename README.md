@@ -7,11 +7,12 @@
 About
 =====
 
-The `slimta` project is a Python library offering the building blocks necessary to 
-create a full-featured [MTA][1]. Most MTAs must be configured, but an MTA built with
-`slimta` is coded. An MTA built with `slimta` can incorporate any protocol or policy,
-custom or built-in. An MTA built with `slimta` can integrate with other Python
-libraries and take advantage of Python's great community.
+The `slimta` project is a Python library offering the building blocks necessary
+to create a full-featured [MTA][1]. Most MTAs must be configured, but an MTA
+built with `slimta` is coded. An MTA built with `slimta` can incorporate any
+protocol or policy, custom or built-in. An MTA built with `slimta` can
+integrate with other Python libraries and take advantage of Python's great
+community.
 
 The `slimta` project is released under the [MIT License][4].
 
@@ -35,9 +36,9 @@ To run one of the included examples:
 
     (.venv)$ python examples/smtpmx.py
 
-***Warning:*** This particular example will create an [open relay][3] on port `1337`.
-Hit *Control-C* to exit and kill the open relay.
-
+***Note:*** Though particular example will create an [open relay][3] on port
+`1337`, it is only accessible from localhost. Hit *Control-C* to exit and kill
+the open relay.
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
@@ -45,3 +46,4 @@ Hit *Control-C* to exit and kill the open relay.
 [4]: http://opensource.org/licenses/MIT
 [5]: http://slimta.org/
 [6]: http://python-slimta.readthedocs.org/
+
