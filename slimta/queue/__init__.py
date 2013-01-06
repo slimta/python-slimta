@@ -274,7 +274,8 @@ class Queue(Greenlet):
 
     def _perm_fail(self, id, envelope, reply):
         self._pool_spawn('store', self.store.remove, id)
-        self._pool_spawn('bounce', self._bounce, envelope, reply)
+        if envelope.sender: # Can't bounce to null-sender.
+            self._pool_spawn('bounce', self._bounce, envelope, reply)
 
     def _retry_later(self, id, envelope, reply):
         attempts = self.store.increment_attempts(id)
