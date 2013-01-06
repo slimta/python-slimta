@@ -11,7 +11,7 @@ def backoff(envelope, attempts):
     if attempts <= 5:
         return 5.0 * attempts
 
-relay = StaticSmtpRelay('mx1.emailsrvr.com', 25, pool_size=2)
+relay = StaticSmtpRelay('mail.example.com', 25, pool_size=2)
 
 env_db = shelve.open('envelope.db')
 meta_db = shelve.open('meta.db')
