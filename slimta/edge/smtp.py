@@ -39,18 +39,51 @@ from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 
-__all__ = ['SmtpEdge']
+__all__ = ['SmtpEdge', 'SmtpValidators']
 
 
-class Handlers(object):
+class SmtpValidators(object):
+    """Base class for implementing SMTP command validators.
 
-    def __init__(self, address, validators, handoff):
+    Sub-classes may implement some or all of the following functions. Leaving
+    the `reply` argument untouched will return the default, successful reply
+    from the command.
+    
+    * ``handle_banner(reply, address)``: Validate connecting address before
+      sending the SMTP banner.
+    * ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
+    * ``handle_helo(reply, helo_as)``: Validate the HELO string.
+    * ``handle_mail(reply, sender)``: Validate the sender address.
+    * ``handle_rcpt(reply, recipient)``: Validate one recipient address.
+    * ``handle_data(reply)``: Any remaining validation before accepting data.
+    * ``handle_rset(reply)``: Called before replying to an RSET command.
+    * ``handle_tls()``: Called after a successful TLS handshake. This may be at
+      the beginning of the session or after a `STARTTLS` command.
+
+    """
+
+    def __init__(self, session):
+        #: This object has a set of attributes that may be useful in validation:
+        #: 
+        #:  * ``address``: The address tuple of the connecting client.
+        #:  * ``extended_smtp``: The client used EHLO instead of HELO.
+        #:  * ``security``: Security of connection, ``None`` or ``'TLS'``.
+        #:  * ``ehlo_as``: The EHLO or HELO string given by the client.
+        #:  * ``auth_result``: The authentication result returned by |Auth|
+        #:                     after successful authentication, or ``None`` if
+        #:                     the client has not authenticated.
+        self.session = session
+
+
+class SmtpSession(object):
+
+    def __init__(self, address, validator_class, handoff):
         self.extended_smtp = False
-        self.security = 'none'
+        self.security = None
         self.address = address
         self.reverse_address = None
-        self.validators = validators
         self.handoff = handoff
+        self.validators = validator_class(self) if validator_class else None
 
         self.envelope = None
         self.ehlo_as = None
@@ -159,27 +192,11 @@ class SmtpEdge(Edge):
     """Class that uses :mod:`slimta.smtp.server` to implement an edge
     service to receive messages.
 
-    The ``validators`` argument is an object that may implement some or
-    all of the following functions. Leaving the `reply` argument
-    untouched will return the default, successful reply from the
-    command.
-    
-    * ``handle_banner(reply, address)``: Validate connecting address before
-      sending the SMTP banner.
-    * ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
-    * ``handle_helo(reply, helo_as)``: Validate the HELO string.
-    * ``handle_mail(reply, sender)``: Validate the sender address.
-    * ``handle_rcpt(reply, recipient)``: Validate one recipient address.
-    * ``handle_data(reply)``: Any remaining validation before accepting data.
-    * ``handle_rset(reply)``: Called before replying to an RSET command.
-    * ``handle_tls()``: Called after a successful TLS handshake. This may be at
-      the beginning of the session or after a `STARTTLS` command.
-
     :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
     :param queue: |Queue| object for handing off messages, as described in
                   :meth:`Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.
-    :param validators: Object with ``handle_xxxx()`` methods as described.
+    :param validator_class: Object with ``handle_xxxx()`` methods as described.
     :param auth_class: Optional |Auth| sub-class to enable server
                        authentication.
     :param tls: Optional dictionary of TLS settings passed directly as
@@ -195,20 +212,20 @@ class SmtpEdge(Edge):
     """
 
     def __init__(self, listener, queue, pool=None,
-                       validators=None, auth_class=None,
+                       validator_class=None, auth_class=None,
                        tls=None, tls_immediately=False,
                        command_timeout=None, data_timeout=None):
         super(SmtpEdge, self).__init__(listener, queue, pool)
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
-        self.validators = validators
+        self.validator_class = validator_class
         self.auth_class = auth_class
         self.tls = tls
         self.tls_immediately = tls_immediately
 
     def handle(self, socket, address):
         try:
-            handlers = Handlers(address, self.validators, self.handoff)
+            handlers = SmtpSession(address, self.validator_class, self.handoff)
             smtp_server = Server(socket, handlers, self.auth_class,
                                  self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,

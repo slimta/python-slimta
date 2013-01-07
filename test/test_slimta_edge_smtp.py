@@ -5,7 +5,7 @@ from mox import MoxTestBase, IsA
 import gevent
 from gevent.socket import create_connection
 
-from slimta.edge.smtp import SmtpEdge, Handlers
+from slimta.edge.smtp import SmtpEdge, SmtpSession
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
@@ -17,13 +17,14 @@ class TestEdgeSmtp(MoxTestBase):
 
     def test_call_validator(self):
         mock = self.mox.CreateMockAnything()
+        mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_test('arg')
         self.mox.ReplayAll()
-        h = Handlers(None, mock, None)
+        h = SmtpSession(None, mock, None)
         h._call_validator('test', 'arg')
 
     def test_protocol_attribute(self):
-        h = Handlers(None, None, None)
+        h = SmtpSession(None, None, None)
         self.assertEqual('SMTP', h.protocol)
         h.extended_smtp = True
         self.assertEqual('ESMTP', h.protocol)
@@ -34,10 +35,11 @@ class TestEdgeSmtp(MoxTestBase):
 
     def test_simple_handshake(self):
         mock = self.mox.CreateMockAnything()
+        mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_banner(IsA(Reply), ('127.0.0.1', 0))
         mock.handle_helo(IsA(Reply), 'there')
         self.mox.ReplayAll()
-        h = Handlers(('127.0.0.1', 0), mock, None)
+        h = SmtpSession(('127.0.0.1', 0), mock, None)
         h.BANNER(Reply('220'))
         h.HELO(Reply('250'), 'there')
         self.assertEqual('there', h.ehlo_as)
@@ -45,11 +47,12 @@ class TestEdgeSmtp(MoxTestBase):
 
     def test_extended_handshake(self):
         mock = self.mox.CreateMockAnything()
+        mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_banner(IsA(Reply), ('127.0.0.1', 0))
         mock.handle_ehlo(IsA(Reply), 'there')
         mock.handle_tls()
         self.mox.ReplayAll()
-        h = Handlers(('127.0.0.1', 0), mock, None)
+        h = SmtpSession(('127.0.0.1', 0), mock, None)
         h.BANNER(Reply('220'))
         h.EHLO(Reply('250'), 'there')
         h.TLSHANDSHAKE()
@@ -62,11 +65,12 @@ class TestEdgeSmtp(MoxTestBase):
 
     def test_mail_rcpt_data_rset(self):
         mock = self.mox.CreateMockAnything()
+        mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_mail(IsA(Reply), 'sender@example.com')
         mock.handle_rcpt(IsA(Reply), 'rcpt@example.com')
         mock.handle_data(IsA(Reply))
         self.mox.ReplayAll()
-        h = Handlers(None, mock, None)
+        h = SmtpSession(None, mock, None)
         h.MAIL(Reply('250'), 'sender@example.com')
         h.RCPT(Reply('250'), 'rcpt@example.com')
         self.assertEqual('sender@example.com', h.envelope.sender)
@@ -76,7 +80,7 @@ class TestEdgeSmtp(MoxTestBase):
         self.assertFalse(h.envelope)
 
     def test_have_data_errors(self):
-        h = Handlers(None, None, None)
+        h = SmtpSession(None, None, None)
         reply = Reply('250')
         h.HAVE_DATA(reply, None, MessageTooBig())
         self.assertEqual('552', reply.code)
@@ -88,7 +92,7 @@ class TestEdgeSmtp(MoxTestBase):
         handoff = self.mox.CreateMockAnything()
         handoff(env).AndReturn([(env, 'testid')])
         self.mox.ReplayAll()
-        h = Handlers(('127.0.0.1', 0), None, handoff)
+        h = SmtpSession(('127.0.0.1', 0), None, handoff)
         h.envelope = env
         reply = Reply('250')
         h.HAVE_DATA(reply, '', None)
@@ -100,7 +104,7 @@ class TestEdgeSmtp(MoxTestBase):
         handoff = self.mox.CreateMockAnything()
         handoff(env).AndReturn([(env, QueueError())])
         self.mox.ReplayAll()
-        h = Handlers(('127.0.0.1', 0), None, handoff)
+        h = SmtpSession(('127.0.0.1', 0), None, handoff)
         h.envelope = env
         reply = Reply('250')
         h.HAVE_DATA(reply, '', None)
