@@ -24,6 +24,7 @@ import time
 import gevent
 from gevent import Timeout, Greenlet
 from gevent.socket import create_connection, getfqdn
+from gevent.ssl import SSLSocket
 from gevent.queue import Queue, Empty
 
 from slimta.relay.smtp import SmtpRelayError
@@ -174,6 +175,8 @@ class SmtpRelayClient(Greenlet):
         finally:
             if self.socket:
                 log.close(self.socket)
+                if isinstance(self.socket, SSLSocket):
+                    self.socket.unwrap()
                 self.socket.close()
 
     def _run(self):

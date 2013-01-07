@@ -26,6 +26,7 @@ a listening socket under various protocols.
 
 import gevent
 from gevent.server import StreamServer
+from gevent.ssl import SSLSocket
 
 from slimta import logging
 
@@ -77,6 +78,8 @@ class Edge(gevent.Greenlet):
             self.handle(socket, address)
         finally:
             log.close(socket)
+            if isinstance(socket, SSLSocket):
+                socket.unwrap()
             socket.close()
 
     def handle(self, socket, address):
