@@ -48,7 +48,7 @@ class SmtpValidators(object):
     Sub-classes may implement some or all of the following functions. Leaving
     the `reply` argument untouched will return the default, successful reply
     from the command.
-    
+
     * ``handle_banner(reply, address)``: Validate connecting address before
       sending the SMTP banner.
     * ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
@@ -196,7 +196,8 @@ class SmtpEdge(Edge):
     :param queue: |Queue| object for handing off messages, as described in
                   :meth:`Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.
-    :param validator_class: Object with ``handle_xxxx()`` methods as described.
+    :param validator_class: :class:`SmtpValidators` sub-class to validate
+                            commands and alter replies.
     :param auth_class: Optional |Auth| sub-class to enable server
                        authentication.
     :param tls: Optional dictionary of TLS settings passed directly as
