@@ -74,13 +74,7 @@ class Edge(gevent.Greenlet):
 
     def _handle(self, socket, address):
         log.accept(self.server.socket, socket, address)
-        try:
-            self.handle(socket, address)
-        finally:
-            log.close(socket)
-            if isinstance(socket, SSLSocket):
-                socket.unwrap()
-            socket.close()
+        self.handle(socket, address)
 
     def handle(self, socket, address):
         """Override this function to receive messages on the socket and call

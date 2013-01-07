@@ -233,6 +233,8 @@ class SmtpEdge(Edge):
             smtp_server.handle()
         except ConnectionLost:
             pass
+        finally:
+            smtp_server.io.close()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

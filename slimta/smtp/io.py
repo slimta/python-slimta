@@ -49,6 +49,12 @@ class IO(object):
         self.send_buffer = cStringIO.StringIO()
         self.recv_buffer = ''
 
+    def close(self):
+        log.close(self.socket)
+        if isinstance(self.socket, SSLSocket):
+            self.socket.unwrap()
+        self.socket.close()
+
     def raw_send(self, data):
         self.socket.sendall(data)
         log.send(self.socket, data)
