@@ -55,6 +55,14 @@ class TestSocketLogger(unittest.TestCase):
                 ('test', 'DEBUG', 'fd:539:connect peer=\'testpeer2\''))
 
     @log_capture()
+    def test_encrypt(self, l):
+        sock = FakeSocket(445)
+        self.log.encrypt(sock, {'keyfile': 'test', 'server_side': True})
+        self.log.encrypt(sock, {'certfile': 'test'})
+        l.check(('test', 'DEBUG', 'fd:445:encrypt certfile=None keyfile=\'test\' server_side=True'),
+                ('test', 'DEBUG', 'fd:445:encrypt certfile=\'test\' keyfile=None server_side=False'))
+
+    @log_capture()
     def test_shutdown(self, l):
         sock = FakeSocket(823)
         self.log.shutdown(sock, socket.SHUT_RD)

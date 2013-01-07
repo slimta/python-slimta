@@ -86,6 +86,20 @@ class SocketLogger(object):
         peer = address or socket.getpeername()
         self.log(socket.fileno(), 'connect', peer=peer)
 
+    def encrypt(self, socket, tls_args):
+        """Logs a socket encryption operation along with the certificate and key
+        files used and whether the socket is acting as the client or the server.
+
+        :param socket: The socket that was shutdown.
+        :param tls_args: Keyword rguments passed to the encryption operation.
+
+        """
+        keyfile = tls_args.get('keyfile', None)
+        certfile = tls_args.get('certfile', None)
+        server_side = tls_args.get('server_side', False)
+        self.log(socket.fileno(), 'encrypt', keyfile=keyfile, certfile=certfile,
+                                             server_side=server_side)
+
     def shutdown(self, socket, how):
         """Logs a socket :meth:`~socket.socket.shutdown()` operation along
         with which part of the socket was shut down. Logged at the

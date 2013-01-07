@@ -67,6 +67,7 @@ class IO(object):
     def _tls_wrapper(self, socket, tls):
         sslsock = SSLSocket(socket, **tls)
         sslsock.do_handshake()
+        log.encrypt(socket, tls)
         return sslsock
 
     def encrypt_socket(self, tls):
