@@ -93,12 +93,32 @@ class MxSmtpRelay(Relay):
     :class:`~slimta.relay.smtp.static.StaticSmtpRelay` object for each
     destination to recycle and limit connections.
 
+    All arguments are optional.
+
+    :param tls: Optional dictionary of TLS settings passed directly as
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param tls_required: If given and True, it should be considered a delivery
+                         failure if TLS cannot be negotiated by the client.
+    :param connect_timeout: Timeout in seconds to wait for a client connection
+                            to be successful before issuing a transient failure.
+    :param command_timeout: Timeout in seconds to wait for a reply to each SMTP
+                            command before issuing a transient failure.
+    :param data_timeout: Timeout in seconds to wait for a reply to message data
+                         before issuing a transient failure.
+    :param idle_timeout: Timeout in seconds after a message is delivered before
+                         a QUIT command is sent and the connection terminated.
+                         If another message should be delivered before this
+                         timeout expires, the connection will be re-used. By
+                         default, QUIT is sent immediately and connections are
+                         never re-used.
+
     """
 
-    def __init__(self):
+    def __init__(self, **client_kwargs):
         self._mx_records = {}
         self._force_mx = {}
         self._relayers = {}
+        self._client_kwargs = client_kwargs
 
     def _get_rcpt_domain(self, envelope):
         rcpt = envelope.recipients[0]
@@ -118,7 +138,7 @@ class MxSmtpRelay(Relay):
         :param port: The delivery port on the destination.
 
         """
-        return StaticSmtpRelay(destination, port=port)
+        return StaticSmtpRelay(destination, port=port, **self._client_kwargs)
 
     def choose_mx(self, records, attempts):
         """Chooses a record based on the number of delivery attempts on the

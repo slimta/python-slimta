@@ -43,10 +43,28 @@ class StaticSmtpRelay(Relay):
     :param pool_size: At most this many simultaneous connections will be open to
                       the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
+    :param tls: Optional dictionary of TLS settings passed directly as
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param tls_required: If given and True, it should be considered a delivery
+                         failure if TLS cannot be negotiated by the client.
+    :param connect_timeout: Timeout in seconds to wait for a client connection
+                            to be successful before issuing a transient failure.
+    :param command_timeout: Timeout in seconds to wait for a reply to each SMTP
+                            command before issuing a transient failure.
+    :param data_timeout: Timeout in seconds to wait for a reply to message data
+                         before issuing a transient failure.
+    :param idle_timeout: Timeout in seconds after a message is delivered before
+                         a QUIT command is sent and the connection terminated.
+                         If another message should be delivered before this
+                         timeout expires, the connection will be re-used. By
+                         default, QUIT is sent immediately and connections are
+                         never re-used.
+
 
     """
 
-    def __init__(self, host, port=25, pool_size=None, client_class=None):
+    def __init__(self, host, port=25, pool_size=None, client_class=None,
+                       **client_kwargs):
         if client_class:
             self.client_class = client_class
         else:
@@ -57,6 +75,7 @@ class StaticSmtpRelay(Relay):
         self.queue = PriorityQueue()
         self.pool = set()
         self.pool_size = pool_size
+        self.client_kwargs = client_kwargs
 
     def _remove_client(self, client):
         self.pool.remove(client)
@@ -65,7 +84,7 @@ class StaticSmtpRelay(Relay):
 
     def _add_client(self):
         client = self.client_class((self.host, self.port), self.queue,
-                                   idle_timeout=10)
+                                   **self.client_kwargs)
         client.start()
         client.link(self._remove_client)
         self.pool.add(client)

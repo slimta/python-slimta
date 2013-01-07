@@ -10,7 +10,7 @@ from slimta.envelope import Envelope
 
 class FakeClient(Greenlet):
 
-    def __init__(self, address, queue, idle_timeout):
+    def __init__(self, address, queue, **kwargs):
         super(FakeClient, self).__init__()
         self.queue = queue
         self.idle = True
