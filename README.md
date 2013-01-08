@@ -1,4 +1,3 @@
-
 ### [Project Homepage][5]
 ### [API Documentation and Manual][6]
 
@@ -15,6 +14,8 @@ integrate with other Python libraries and take advantage of Python's great
 community.
 
 The `slimta` project is released under the [MIT License][4].
+
+[![Build Status](http://ci.slimta.org/job/slimta/badge/icon)](http://ci.slimta.org/job/slimta/)
 
 Getting Started
 ===============
