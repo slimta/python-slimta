@@ -48,6 +48,7 @@ class MaildropRelay(Relay):
     EX_TEMPFAIL = 75
 
     def __init__(self, argv0='maildrop', timeout=None):
+        super(MaildropRelay, self).__init__()
         self.argv0 = argv0
         self.timeout = timeout
 

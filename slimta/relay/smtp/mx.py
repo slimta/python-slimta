@@ -115,6 +115,7 @@ class MxSmtpRelay(Relay):
     """
 
     def __init__(self, **client_kwargs):
+        super(MxSmtpRelay, self).__init__()
         self._mx_records = {}
         self._force_mx = {}
         self._relayers = {}
