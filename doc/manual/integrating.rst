@@ -6,7 +6,7 @@ Integrating Everything
 
 .. figure:: http://slimta.org/images/diagrams/reception-to-delivery.png
    :target: http://slimta.org/images/diagrams/reception-to-delivery.png
-   :width: 25%
+   :width: 100%
    :figwidth: 25%
    :align: right
 
