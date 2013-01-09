@@ -12,7 +12,9 @@ Usage Manual
    manual/queue
    manual/relay
    manual/policies
-   manual/integration
+   manual/integrating
+   manual/incomingserver
+   manual/outgoingserver
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
@@ -39,5 +41,8 @@ Usage Manual
   * :ref:`Recipient Forwarding <policy-forwarding>`
   * :ref:`SpamAssassin <policy-spamassassin>`
 
-* :doc:`manual/integration`
+* :doc:`manual/integrating`
+
+  * :doc:`manual/mda`
+  * :doc:`manual/msa`
 

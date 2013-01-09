@@ -1,24 +1,13 @@
 
 .. include:: /global.rst
 
-Integrating Everything
-======================
-
-Piecing together the building blocks described in previous section is the last
-crucial step in setting up your MTA. Nearly everything in ``slimta`` starts with
-an |Edge| service which receives messages. They hand messages off to a |Queue|
-service to persistently store messages and trigger delivery attempts.
-
-.. image:: http://slimta.org/images/diagrams/reception-to-delivery.png
-   :alt: Diagram of an Envelope's path from reception to delivery
-   :target: http://slimta.org/images/diagrams/reception-to-delivery.png
-   :width: 25%
-   :align: right
+Mail Submission Agent
+=====================
 
 Step 1: Create the Relay
 ------------------------
 
-To get started, we create a |Relay| object first. This is because |Edge| depends
+To get started, we create a |Relay| object. This is first because |Edge| depends
 on |Queue| and |Queue| depends on |Relay|::
 
     from slimta.relay.smtp.mx import MxSmtpRelay
@@ -37,7 +26,7 @@ Step 2: Create the Queue
 Now that we have a |Relay|, we can create the |QueueStorage| and |Queue|
 objects. The simplest |QueueStorage| sub-class is
 :class:`~slimta.queue.dict.DictStorage`, which stores message contents and meta
-in :func:`dict` objects. However, this can be made persistent using
+in :class:`dict` objects. However, this can be made persistent using
 :mod:`shelve`::
 
     import shelve
@@ -62,7 +51,7 @@ Step 3: Add Queue Policies
 --------------------------
 
 Now that we have our |Queue|, we will most likely want to add various
-|PrequeuePolicy| and |PostqueuePolicy| rules to affect behavior. MTAs should add
+|PrequeuePolicy| and |PostqueuePolicy| rules to affect behavior. MSAs should add
 various headers, such as ``Date`` and ``Received``, for example::
 
     from slimta.policy.headers import *
@@ -71,28 +60,29 @@ various headers, such as ``Date`` and ``Received``, for example::
     queue.add_prequeue_policy(AddMessageIdHeader())
     queue.add_prequeue_policy(AddReceivedHeader())
 
-Because our |Relay| choice above was :class:`~slimta.relay.smtp.mx.MxSmtpRelay`,
-we should also use the :class:`~slimta.policy.split.RecipientDomainSplit`
-policy. This makes sure that we relay each recipient to its correct domain MX
-record, since an |Envelope| can have many recipients of many different domains::
+Because our |Relay| above was :class:`~slimta.relay.smtp.mx.MxSmtpRelay`, we
+should also use the :class:`~slimta.policy.split.RecipientDomainSplit` policy.
+This makes sure that we relay each recipient to its correct domain MX record,
+since an |Envelope| can have many recipients of many different domains::
 
     from slimta.policy.split import RecipientDomainSplit
 
     queue.add_prequeue_policy(RecipientDomainSplit())
 
-The policies you choose often depend on your choice of |Relay|. If you are using
-:class:`~slimta.relay.maildrop.MaildropRelay` to deliver locally, you will
-probably also want to scan incoming messages to filter out spam, using the
-:class:`~slimta.policy.spamassassin.SpamAssassin` policy to add spam headers.
+Most MSAs trust that their clients aren't going to be sending spam, so we'll
+leave discussion of the :class:`~slimta.policy.spamassassin.SpamAssassin`
+policy for the :doc:`mda` section. The :class:`~slimta.policy.forward.Forward`
+policy may prove useful in some MSA configurations.
 
 Step 4: Create the Edge
 -----------------------
 
-The |Edge| is how messages are injected into the system from the outside world,
-and now that we have a |Queue| object, we can create one. The most common |Edge|
-for an MTA will obviously be :class:`~slimta.edge.smtp.SmtpEdge`, but you could
+The |Edge| is how messages are injected into the system from mail clients, and
+now that we have a |Queue| object, we can create one. The most common |Edge|
+for an MSA will obviously be :class:`~slimta.edge.smtp.SmtpEdge`, but you could
 also create an edge service that receives messages by HTTP or even from the
-filesystem.
+filesystem. An :class:`~slimta.edge.smtp.SmtpEdge` should be created for the
+RFC-specified port 587 and the deprecated SSL-only port 465.
 
 Creating an |Edge| can be very simple if you are not worried about how messages
 are received or from whom::
@@ -100,12 +90,12 @@ are received or from whom::
     from slimta.edge.smtp import SmtpEdge
 
     tls_args = {'keyfile': '/path/to/key.pem', 'certfile': '/path/to/cert.pem'}
-    edge = SmtpEdge(('', 25), queue, tls=tls_args)
+    edge = SmtpEdge(('', 587), queue, tls=tls_args)
     edge.start()
 
 This will receive any messages from any sender and send it to the |Queue|. In
 our examples, because we chose an :class:`~slimta.relay.smtp.mx.MxSmtpRelay`,
-this would also mean our MTA would be an `Open Relay`_. **This is BAD**. We
+this would also mean our MSA would be an `Open Relay`_. **This is BAD!** We
 should add some sort of authentication::
 
     from slimta.smtp.auth import Auth, CredentialsInvalidError
@@ -121,7 +111,8 @@ should add some sort of authentication::
             raise CredentialsInvalidError()
 
     # Your edge creation line would now look like...
-    edge = SmtpEdge(('', 25), queue, auth_class=MyAuth, tls=tls_args)
+    edge = SmtpEdge(('', 587), queue, auth_class=MyAuth, tls=tls_args)
+    edge.start()
 
 Now, that will *allow* clients to authenticate, but it will not stop them from
 sending messages if they haven't authenticated. For that, we need to add an
@@ -137,18 +128,22 @@ sending messages if they haven't authenticated. For that, we need to add an
                 return
 
     # Your edge creation line would now look like...
-    edge = SmtpEdge(('', 25), queue, tls=tls_args,
+    edge = SmtpEdge(('', 587), queue, tls=tls_args,
                     validator_class=MyValidators, auth_class=MyAuth)
+    edge.start()
 
 Your SMTP server will now reject a client's ``MAIL FROM:<...>`` command if they
 have not first issued a successful ``AUTH`` command. If the client cannot issue
 their ``MAIL FROM``, then the SMTP command sequence cannot continue and they
 cannot send mail.
 
-SMTP Authentication **should not** be used for mail servers configured as the
-receiver of MX traffic. Such servers should also not use the ``tls_immediately``
-flag of the :class:`~slimta.edge.smtp.SmtpEdge` or
-:class:`~slimta.relay.smtp.mx.MxSmtpRelay` constructors.
+Configuring port 465 for SSL-only traffic looks very similar, with one extra
+keyword argument. Don't worry, two |Edge| services may be configured and run
+simultaneously::
+
+    ssl_edge = SmtpEdge(('', 465), queue, tls_tls_args, tls_immediately=True,
+                        validator_class=MyValidators, auth_class=MyAuth)
+    ssl_edge.start()
 
 Step 5: Daemonizing
 -------------------
@@ -167,7 +162,7 @@ Their usage is relatively simple::
 
 The :func:`~slimta.system.drop_privileges()` command is only necessary if you
 ran your MTA as ``root``, which is necessary to create servers listening on
-privileged ports such as 25.
+privileged ports such as 25, 587 or 465.
 
 The :func:`gevent.sleep()` call is not always necessary, but sometimes gevent
 will not have opened the ports by the time you drop privileges and then it will
@@ -183,5 +178,6 @@ Once you have all your pieces together, you can simply let the system function::
     except KeyboardInterrupt:
         pass
 
-.. _Open Relay:: http://en.wikipedia.org/wiki/Open_mail_relay
+.. _MSA: http://en.wikipedia.org/wiki/Mail_submission_agent
+.. _Open Relay: http://en.wikipedia.org/wiki/Open_mail_relay
 
