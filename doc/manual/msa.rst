@@ -51,7 +51,7 @@ Step 3: Add Queue Policies
 --------------------------
 
 Now that we have our |Queue|, we will most likely want to add various
-|PrequeuePolicy| and |PostqueuePolicy| rules to affect behavior. MSAs should add
+|QueuePolicy| and |RelayPolicy| rules to affect behavior. MSAs should add
 various headers, such as ``Date`` and ``Received``, for example::
 
     from slimta.policy.headers import *
