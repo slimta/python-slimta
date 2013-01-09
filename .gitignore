@@ -9,3 +9,4 @@ examples/*.db
 examples/cert.pem
 *.pyc
 *.pyo
+.*.swp

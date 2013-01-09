@@ -20,6 +20,15 @@ class TestQueue(MoxTestBase):
         self.store = self.mox.CreateMock(QueueStorage)
         self.env = Envelope('sender@example.com', ['rcpt@example.com'])
 
+    def test_queuestorage_interface(self):
+        qs = QueueStorage()
+        self.assertRaises(NotImplementedError, qs.write, self.env, 1234567890)
+        self.assertRaises(NotImplementedError, qs.set_timestamp, '1234', 1234567890)
+        self.assertRaises(NotImplementedError, qs.increment_attempts, '1234')
+        self.assertRaises(NotImplementedError, qs.load)
+        self.assertRaises(NotImplementedError, qs.get, '1234')
+        self.assertRaises(NotImplementedError, qs.remove, '1234')
+
     def test_policies(self):
         p1 = self.mox.CreateMock(QueuePolicy)
         p2 = self.mox.CreateMock(QueuePolicy)
