@@ -48,11 +48,11 @@ of a ``slimta`` MTA, you can pretty much handle any of these configurations.
    the result to another MTA with a
    :class:`~slimta.relay.smtp.static.StaticSmtpRelay` for further processing.
 
-.. _MTAs:: http://en.wikipedia.org/wiki/Message_transfer_agent
-.. _MDAs:: http://en.wikipedia.org/wiki/Mail_delivery_agent
-.. _MSAs:: http://en.wikipedia.org/wiki/Mail_submission_agent
-.. _Smart hosts:: http://en.wikipedia.org/wiki/Smart_host
-.. _SMTP proxies:: http://en.wikipedia.org/wiki/SMTP_proxy
-.. _Mail hubs:: http://en.wikipedia.org/wiki/E-mail_hub
-.. _maildrop:: http://www.courier-mta.org/maildrop/
+.. _MTAs: http://en.wikipedia.org/wiki/Message_transfer_agent
+.. _MDAs: http://en.wikipedia.org/wiki/Mail_delivery_agent
+.. _MSAs: http://en.wikipedia.org/wiki/Mail_submission_agent
+.. _Smart hosts: http://en.wikipedia.org/wiki/Smart_host
+.. _SMTP proxies: http://en.wikipedia.org/wiki/SMTP_proxy
+.. _Mail hubs: http://en.wikipedia.org/wiki/E-mail_hub
+.. _maildrop: http://www.courier-mta.org/maildrop/
 

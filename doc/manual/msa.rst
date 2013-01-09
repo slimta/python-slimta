@@ -178,6 +178,6 @@ Once you have all your pieces together, you can simply let the system function::
     except KeyboardInterrupt:
         pass
 
-.. _MSA:: http://en.wikipedia.org/wiki/Mail_submission_agent
-.. _Open Relay:: http://en.wikipedia.org/wiki/Open_mail_relay
+.. _MSA: http://en.wikipedia.org/wiki/Mail_submission_agent
+.. _Open Relay: http://en.wikipedia.org/wiki/Open_mail_relay
 
