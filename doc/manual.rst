@@ -13,8 +13,8 @@ Usage Manual
    manual/relay
    manual/policies
    manual/integrating
-   manual/incomingserver
-   manual/outgoingserver
+   manual/mda
+   manual/msa
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
