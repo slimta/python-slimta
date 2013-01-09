@@ -7,6 +7,7 @@ Integrating Everything
 .. figure:: http://slimta.org/images/diagrams/reception-to-delivery.png
    :target: http://slimta.org/images/diagrams/reception-to-delivery.png
    :width: 25%
+   :figwidth: 25%
    :align: right
 
    Diagram of an |Envelope| object's path from reception to delivery.
@@ -20,18 +21,17 @@ The queue initiates delivery attempts with a |Relay| object.
 Types of MTA Servers
 --------------------
 
-If you read the :doc:`manual/terminology` page, there are `MTAs`_, `MDAs`_,
-`MSAs`_, as well as other special configurations like `Smart hosts`_, `SMTP
-proxies`_, or `Mail hubs`_. Depending on how you sub-class the different
-building blocks of a ``slimta`` MTA, you can pretty much handle any of these
-configurations.
+If you read the :doc:`terminology` page, there are `MTAs`_, `MDAs`_, `MSAs`_,
+as well as other special configurations like `Smart hosts`_, `SMTP proxies`_,
+or `Mail hubs`_. Depending on how you sub-class the different building blocks
+of a ``slimta`` MTA, you can pretty much handle any of these configurations.
 
  * **MSA**: An MSA is all about taking a message from a mail client like
    Thunderbird and delivering it to its next hop on the Internet. Check out the
-   :doc:`manual/msa` page.
+   :doc:`msa` page.
 
  * **MDA**: An MDA takes messages from the Internet and delivers them localy to
-   something like `maildrop`_. Check out the :doc:`manual/mda` page.
+   something like `maildrop`_. Check out the :doc:`mda` page.
 
  * **Smart Host**: A smart host takes messages and delivers them to a specific
    destination, rather then dynamically looking up the recipient's destination.

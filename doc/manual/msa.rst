@@ -70,8 +70,8 @@ since an |Envelope| can have many recipients of many different domains::
     queue.add_prequeue_policy(RecipientDomainSplit())
 
 Most MSAs trust that their clients aren't going to be sending spam, so we'll
-leave discussion of the :class:`~slimta.policy.spamassassin.SpamAssassin` policy
-for the :doc:`manual/mda` section. The :class:`~slimta.policy.forward.Forward`
+leave discussion of the :class:`~slimta.policy.spamassassin.SpamAssassin`
+policy for the :doc:`mda` section. The :class:`~slimta.policy.forward.Forward`
 policy may prove useful in some MSA configurations.
 
 Step 4: Create the Edge
