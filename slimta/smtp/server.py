@@ -182,7 +182,7 @@ class Server(object):
         if self.tls and self.tls_immediately:
             self._encrypt_session()
 
-        command, arg = 'BANNER', None
+        command, arg = 'BANNER_', None
         while True:
             try:
                 if command:
@@ -210,10 +210,10 @@ class Server(object):
                 self.io.flush_send()
                 break
 
-    def _command_BANNER(self, arg):
+    def _command_BANNER_(self, arg):
         reply = Reply('220', 'ESMTP server')
         reply.enhanced_status_code = False
-        self._call_custom_handler('BANNER', reply)
+        self._call_custom_handler('BANNER_', reply)
 
         reply.send(self.io)
 

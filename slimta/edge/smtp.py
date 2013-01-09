@@ -119,7 +119,7 @@ class SmtpSession(object):
     def _trigger_ptr_lookup(self):
         self._ptr_lookup_thread = gevent.spawn(self._ptr_lookup)
 
-    def BANNER(self, reply):
+    def BANNER_(self, reply):
         self._trigger_ptr_lookup()
         self._call_validator('banner', reply, self.address)
 

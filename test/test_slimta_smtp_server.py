@@ -75,7 +75,7 @@ class TestSmtpServer(MoxTestBase):
 
     def test_unhandled_error(self):
         class TestHandler(object):
-            def BANNER(self, reply):
+            def BANNER_(self, reply):
                 raise Exception('test')
         self.sock.sendall('421 4.3.0 Unhandled system error\r\n')
         self.mox.ReplayAll()
@@ -83,6 +83,18 @@ class TestSmtpServer(MoxTestBase):
         with self.assertRaises(Exception) as cm:
             s.handle()
         self.assertEqual(('test', ), cm.exception.args)
+
+    def test_banner_command(self):
+        self.sock.sendall('220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn('BANNER\r\n')
+        self.sock.sendall('500 5.5.2 Syntax error, command unrecognized\r\n')
+        self.sock.recv(IsA(int)).AndReturn('BANNER_\r\n')
+        self.sock.sendall('500 5.5.2 Syntax error, command unrecognized\r\n')
+        self.sock.recv(IsA(int)).AndReturn('QUIT\r\n')
+        self.sock.sendall('221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.handle()
 
     def test_tls_immediately(self):
         sock = self.mox.CreateMockAnything()
