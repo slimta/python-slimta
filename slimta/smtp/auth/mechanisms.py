@@ -56,7 +56,7 @@ class Mechanism(object):
         return ret
 
     def server_attempt(self, io, initial_response):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class Plain(Mechanism):

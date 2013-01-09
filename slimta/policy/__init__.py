@@ -63,7 +63,7 @@ class QueuePolicy(object):
                   empty list will keep using ``envelope``.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class RelayPolicy(object):
@@ -80,7 +80,7 @@ class RelayPolicy(object):
                          any changes to.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

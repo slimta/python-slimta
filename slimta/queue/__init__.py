@@ -68,7 +68,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def set_timestamp(self, id, timestamp):
         """Sets a new timestamp for the message's next delivery attempt.
@@ -78,7 +78,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def increment_attempts(self, id):
         """Increments the number of delivery attempts associated with the
@@ -89,7 +89,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def load(self):
         """Loads all queued messages from the storage engine, such that the
@@ -100,7 +100,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get(self, id):
         """Returns the |Envelope| object associated with the given unique
@@ -111,7 +111,7 @@ class QueueStorage(object):
         :raises: :class:`KeyError`, :class:`QueueError`
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def remove(self, id):
         """Removes the |Envelope| associated with the given unique identifier
@@ -122,7 +122,7 @@ class QueueStorage(object):
         :raises: :class:`QueueError`.
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class Queue(Greenlet):

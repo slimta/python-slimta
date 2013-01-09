@@ -83,10 +83,10 @@ class Edge(gevent.Greenlet):
         :param socket: The socket for the connected client.
         :param address: The address of the connected client.
 
-        :raises: :class:`NotImplemented`
+        :raises: :class:`NotImplementedError`
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def _run(self):
         self.server.start()
