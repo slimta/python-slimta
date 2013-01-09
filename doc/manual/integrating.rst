@@ -7,7 +7,7 @@ Integrating Everything
 .. figure:: http://slimta.org/images/diagrams/reception-to-delivery.png
    :target: http://slimta.org/images/diagrams/reception-to-delivery.png
    :width: 100%
-   :figwidth: 350
+   :figwidth: 300px
    :align: right
 
    Diagram of an |Envelope| object's path from reception to delivery.
