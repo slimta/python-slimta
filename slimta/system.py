@@ -25,6 +25,7 @@ running processes.
 """
 
 import os
+import sys
 from pwd import getpwnam
 from grp import getgrnam
 
