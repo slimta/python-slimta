@@ -59,7 +59,7 @@ class Edge(gevent.Greenlet):
 
     def handoff(self, envelope):
         """When :meth:`.handle()` finishes receiving a message, it should pass
-        the new |Envelope| object to this method. Because a |PrequeuePolicy| may
+        the new |Envelope| object to this method. Because a |QueuePolicy| may
         generate new |Envelope| objects, this method returns a list of tuples,
         ``(envelope, result)`` where ``result`` is either an ID string or a
         :class:`~slimta.queue.QueueError`. The edge service can then use this

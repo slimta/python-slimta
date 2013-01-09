@@ -20,16 +20,16 @@
 #
 
 """Package containing useful policies, which can be configured to run before
-or after queuing the message with the
-:meth:`~slimta.queue.Queue.add_prequeue_policy()` and
-:meth:`~slimta.queue.Queue.add_postqueue_policy()`, respectively.
+queuing or before relaying the message with the
+:meth:`slimta.queue.Queue.add_policy()` and
+:meth:`slimta.relay.Relay.add_policy()`, respectively.
 
 If a policy is applied before queuing, it is executed only once and any changes
 it makes to the |Envelope| will be stored persistently. This is especially
 useful for tasks such as header and content modification, since these may be
 more expensive operations and should only run once.
 
-If a policy is applied after queuing, it is executed before each delivery
+If a policy is applied before relaying, it is executed before each delivery
 attempt and no resulting changes will be persisted to storage. This is useful
 for policies that have to do with delivery, such as forwarding.
 
@@ -37,7 +37,7 @@ for policies that have to do with delivery, such as forwarding.
 
 from slimta import SlimtaError
 
-__all__ = ['PolicyError', 'PrequeuePolicy', 'PostqueuePolicy']
+__all__ = ['PolicyError', 'QueuePolicy', 'RelayPolicy']
 
 
 class PolicyError(SlimtaError):
@@ -45,15 +45,15 @@ class PolicyError(SlimtaError):
     pass
 
 
-class PrequeuePolicy(object):
-    """Base class for pre-queue policies. These are run before a message is
+class QueuePolicy(object):
+    """Base class for queue policies. These are run before a message is
     persistently queued and may overwrite the original |Envelope| with one or
     many new |Envelope| objects.
     
     """
 
     def apply(self, envelope):
-        """:class:`PrequeuePolicy` sub-classes must override this method, which
+        """:class:`QueuePolicy` sub-classes must override this method, which
         will be called by the |Queue| before storage.
 
         :param envelope: The |Envelope| object the policy execution should apply
@@ -66,15 +66,15 @@ class PrequeuePolicy(object):
         raise NotImplemented()
 
 
-class PostqueuePolicy(object):
-    """Base class for post-queue policies. These are run after a message is
-    pulled from the queue, immediately before a relay attempt is made.
+class RelayPolicy(object):
+    """Base class for relay policies. These are run immediately before a relay
+    attempt is made.
 
     """
 
     def apply(self, envelope):
-        """:class:`PostqueuePolicy` sub-classes must override this method, which
-        will be called by the |Queue| before delivery.
+        """:class:`RelayPolicy` sub-classes must override this method, which
+        will be called by the |Relay| before delivery.
 
         :param envelope: The |Envelope| object the policy execution should apply
                          any changes to.

@@ -27,12 +27,12 @@ messages well, such as :class:`~slimta.relay.smtp.mx.MxSmtpRelay`.
 
 import copy
 
-from slimta.policy import PrequeuePolicy
+from slimta.policy import QueuePolicy
 
 __all__ = ['RecipientSplit', 'RecipientDomainSplit']
 
 
-class RecipientSplit(PrequeuePolicy):
+class RecipientSplit(QueuePolicy):
     """If a given |Envelope| has more than one recipient, this policy splits
     it, generating a list of new :class:`Envelope` object copies where each has
     only one recipient. Each new object has its own copy of
@@ -53,7 +53,7 @@ class RecipientSplit(PrequeuePolicy):
         return ret
 
 
-class RecipientDomainSplit(PrequeuePolicy):
+class RecipientDomainSplit(QueuePolicy):
     """If a given |Envelope| recipients of more than one unique domain (case-
     insensitive), this policy splits it generating a list of new
     :class:`Envelope` object copies where each has only one recipient. Each new

@@ -8,7 +8,7 @@ from gevent.pool import Pool
 from slimta.queue import Queue, QueueStorage
 from slimta.smtp.reply import Reply
 from slimta.relay import Relay, TransientRelayError, PermanentRelayError
-from slimta.policy import PrequeuePolicy, PostqueuePolicy
+from slimta.policy import QueuePolicy
 from slimta.envelope import Envelope
 
 
@@ -20,29 +20,17 @@ class TestQueue(MoxTestBase):
         self.store = self.mox.CreateMock(QueueStorage)
         self.env = Envelope('sender@example.com', ['rcpt@example.com'])
 
-    def test_prequeue_policies(self):
-        p1 = self.mox.CreateMock(PrequeuePolicy)
-        p2 = self.mox.CreateMock(PrequeuePolicy)
+    def test_policies(self):
+        p1 = self.mox.CreateMock(QueuePolicy)
+        p2 = self.mox.CreateMock(QueuePolicy)
         p1.apply(self.env)
         p2.apply(self.env)
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
-        queue.add_prequeue_policy(p1)
-        queue.add_prequeue_policy(p2)
-        self.assertRaises(TypeError, queue.add_prequeue_policy, None)
-        queue._run_prequeue_policies(self.env)
-
-    def test_postqueue_policies(self):
-        p1 = self.mox.CreateMock(PostqueuePolicy)
-        p2 = self.mox.CreateMock(PostqueuePolicy)
-        p2.apply(self.env)
-        p1.apply(self.env)
-        self.mox.ReplayAll()
-        queue = Queue(self.store, self.relay)
-        queue.add_postqueue_policy(p2)
-        queue.add_postqueue_policy(p1)
-        self.assertRaises(TypeError, queue.add_postqueue_policy, None)
-        queue._run_postqueue_policies(self.env)
+        queue.add_policy(p1)
+        queue.add_policy(p2)
+        self.assertRaises(TypeError, queue.add_policy, None)
+        queue._run_policies(self.env)
 
     def test_add_queued(self):
         queue = Queue(self.store, self.relay)
@@ -70,7 +58,7 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.relay.attempt(self.env, 0)
+        self.relay._attempt(self.env, 0)
         self.store.remove('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
@@ -78,9 +66,9 @@ class TestQueue(MoxTestBase):
         queue.relay_pool.join()
 
     def test_enqueue_wait_splitpolicy(self):
-        splitpolicy1 = self.mox.CreateMock(PrequeuePolicy)
-        splitpolicy2 = self.mox.CreateMock(PrequeuePolicy)
-        regpolicy = self.mox.CreateMock(PrequeuePolicy)
+        splitpolicy1 = self.mox.CreateMock(QueuePolicy)
+        splitpolicy2 = self.mox.CreateMock(QueuePolicy)
+        regpolicy = self.mox.CreateMock(QueuePolicy)
         env1 = Envelope('sender1@example.com', ['rcpt1@example.com'])
         env2 = Envelope('sender2@example.com', ['rcpt2@example.com'])
         env3 = Envelope('sender3@example.com', ['rcpt3@example.com'])
@@ -92,17 +80,17 @@ class TestQueue(MoxTestBase):
         self.store.write(env1, IsA(float)).AndReturn('1234')
         self.store.write(env2, IsA(float)).AndReturn('5678')
         self.store.write(env3, IsA(float)).AndReturn('90AB')
-        self.relay.attempt(env1, 0).InAnyOrder('relay')
-        self.relay.attempt(env2, 0).InAnyOrder('relay')
-        self.relay.attempt(env3, 0).InAnyOrder('relay')
+        self.relay._attempt(env1, 0).InAnyOrder('relay')
+        self.relay._attempt(env2, 0).InAnyOrder('relay')
+        self.relay._attempt(env3, 0).InAnyOrder('relay')
         self.store.remove('1234').InAnyOrder('relay')
         self.store.remove('5678').InAnyOrder('relay')
         self.store.remove('90AB').InAnyOrder('relay')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
-        queue.add_prequeue_policy(splitpolicy1)
-        queue.add_prequeue_policy(regpolicy)
-        queue.add_prequeue_policy(splitpolicy2)
+        queue.add_policy(splitpolicy1)
+        queue.add_policy(regpolicy)
+        queue.add_policy(splitpolicy2)
         self.assertEqual([(env1, '1234'), (env2, '5678'), (env3, '90AB')],
                          queue.enqueue(self.env))
         queue.relay_pool.join()
@@ -115,7 +103,7 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_transientfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.relay.attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
+        self.relay._attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
         self.store.increment_attempts('1234')
         self.store.set_timestamp('1234', IsA(float))
         self.mox.ReplayAll()
@@ -127,7 +115,7 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_transientfail_noretry(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.relay.attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
+        self.relay._attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
         self.store.increment_attempts('1234')
         self.store.remove('1234')
         self.mox.ReplayAll()
@@ -139,7 +127,7 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_permanentfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.relay.attempt(self.env, 0).AndRaise(PermanentRelayError('permanent', Reply('550', 'permanent')))
+        self.relay._attempt(self.env, 0).AndRaise(PermanentRelayError('permanent', Reply('550', 'permanent')))
         self.store.remove('1234')
         self.mox.ReplayAll()
         def no_bounce(envelope, reply):
@@ -150,7 +138,7 @@ class TestQueue(MoxTestBase):
 
     def test_check_ready(self):
         self.store.get('1234').AndReturn((self.env, 0))
-        self.relay.attempt(self.env, 0)
+        self.relay._attempt(self.env, 0)
         self.store.remove('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, store_pool=Pool(5))
@@ -199,11 +187,11 @@ class TestQueue(MoxTestBase):
         self.store.get('three').AndReturn((self.env, 1))
         self.store.get('two').AndReturn((self.env, 2))
         self.store.get('one').AndReturn((self.env, 3))
-        self.relay.attempt(self.env, 1)
+        self.relay._attempt(self.env, 1)
         self.store.remove('three')
-        self.relay.attempt(self.env, 2)
+        self.relay._attempt(self.env, 2)
         self.store.remove('two')
-        self.relay.attempt(self.env, 3)
+        self.relay._attempt(self.env, 3)
         self.store.remove('one')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, store_pool=5, relay_pool=5)

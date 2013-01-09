@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 #
 
-"""Module containing several |PrequeuePolicy| implementations for handling the
+"""Module containing several |QueuePolicy| implementations for handling the
 standard RFC headers.
 
 """
@@ -30,13 +30,13 @@ from math import floor
 
 from gevent.socket import getfqdn
 
-from slimta.policy import PrequeuePolicy
+from slimta.policy import QueuePolicy
 from slimta import VERSION
 
 __all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader']
 
 
-class AddDateHeader(PrequeuePolicy):
+class AddDateHeader(QueuePolicy):
     """Checks for the existence of the RFC-specified ``Date`` header, adding it
     if it does not exist.
 
@@ -61,7 +61,7 @@ class AddDateHeader(PrequeuePolicy):
             envelope.headers['Date'] = self.build_date(envelope.timestamp)
 
 
-class AddMessageIdHeader(PrequeuePolicy):
+class AddMessageIdHeader(QueuePolicy):
     """Checks for the existence of the RFC-specified ``Message-Id`` header,
     adding it if it does not exist.
 
@@ -81,7 +81,7 @@ class AddMessageIdHeader(PrequeuePolicy):
             envelope.headers['Message-Id'] = mid
 
 
-class AddReceivedHeader(PrequeuePolicy):
+class AddReceivedHeader(QueuePolicy):
     """Adds the RFC-specified ``Received`` header to the message. This header
     should be added for every hop from a message's origination to its
     destination.

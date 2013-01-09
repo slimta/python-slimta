@@ -25,6 +25,7 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 """
 
 from slimta import SlimtaError
+from slimta.policy import RelayPolicy
 
 __all__ = ['PermanentRelayError', 'TransientRelayError', 'Relay']
 
@@ -58,6 +59,29 @@ class Relay(object):
 
     """
 
+    def __init__(self):
+        self.relay_policies = []
+
+    def add_policy(self, policy):
+        """Adds a |RelayPolicy| to be executed each time the relay attempts
+        delivery for a message.
+
+        :param policy: |RelayPolicy| object to execute.
+
+        """
+        if isinstance(policy, RelayPolicy):
+            self.relay_policies.append(policy)
+        else:
+            raise TypeError('Argument not a RelayPolicy.')
+
+    def _run_policies(self, envelope):
+        for policy in self.relay_policies:
+            policy.apply(envelope)
+
+    def _attempt(self, envelope, attempts):
+        self._run_policies(envelope)
+        return self.attempt(envelope, attempts)
+
     def attempt(self, envelope, attempts):
         """This method must be overriden by sub-classes in order to be passed
         in to the |Queue| constructor.
@@ -67,7 +91,7 @@ class Relay(object):
         :raises: :class:`PermanentRelayError`, :class:`TransientRelayError`
 
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

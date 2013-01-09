@@ -39,7 +39,7 @@ from slimta import SlimtaError
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.smtp.reply import Reply
 from slimta.bounce import Bounce
-from slimta.policy import PrequeuePolicy, PostqueuePolicy
+from slimta.policy import QueuePolicy
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
@@ -158,44 +158,31 @@ class Queue(Greenlet):
         self.wake = Event()
         self.queued = []
         self.queued_lock = Semaphore(1)
-        self.prequeue_policies = []
-        self.postqueue_policies = []
+        self.queue_policies = []
         self._use_pool('store_pool', store_pool)
         self._use_pool('relay_pool', relay_pool)
 
-    def add_prequeue_policy(self, policy):
-        """Adds a |PrequeuePolicy| to be executed before messages are persisted
+    def add_policy(self, policy):
+        """Adds a |QueuePolicy| to be executed before messages are persisted
         to storage.
 
-        :param policy: |PrequeuePolicy| object to execute.
+        :param policy: |QueuePolicy| object to execute.
 
         """
-        if isinstance(policy, PrequeuePolicy):
-            self.prequeue_policies.append(policy)
+        if isinstance(policy, QueuePolicy):
+            self.queue_policies.append(policy)
         else:
-            raise TypeError('Argument not a PrequeuePolicy.')
-
-    def add_postqueue_policy(self, policy):
-        """Adds a |PostqueuePolicy| to be executed after messages are persisted
-        to storage, before each delivery attempt.
-
-        :param policy: |PostqueuePolicy| object to execute.
-
-        """
-        if isinstance(policy, PostqueuePolicy):
-            self.postqueue_policies.append(policy)
-        else:
-            raise TypeError('Argument not a PostqueuePolicy.')
+            raise TypeError('Argument not a QueuePolicy.')
 
     @staticmethod
     def _default_backoff(envelope, attempts):
         pass
 
-    def _run_prequeue_policies(self, envelope):
+    def _run_policies(self, envelope):
         results = [envelope]
         def recurse(current, i):
             try:
-                policy = self.prequeue_policies[i]
+                policy = self.queue_policies[i]
             except IndexError:
                 return
             ret = policy.apply(current)
@@ -208,10 +195,6 @@ class Queue(Greenlet):
                 recurse(current, i+1)
         recurse(envelope, 0)
         return results
-
-    def _run_postqueue_policies(self, envelope):
-        for policy in self.postqueue_policies:
-            policy.apply(envelope)
 
     def _use_pool(self, attr, pool):
         if pool is None:
@@ -253,7 +236,7 @@ class Queue(Greenlet):
 
     def enqueue(self, envelope):
         now = time.time()
-        envelopes = self._run_prequeue_policies(envelope)
+        envelopes = self._run_policies(envelope)
         ids = self._pool_imap('store', self.store.write, envelopes, repeat(now))
         results = zip(envelopes, ids)
         for env, id in results:
@@ -290,7 +273,7 @@ class Queue(Greenlet):
 
     def _attempt(self, id, envelope, attempts):
         try:
-            self.relay.attempt(envelope, attempts)
+            self.relay._attempt(envelope, attempts)
         except TransientRelayError, e:
             self._pool_spawn('store', self._retry_later, id, envelope, e.reply)
         except PermanentRelayError, e:
@@ -300,7 +283,6 @@ class Queue(Greenlet):
 
     def _dequeue(self, id):
         envelope, attempts = self.store.get(id)
-        self._run_postqueue_policies(envelope)
         self._pool_spawn('relay', self._attempt, id, envelope, attempts)
 
     def _check_ready(self, now):
