@@ -77,6 +77,9 @@ class Bounce(Envelope):
 
     :param envelope: The |Envelope| object of the original failed message.
     :param reply: The |Reply| object that caused the failure.
+    :param headers_only: If given ``True``, the bounce will include only the
+                         only the original message's headers, not the entire
+                         message body.
 
     """
 
@@ -111,10 +114,10 @@ class Bounce(Envelope):
     #: attribute of bounce messages.
     receiver = getfqdn()
 
-    def __init__(self, envelope, reply):
+    def __init__(self, envelope, reply, headers_only=False):
         super(Bounce, self).__init__(sender=self.sender,
                                      recipients=[envelope.sender])
-        self._build_message(envelope, reply)
+        self._build_message(envelope, reply, headers_only)
         self.timestamp = time.time()
         self.client = Bounce.client
         self.receiver = Bounce.receiver
@@ -130,15 +133,15 @@ class Bounce(Envelope):
                 'code': reply.code,
                 'message': reply.message}
 
-    def _build_message(self, envelope, reply):
+    def _build_message(self, envelope, reply, headers_only):
         sub_table = self._get_substitution_table(envelope, reply)
         new_payload = cStringIO.StringIO()
         new_payload.write(self.header_template.format(**sub_table))
         header_data, message_data = envelope.flatten()
         new_payload.write(header_data)
-        new_payload.write(message_data)
+        if not headers_only:
+            new_payload.write(message_data)
         new_payload.write(self.footer_template.format(**sub_table))
         self.parse(new_payload.getvalue())
-
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
