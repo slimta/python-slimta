@@ -20,5 +20,6 @@ slimta
    slimta.envelope
    slimta.bounce
    slimta.policy
+   slimta.util
    slimta.system
 
