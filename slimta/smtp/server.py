@@ -217,6 +217,10 @@ class Server(object):
 
         reply.send(self.io)
 
+        if reply.code != '220':
+            self._call_custom_handler('CLOSE')
+            raise StopIteration()
+
     def _command_EHLO(self, ehlo_as):
         reply = Reply('250', 'Hello {0}'.format(ehlo_as))
         reply.enhanced_status_code = False
@@ -408,7 +412,6 @@ class Server(object):
         reply.send(self.io)
 
         if reply.code == '221':
-            self.io.flush_send()
             self._call_custom_handler('CLOSE')
             raise StopIteration()
 
