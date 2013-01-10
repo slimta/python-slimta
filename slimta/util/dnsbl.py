@@ -31,7 +31,7 @@ from functools import wraps
 import gevent
 import dns.resolver
 from dns.exception import DNSException
-from gevent.pool import Pool
+from gevent.pool import Pool, Group
 from gevent.event import Event
 
 from slimta.smtp.reply import Reply
@@ -56,9 +56,6 @@ class DnsBlocklist(object):
     
     def __init__(self, address):
         self.address = address
-
-    def _reverse_ip_octets(self, ip):
-        return four, three, two, one
 
     def _build_query(self, ip):
         one, two, three, four = ip.split('.', 3)
@@ -107,8 +104,9 @@ class DnsBlocklist(object):
             except DNSException:
                 pass
             else:
-                for txt in answers:
-                    return str(txt)
+                if answers:
+                    for txt in answers:
+                        return str(txt)
 
 
 class DnsBlocklistGroup(object):
@@ -135,7 +133,7 @@ class DnsBlocklistGroup(object):
         if dnsbl.get(ip):
             matches.add(dnsbl.address)
 
-    def _run_dnsbl_get_reason(self, matches, dnsbl, ip):
+    def _run_dnsbl_get_reason(self, reasons, dnsbl, ip):
         reasons[dnsbl.address] = dnsbl.get_reason(ip)
 
     def __contains__(self, ip):
@@ -161,7 +159,7 @@ class DnsBlocklistGroup(object):
         group.kill()
         return matches
 
-    def get_reason(self, matches, ip, timeout=None):
+    def get_reasons(self, matches, ip, timeout=None):
         """Gets the reasons for each matching DNSBL for the IP address.
 
         :param matches: The DNSBL matches, as returned by :meth:`.get()`.
