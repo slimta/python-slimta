@@ -42,21 +42,25 @@ class MaildropRelay(Relay):
     :param argv0: The command to use for ``maildrop``.
     :param timeout: The length of time a ``maildrop`` delivery is allowed to run
                     before it fails transiently, default unlimited.
+    :param extra_args: List of extra arguments passed in to maildrop.
 
     """
 
     EX_TEMPFAIL = 75
 
-    def __init__(self, argv0='maildrop', timeout=None):
+    def __init__(self, argv0='maildrop', timeout=None, extra_args=None):
         super(MaildropRelay, self).__init__()
         self.argv0 = argv0
         self.timeout = timeout
+        self.extra_args = extra_args
 
     def _exec_maildrop(self, envelope):
         header_data, message_data = envelope.flatten()
         stdin = ''.join((header_data, message_data))
         with Timeout(self.timeout):
             args = [self.argv0, '-f', envelope.sender]
+            if self.extra_args:
+                args += self.extra_args
             p = gevent_subprocess.Popen(args, stdin=gevent_subprocess.PIPE,
                                               stdout=gevent_subprocess.PIPE,
                                               stderr=gevent_subprocess.PIPE)
