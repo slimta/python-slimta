@@ -27,7 +27,7 @@ certain situations (typically when a client sends various commands).
 
 import re
 
-from gevent.ssl import SSLSocket
+from gevent.ssl import SSLError
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from gevent.timeout import Timeout as TimeoutHappened
@@ -180,7 +180,11 @@ class Server(object):
 
         """
         if self.tls and self.tls_immediately:
-            self._encrypt_session()
+            try:
+                self._encrypt_session()
+            except SSLError:
+                tls_failure.send(self.io, flush=True)
+                return
 
         command, arg = 'BANNER_', None
         while True:
@@ -268,7 +272,11 @@ class Server(object):
         reply.send(self.io, flush=True)
 
         if reply.code == '220':
-            self._encrypt_session()
+            try:
+                self._encrypt_session()
+            except SSLError:
+                tls_failure.send(self.io)
+                raise StopIteration()
             self.ehlo_as = None
             self.extensions.drop('STARTTLS')
 

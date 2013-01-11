@@ -21,7 +21,6 @@
 
 import re
 import cStringIO
-from pprint import pformat
 
 from gevent.ssl import SSLSocket
 
@@ -67,10 +66,10 @@ class IO(object):
     def _tls_wrapper(self, socket, tls):
         sslsock = SSLSocket(socket, **tls)
         sslsock.do_handshake()
-        log.encrypt(socket, tls)
         return sslsock
 
     def encrypt_socket(self, tls):
+        log.encrypt(self.socket, tls)
         self.socket = self._tls_wrapper(self.socket, tls)
 
     def buffered_recv(self):
