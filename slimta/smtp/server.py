@@ -157,9 +157,11 @@ class Server(object):
         self.have_rcptto = None
 
     def _encrypt_session(self):
-        self.io.encrypt_socket(self.tls)
+        if not self.io.encrypt_socket(self.tls):
+            return False
         self._call_custom_handler('TLSHANDSHAKE')
         self.encrypted = True
+        return True
 
     def _handle_command(self, which, arg):
         method = '_command_'+which
@@ -180,9 +182,7 @@ class Server(object):
 
         """
         if self.tls and self.tls_immediately:
-            try:
-                self._encrypt_session()
-            except SSLError:
+            if not self._encrypt_session():
                 tls_failure.send(self.io, flush=True)
                 return
 
@@ -272,9 +272,7 @@ class Server(object):
         reply.send(self.io, flush=True)
 
         if reply.code == '220':
-            try:
-                self._encrypt_session()
-            except SSLError:
+            if not self._encrypt_session():
                 tls_failure.send(self.io)
                 raise StopIteration()
             self.ehlo_as = None
