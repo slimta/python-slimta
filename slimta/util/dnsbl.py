@@ -203,7 +203,7 @@ def check_dnsbl(address, match_code=None, match_message=None, timeout=10.0):
        not isinstance(address, DnsBlocklistGroup):
         address = DnsBlocklist(address)
     match_code = match_code or '550'
-    match_message = match_message = '5.7.1 Access denied')
+    match_message = match_message or '5.7.1 Access denied'
 
     def new_decorator(f):
         @wraps(f)
