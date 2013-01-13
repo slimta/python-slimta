@@ -183,31 +183,35 @@ class DnsBlocklistGroup(object):
         return reasons
 
 
-def check_dnsbl(address, match_reply=None, timeout=10.0):
+def check_dnsbl(address, match_code=None, match_message=None, timeout=10.0):
     """Decorator for :class:`~slimta.edge.smtp.SmtpValidators` methods that are
     given a |Reply| object. It will check the current SMTP session's connecting
     IP address against the DNSBL provided at domain name ``address``. If the IP
-    matches, ``match_reply`` is sent and the validator method is never called.
+    matches, set the reply and do not call the validator method.
 
     :param address: :class:`DnsBlocklist` object, :class:`DnsBlocklistGroup`
                     object, or DNSBL domain name string.
-    :param match_reply: |Reply| object to send if the IP adress matches. The
-                        default is a ``550`` code with standard message.
+    :param match_code: When the connecting IP address matches, set the |Reply|
+                       code to this string, default ``550``.
+    :param match_message: When the connecting IP address matches, set the
+                          |Reply| message to this string, default
+                          ``5.7.1 Access denied``.
     :param timeout: Timeout in seconds before giving up the check.
 
     """
     if not isinstance(address, DnsBlocklist) and \
        not isinstance(address, DnsBlocklistGroup):
         address = DnsBlocklist(address)
-    if not match_reply:
-        match_reply = Reply('550', '5.7.1 Access denied')
+    match_code = match_code or '550'
+    match_message = match_message = '5.7.1 Access denied')
 
     def new_decorator(f):
         @wraps(f)
         def new_f(self, reply, *args, **kwargs):
             ip = self.session.address[0]
             if address.get(ip, timeout=timeout):
-                reply.copy(match_reply)
+                reply.code = match_code
+                reply.message = match_message
             else:
                 return f(self, reply, *args, **kwargs)
         return new_f
