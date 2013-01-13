@@ -25,6 +25,7 @@ import threading
 threading._DummyThread._Thread__stop = lambda x: 42
 
 import re
+import repr
 import logging
 from ast import literal_eval
 
@@ -74,11 +75,15 @@ def getQueueStorageLogger(name):
     return QueueStorageLogger(logger)
 
 
+log_repr = repr.Repr()
+log_repr.maxstring = 100
+
+
 def logline(log, type, typeid, operation, **data):
     if not data:
         log('{0}:{1}:{2}'.format(type, typeid, operation))
     else:
-        data_str = ' '.join(['='.join((key, repr(val)))
+        data_str = ' '.join(['='.join((key, log_repr.repr(val)))
                              for key, val in sorted(data.iteritems())])
         log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 

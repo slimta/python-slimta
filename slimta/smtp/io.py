@@ -21,9 +21,8 @@
 
 import re
 import cStringIO
-from pprint import pformat
 
-from gevent.ssl import SSLSocket
+from gevent.ssl import SSLSocket, SSLError
 
 from slimta.smtp import ConnectionLost, BadReply
 from slimta.smtp.reply import Reply
@@ -67,11 +66,15 @@ class IO(object):
     def _tls_wrapper(self, socket, tls):
         sslsock = SSLSocket(socket, **tls)
         sslsock.do_handshake()
-        log.encrypt(socket, tls)
         return sslsock
 
     def encrypt_socket(self, tls):
-        self.socket = self._tls_wrapper(self.socket, tls)
+        log.encrypt(self.socket, tls)
+        try:
+            self.socket = self._tls_wrapper(self.socket, tls)
+            return True
+        except SSLError:
+            return False
 
     def buffered_recv(self):
         received = self.raw_recv()

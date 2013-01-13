@@ -26,18 +26,29 @@ These lists can be hugely helpful and inexpensive ways of filtering spam.
 
 """
 
-__all__ = ['DnsBlackholeList']
+from functools import wraps
 
 import gevent
 import dns.resolver
 from dns.exception import DNSException
-from gevent.pool import Pool
+from gevent.pool import Pool, Group
 from gevent.event import Event
 
+from slimta.smtp.reply import Reply
 
-class DnsBlackholeList(object):
-    """Class to check one DNSBL. This object also supports the membership test
-    protocol, so it would support a check like ``'127.0.0.1' in dnsbl``.
+__all__ = ['DnsBlocklist', 'DnsBlocklistGroup', 'check_dnsbl']
+
+
+class DnsBlocklist(object):
+    """Class to check one DNSBL. This object provides ``__contains__`` and
+    ``__getitem__`` protocols, so it supports simpler usage::
+
+        if '123.4.56.7' in dnsbl:
+            reason = dnsbl['123.4.56.7']
+
+    *Note:* Because ``__getitem__`` simply calls :meth:`.get_reason()`, it
+    will never raise a :class:`KeyError` and should only be used after using
+    :meth:`.get()` or ``__contains__``.
 
     :param address: The DNSBL domain name.
 
@@ -46,18 +57,15 @@ class DnsBlackholeList(object):
     def __init__(self, address):
         self.address = address
 
-    def _reverse_ip_octets(self, ip):
-        return four, three, two, one
-
     def _build_query(self, ip):
         one, two, three, four = ip.split('.', 3)
         return '.'.join([four, three, two, one, self.address])
 
     def __contains__(self, ip):
-        try:
-            return self.get(ip, timeout=10.0)
-        except gevent.Timeout:
-            return False
+        return self.get(ip, timeout=10.0)
+
+    def __getitem__(self, ip):
+        return self.get_reason(ip, timeout=10.0)
 
     def get(self, ip, timeout=None):
         """Checks this DNSBL for the given IP address. This method does not
@@ -89,18 +97,19 @@ class DnsBlackholeList(object):
         :returns: A string with the reason, or ``None``.
 
         """
-        with gevent.Timeout(timeout):
+        with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
                 answers = dns.resolver.query(query, 'TXT')
             except DNSException:
                 pass
             else:
-                for txt in answers:
-                    return str(txt)
+                if answers:
+                    for txt in answers:
+                        return str(txt)
 
 
-class DnsBLGroup(object):
+class DnsBlocklistGroup(object):
     """Allows a group of DNSBLs to be queried simultaneously."""
 
     def __init__(self, pool=None):
@@ -118,14 +127,17 @@ class DnsBLGroup(object):
         :param address: The DNSBL domain name.
 
         """
-        self.dnsbls.append(DnsBlackholeList(address))
+        self.dnsbls.append(DnsBlocklist(address))
 
     def _run_dnsbl_get(self, matches, dnsbl, ip):
         if dnsbl.get(ip):
             matches.add(dnsbl.address)
 
-    def _run_dnsbl_get_reason(self, matches, dnsbl, ip):
+    def _run_dnsbl_get_reason(self, reasons, dnsbl, ip):
         reasons[dnsbl.address] = dnsbl.get_reason(ip)
+
+    def __contains__(self, ip):
+        return bool(self.get(ip, timeout=10.0))
 
     def get(self, ip, timeout=None):
         """Queries all DNSBLs in the group for matches.
@@ -147,7 +159,7 @@ class DnsBLGroup(object):
         group.kill()
         return matches
 
-    def get_reason(self, matches, ip, timeout=None):
+    def get_reasons(self, matches, ip, timeout=None):
         """Gets the reasons for each matching DNSBL for the IP address.
 
         :param matches: The DNSBL matches, as returned by :meth:`.get()`.
@@ -169,6 +181,37 @@ class DnsBLGroup(object):
             group.join()
         group.kill()
         return reasons
+
+
+def check_dnsbl(address, match_reply=None, timeout=10.0):
+    """Decorator for :class:`~slimta.edge.smtp.SmtpValidators` methods that are
+    given a |Reply| object. It will check the current SMTP session's connecting
+    IP address against the DNSBL provided at domain name ``address``. If the IP
+    matches, ``match_reply`` is sent and the validator method is never called.
+
+    :param address: :class:`DnsBlocklist` object, :class:`DnsBlocklistGroup`
+                    object, or DNSBL domain name string.
+    :param match_reply: |Reply| object to send if the IP adress matches. The
+                        default is a ``550`` code with standard message.
+    :param timeout: Timeout in seconds before giving up the check.
+
+    """
+    if not isinstance(address, DnsBlocklist) and \
+       not isinstance(address, DnsBlocklistGroup):
+        address = DnsBlocklist(address)
+    if not match_reply:
+        match_reply = Reply('550', '5.7.1 Access denied')
+
+    def new_decorator(f):
+        @wraps(f)
+        def new_f(self, reply, *args, **kwargs):
+            ip = self.session.address[0]
+            if address.get(ip, timeout=timeout):
+                reply.copy(match_reply)
+            else:
+                return f(self, reply, *args, **kwargs)
+        return new_f
+    return new_decorator
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -3,6 +3,7 @@ import unittest
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
+from gevent.ssl import SSLError
 
 from slimta.smtp.server import Server
 from slimta.smtp.auth import Auth, CredentialsInvalidError
@@ -108,6 +109,16 @@ class TestSmtpServer(MoxTestBase):
                                tls_wrapper=sock.tls_wrapper)
         s.handle()
 
+    def test_tls_immediately_sslerror(self):
+        sock = self.mox.CreateMockAnything()
+        sock.fileno = lambda: -1
+        sock.tls_wrapper(sock, self.tls_args).AndRaise(SSLError())
+        sock.sendall('421 4.7.0 TLS negotiation failed\r\n')
+        self.mox.ReplayAll()
+        s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
+                               tls_wrapper=sock.tls_wrapper)
+        s.handle()
+
     def test_ehlo(self):
         self.sock.sendall('220 ESMTP server\r\n')
         self.sock.recv(IsA(int)).AndReturn('EHLO there\r\n')
@@ -151,19 +162,25 @@ class TestSmtpServer(MoxTestBase):
         self.assertEqual(None, s.ehlo_as)
 
     def test_starttls_bad(self):
-        self.sock.sendall('220 ESMTP server\r\n')
-        self.sock.recv(IsA(int)).AndReturn('STARTTLS\r\n')
-        self.sock.sendall('503 5.5.1 Bad sequence of commands\r\n')
-        self.sock.recv(IsA(int)).AndReturn('STARTTLS badarg\r\n')
-        self.sock.sendall('501 5.5.4 Syntax error in parameters or arguments\r\n')
-        self.sock.recv(IsA(int)).AndReturn('QUIT\r\n')
-        self.sock.sendall('221 2.0.0 Bye\r\n')
+        sock = self.mox.CreateMockAnything()
+        sock.fileno = lambda: -1
+        sock.sendall('220 ESMTP server\r\n')
+        sock.recv(IsA(int)).AndReturn('STARTTLS\r\n')
+        sock.sendall('503 5.5.1 Bad sequence of commands\r\n')
+        sock.recv(IsA(int)).AndReturn('STARTTLS badarg\r\n')
+        sock.sendall('501 5.5.4 Syntax error in parameters or arguments\r\n')
+        sock.recv(IsA(int)).AndReturn('EHLO there\r\n')
+        sock.sendall('250-Hello there\r\n250 STARTTLS\r\n')
+        sock.recv(IsA(int)).AndReturn('STARTTLS\r\n')
+        sock.sendall('220 2.7.0 Go ahead\r\n')
+        sock.tls_wrapper(sock, self.tls_args).AndRaise(SSLError())
+        sock.sendall('421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
-        s = Server(self.sock, None, tls=self.tls_args)
+        s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
-        self.assertEqual(None, s.ehlo_as)
+        self.assertEqual('there', s.ehlo_as)
 
     def test_auth(self):
         self.sock.sendall('220 ESMTP server\r\n')

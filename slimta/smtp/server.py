@@ -27,7 +27,7 @@ certain situations (typically when a client sends various commands).
 
 import re
 
-from gevent.ssl import SSLSocket
+from gevent.ssl import SSLError
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from gevent.timeout import Timeout as TimeoutHappened
@@ -157,9 +157,11 @@ class Server(object):
         self.have_rcptto = None
 
     def _encrypt_session(self):
-        self.io.encrypt_socket(self.tls)
+        if not self.io.encrypt_socket(self.tls):
+            return False
         self._call_custom_handler('TLSHANDSHAKE')
         self.encrypted = True
+        return True
 
     def _handle_command(self, which, arg):
         method = '_command_'+which
@@ -180,7 +182,9 @@ class Server(object):
 
         """
         if self.tls and self.tls_immediately:
-            self._encrypt_session()
+            if not self._encrypt_session():
+                tls_failure.send(self.io, flush=True)
+                return
 
         command, arg = 'BANNER_', None
         while True:
@@ -216,6 +220,10 @@ class Server(object):
         self._call_custom_handler('BANNER_', reply)
 
         reply.send(self.io)
+
+        if reply.code != '220':
+            self._call_custom_handler('CLOSE')
+            raise StopIteration()
 
     def _command_EHLO(self, ehlo_as):
         reply = Reply('250', 'Hello {0}'.format(ehlo_as))
@@ -264,7 +272,9 @@ class Server(object):
         reply.send(self.io, flush=True)
 
         if reply.code == '220':
-            self._encrypt_session()
+            if not self._encrypt_session():
+                tls_failure.send(self.io)
+                raise StopIteration()
             self.ehlo_as = None
             self.extensions.drop('STARTTLS')
 
@@ -408,7 +418,6 @@ class Server(object):
         reply.send(self.io)
 
         if reply.code == '221':
-            self.io.flush_send()
             self._call_custom_handler('CLOSE')
             raise StopIteration()
 
