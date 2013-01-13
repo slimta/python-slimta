@@ -31,6 +31,7 @@ from gevent.server import StreamServer
 from gevent.socket import getfqdn
 from gevent import monkey; monkey.patch_all()
 from dns import resolver, reversename
+from dns.exception import DNSException
 
 from slimta.envelope import Envelope
 from slimta.edge import Edge
@@ -109,7 +110,7 @@ class SmtpSession(object):
         ptraddr = reversename.from_address(self.address[0])
         try:
             answers = resolver.query(ptraddr, 'PTR')
-        except resolver.NXDOMAIN:
+        except DNSException:
             answers = []
         try:
             self.reverse_address = str(answers[0])
