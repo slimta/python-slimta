@@ -1,6 +1,6 @@
 build/
 dist/
-slimta.egg-info/
+python_slimta.egg-info/
 .venv/
 .coverage
 nosetests.xml

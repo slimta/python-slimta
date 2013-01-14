@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 
 from slimta import VERSION
 
-setup(name='slimta',
+setup(name='python-slimta',
       version=VERSION,
       author='Ian Good',
       author_email='icgood@gmail.com',
