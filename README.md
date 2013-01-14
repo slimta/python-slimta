@@ -30,7 +30,7 @@ Use a [virtualenv][2] to get started developing against `slimta`:
 
 To run the suite of unit tests included with `slimta`:
 
-    (.venv)$ pip install -r test-requires.txt
+    (.venv)$ pip install -r tests-require.txt
     (.venv)$ nosetests
 
 To run one of the included examples:

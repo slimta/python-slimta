@@ -19,9 +19,16 @@
 # THE SOFTWARE.
 #
 
+import os.path
 from setuptools import setup, find_packages
 
 from slimta import VERSION
+
+
+def read_requirements(filename):
+    filename = os.path.join(os.path.dirname(__file__), filename)
+    return open(filename, 'r').read().splitlines()
+
 
 setup(name='python-slimta',
       version=VERSION,
@@ -30,7 +37,14 @@ setup(name='python-slimta',
       description='Lightweight, asynchronous SMTP libraries',
       license='MIT',
       url='http://slimta.org/',
-      requires=['gevent', 'gevent_subprocess', 'dnspython'],
-      packages=find_packages())
+      packages=find_packages(),
+      install_requires=read_requirements('pip-requires.txt'),
+      tests_require=read_requirements('tests-require.txt'),
+      classifiers=['Development Status :: 3 - Alpha',
+                   'Topic :: Communications :: Email :: Mail Transport Agents',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: Information Technology',
+                   'License :: OSI Approved :: MIT License',
+                   'Programming Language :: Python'])
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
