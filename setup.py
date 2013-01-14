@@ -30,7 +30,7 @@ setup(name='python-slimta',
       description='Lightweight, asynchronous SMTP libraries',
       license='MIT',
       url='http://slimta.org/',
-      requires=['gevent', 'dnspython'],
+      requires=['gevent', 'gevent-subprocess', 'dnspython'],
       packages=find_packages())
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
