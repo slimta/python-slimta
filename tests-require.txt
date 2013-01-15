@@ -1,5 +1,0 @@
-nose
-mox
-coverage
-nosexcover
-testfixtures
