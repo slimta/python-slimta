@@ -197,6 +197,7 @@ class SmtpEdge(Edge):
     :param queue: |Queue| object for handing off messages, as described in
                   :meth:`Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.
+    :param max_size: Maximum size of incoming messages.
     :param validator_class: :class:`SmtpValidators` sub-class to validate
                             commands and alter replies.
     :param auth_class: Optional |Auth| sub-class to enable server
@@ -213,11 +214,12 @@ class SmtpEdge(Edge):
 
     """
 
-    def __init__(self, listener, queue, pool=None,
+    def __init__(self, listener, queue, pool=None, max_size=None,
                        validator_class=None, auth_class=None,
                        tls=None, tls_immediately=False,
                        command_timeout=None, data_timeout=None):
         super(SmtpEdge, self).__init__(listener, queue, pool)
+        self.max_size = max_size
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validator_class = validator_class
@@ -232,6 +234,8 @@ class SmtpEdge(Edge):
                                  self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)
+            if self.max_size:
+                smtp_server.extensions.add('SIZE', self.max_size)
             smtp_server.handle()
         except ConnectionLost:
             pass
