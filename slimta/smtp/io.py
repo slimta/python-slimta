@@ -21,8 +21,10 @@
 
 import re
 import cStringIO
+from errno import ECONNRESET
 
 from gevent.ssl import SSLSocket, SSLError
+from gevent import socket
 
 from slimta.smtp import ConnectionLost, BadReply
 from slimta.smtp.reply import Reply
@@ -55,12 +57,19 @@ class IO(object):
         self.socket.close()
 
     def raw_send(self, data):
-        self.socket.sendall(data)
+        try:
+            self.socket.sendall(data)
+        except socket.error, (errno, message):
+            if errno == ECONNRESET:
+                raise ConnectionLost()
+            raise
         log.send(self.socket, data)
 
     def raw_recv(self):
         data = self.socket.recv(4096)
         log.recv(self.socket, data)
+        if data == '':
+            raise ConnectionLost()
         return data
 
     def _tls_wrapper(self, socket, tls):
@@ -78,8 +87,6 @@ class IO(object):
 
     def buffered_recv(self):
         received = self.raw_recv()
-        if received == '':
-            raise ConnectionLost()
         self.recv_buffer += received
 
     def buffered_send(self, data):
