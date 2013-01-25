@@ -18,6 +18,7 @@ class TestMaildropRelay(MoxTestBase):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
         gevent_subprocess.Popen(['maildrop', '-f', 'sender@example.com'],
+                                executable=None,
                                 stdin=gevent_subprocess.PIPE,
                                 stdout=gevent_subprocess.PIPE,
                                 stderr=gevent_subprocess.PIPE).AndReturn(pmock)
@@ -36,6 +37,7 @@ class TestMaildropRelay(MoxTestBase):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
         gevent_subprocess.Popen(['maildrop', '-f', 'sender@example.com'],
+                                executable='/path/to/maildrop',
                                 stdin=gevent_subprocess.PIPE,
                                 stdout=gevent_subprocess.PIPE,
                                 stderr=gevent_subprocess.PIPE).AndReturn(pmock)
@@ -43,7 +45,7 @@ class TestMaildropRelay(MoxTestBase):
         pmock.pid = -1
         pmock.returncode = MaildropRelay.EX_TEMPFAIL
         self.mox.ReplayAll()
-        m = MaildropRelay()
+        m = MaildropRelay('/path/to/maildrop')
         status, msg = m._exec_maildrop(env)
         self.assertEqual(MaildropRelay.EX_TEMPFAIL, status)
         self.assertEqual('error msg', msg)
