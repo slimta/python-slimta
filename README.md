@@ -25,7 +25,7 @@ Use a [virtualenv][2] to get started developing against `slimta`:
     $ cd python-slimta/
     $ virtualenv .venv
     $ source .venv/bin/activate
-    (.venv)$ python setup.py install
+    (.venv)$ python setup.py develop
 
 To run the suite of unit tests included with `slimta`:
 
