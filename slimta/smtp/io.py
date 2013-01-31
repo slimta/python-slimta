@@ -66,7 +66,12 @@ class IO(object):
         log.send(self.socket, data)
 
     def raw_recv(self):
-        data = self.socket.recv(4096)
+        try:
+            data = self.socket.recv(4096)
+        except socket.error, (errno, message):
+            if errno == ECONNRESET:
+                raise ConnectionLost()
+            raise
         log.recv(self.socket, data)
         if data == '':
             raise ConnectionLost()
