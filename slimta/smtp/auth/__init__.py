@@ -132,7 +132,7 @@ class Auth(object):
         """
         raise CredentialsInvalidError()
 
-    def get_available_mechanisms(self, secure=False):
+    def get_available_mechanisms(self, connection_secure=False):
         """Returns a list of mechanism classes from the
         :mod:`~slimta.smtp.auth.mechanisms` module that are available on the
         session. This usually depends on whether the connection is ``secure``,
@@ -141,12 +141,12 @@ class Auth(object):
         Unless overridden, this method will return attempt to use all built-in
         auth mechanisms.
 
-        :param secure: Whether or not the session is encrypted.
+        :param connection_secure: Whether or not the session is encrypted.
         :type secure: ``True`` or ``False``
         :returns: List of available mechanism classes.
 
         """
-        if secure:
+        if connection_secure:
             return self.supported_mechanisms
         else:
             return [mech for mech in self.supported_mechanisms if mech.secure]
