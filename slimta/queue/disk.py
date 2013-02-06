@@ -38,6 +38,32 @@ __all__ = ['DiskStorage']
 log = logging.getQueueStorageLogger(__name__)
 
 
+class aioFileWithReadline(aioFile):
+
+    def read(self, *args, **kwargs):
+        return str(super(aioFileWithReadline, self).read(*args, **kwargs))
+
+    def readline(self, size=None):
+        linebuf = bytearray()
+        print 'ohi'
+        while True:
+            piece = super(aioFileWithReadline, self).read(64)
+            if piece is None:
+                return str(linebuf)
+            endl_index = piece.find('\n')
+            if endl_index == -1:
+                linebuf.extend(piece)
+            else:
+                piece_view = memoryview(piece)
+                linebuf.extend(piece_view[0:endl_index+1])
+                if endl_index+1 < len(piece):
+                    leftover = piece_view[endl_index+1:]
+                    self._read_buf[0:0] = leftover
+                    self._offset -= len(leftover)
+                    self._eof = False
+                return str(linebuf)
+
+
 class DiskOps(object):
 
     def __init__(self, env_dir, meta_dir, tmp_dir):
@@ -46,43 +72,45 @@ class DiskOps(object):
         self.tmp_dir = tmp_dir
 
     def check_exists(self, id):
-        path = os.path.join(self.env, id)
+        path = os.path.join(self.env_dir, id)
         return os.path.lexists(path)
 
     def write_env(self, id, envelope):
         tmp_path = os.path.join(self.tmp_dir, id)
         final_path = os.path.join(self.env_dir, id)
-        with aioFile(tmp_path, 'w') as f:
+        with aioFileWithReadline(tmp_path, 'w') as f:
             cPickle.dump(envelope, f)
         os.rename(tmp_path, final_path)
 
     def write_meta(self, id, meta):
         tmp_path = os.path.join(self.tmp_dir, id+'.meta')
         final_path = os.path.join(self.meta_dir, id+'.meta')
-        with aioFile(tmp_path, 'w') as f:
+        with aioFileWithReadline(tmp_path, 'w') as f:
             cPickle.dump(meta, f)
         os.rename(tmp_path, final_path)
 
     def read_meta(self, id):
         path = os.path.join(self.meta_dir, id+'.meta')
-        with aioFile(path, 'r') as f:
+        with aioFileWithReadline(path, 'r') as f:
             return cPickle.load(f)
 
     def read_env(self, id):
         path = os.path.join(self.env_dir, id)
-        with aioFile(path, 'r') as f:
+        with aioFileWithReadline(path, 'r') as f:
             return cPickle.load(f)
 
     def get_ids(self):
         return os.listdir(self.env_dir)
 
-    def delete(self, id):
+    def delete_env(self, id):
         env_path = os.path.join(self.env_dir, id)
-        meta_path = os.path.join(self.meta_dir, id+'.meta')
         try:
             os.remove(env_path)
         except OSError:
             pass
+
+    def delete_meta(self, id):
+        meta_path = os.path.join(self.meta_dir, id+'.meta')
         try:
             os.remove(meta_path)
         except OSError:
@@ -110,7 +138,7 @@ class DiskStorage(QueueStorage):
         meta = {'timestamp': timestamp, 'attempts': 0}
         while True:
             id = uuid.uuid4().hex
-            if not self._check_exists(id):
+            if not self.ops.check_exists(id):
                 self.ops.write_env(id, envelope)
                 self.ops.write_meta(id, meta)
                 log.write(id, envelope)
@@ -141,7 +169,8 @@ class DiskStorage(QueueStorage):
         return env, meta['attempts']
 
     def remove(self, id):
-        self.ops.delete(id)
+        self.ops.delete_env(id)
+        self.ops.delete_meta(id)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

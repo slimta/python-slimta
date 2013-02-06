@@ -9,7 +9,7 @@ from slimta.queue.disk import DiskStorage
 from slimta.envelope import Envelope
 
 
-class TestdiskStorage(unittest.TestCase):
+class TestDiskStorage(unittest.TestCase):
 
     id_pattern = re.compile(r'[0-9a-fA-F]{32}')
 
@@ -20,13 +20,9 @@ class TestdiskStorage(unittest.TestCase):
         self.disk = DiskStorage(self.env_dir, self.meta_dir, self.tmp_dir)
 
     def tearDown(self):
-        rmtree(self.env_dir, True)
-        rmtree(self.meta_dir, True)
-        rmtree(self.tmp_dir, True)
-
-    def _assert_empty_dir(self, path):
-        filelist = os.listdir(path)
-        self.assertFalse(filelist)
+        rmtree(self.env_dir)
+        rmtree(self.meta_dir)
+        rmtree(self.tmp_dir)
 
     def _write_test_envelope(self, rcpts=None):
         env = Envelope('sender@example.com', rcpts or ['rcpt@example.com'])
@@ -36,25 +32,34 @@ class TestdiskStorage(unittest.TestCase):
 
     def test_write(self):
         id, env = self._write_test_envelope()
+
+        written_env = self.disk.ops.read_env(id)
+        written_meta = self.disk.ops.read_meta(id)
         self.assertTrue(self.id_pattern.match(id))
-        self.assertEqual(env, self.env[id])
+        self.assertEqual(vars(env), vars(written_env))
         self.assertEqual(1234567890, self.meta[id]['timestamp'])
         self.assertEqual(0, self.meta[id]['attempts'])
-        self.assertEqual('sender@example.com', self.env[id].sender)
-        self.assertEqual(['rcpt@example.com'], self.env[id].recipients)
-        self.assertEqual(9876543210, self.env[id].timestamp)
+        self.assertEqual('sender@example.com', written_env.sender)
+        self.assertEqual(['rcpt@example.com'], written_env.recipients)
+        self.assertEqual(9876543210, written_env.timestamp)
 
     def test_set_timestamp(self):
         id, env = self._write_test_envelope()
         self.disk.set_timestamp(id, 1111)
-        self.assertEqual(env, self.env[id])
+
+        written_env = self.disk.ops.read_env(id)
+        written_meta = self.disk.ops.read_meta(id)
+        self.assertEqual(vars(env), vars(written_env))
         self.assertEqual(1111, self.meta[id]['timestamp'])
 
     def test_increment_attempts(self):
         id, env = self._write_test_envelope()
         self.assertEqual(1, self.disk.increment_attempts(id))
         self.assertEqual(2, self.disk.increment_attempts(id))
-        self.assertEqual(env, self.env[id])
+
+        written_env = self.disk.ops.read_env(id)
+        written_meta = self.disk.ops.read_meta(id)
+        self.assertEqual(vars(env), vars(written_env))
         self.assertEqual(2, self.meta[id]['attempts'])
 
     def test_load(self):
@@ -65,7 +70,9 @@ class TestdiskStorage(unittest.TestCase):
         for timestamp, loaded_id in loaded:
             for queued_id, env in queued:
                 if loaded_id == queued_id:
-                    self.assertEqual(env, self.env[loaded_id])
+                    written_env = self.disk.ops.read_env(loaded_id)
+                    written_meta = self.disk.ops.read_meta(loaded_id)
+                    self.assertEqual(vars(env), vars(written_env))
                     self.assertEqual(timestamp, self.meta[queued_id]['timestamp'])
                     break
             else:
@@ -75,17 +82,17 @@ class TestdiskStorage(unittest.TestCase):
         id, env = self._write_test_envelope()
         self.disk.increment_attempts(id)
         get_env, get_attempts = self.disk.get(id)
-        self.assertEqual(env, get_env)
+        self.assertEqual(vars(env), vars(get_env))
         self.assertEqual(1, get_attempts)
 
     def test_remove(self):
         id, env = self._write_test_envelope()
         self.disk.remove(id)
         id, env = self._write_test_envelope()
-        del self.env[id]
+        self.disk.ops.delete_env(id)
         self.disk.remove(id)
         id, env = self._write_test_envelope()
-        del self.meta[id]
+        self.disk.ops.delete_meta(id)
         self.disk.remove(id)
 
 
