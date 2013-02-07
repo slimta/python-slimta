@@ -37,8 +37,8 @@ class TestDiskStorage(unittest.TestCase):
         written_meta = self.disk.ops.read_meta(id)
         self.assertTrue(self.id_pattern.match(id))
         self.assertEqual(vars(env), vars(written_env))
-        self.assertEqual(1234567890, self.meta[id]['timestamp'])
-        self.assertEqual(0, self.meta[id]['attempts'])
+        self.assertEqual(1234567890, written_meta['timestamp'])
+        self.assertEqual(0, written_meta['attempts'])
         self.assertEqual('sender@example.com', written_env.sender)
         self.assertEqual(['rcpt@example.com'], written_env.recipients)
         self.assertEqual(9876543210, written_env.timestamp)
@@ -50,7 +50,7 @@ class TestDiskStorage(unittest.TestCase):
         written_env = self.disk.ops.read_env(id)
         written_meta = self.disk.ops.read_meta(id)
         self.assertEqual(vars(env), vars(written_env))
-        self.assertEqual(1111, self.meta[id]['timestamp'])
+        self.assertEqual(1111, written_meta['timestamp'])
 
     def test_increment_attempts(self):
         id, env = self._write_test_envelope()
@@ -60,7 +60,7 @@ class TestDiskStorage(unittest.TestCase):
         written_env = self.disk.ops.read_env(id)
         written_meta = self.disk.ops.read_meta(id)
         self.assertEqual(vars(env), vars(written_env))
-        self.assertEqual(2, self.meta[id]['attempts'])
+        self.assertEqual(2, written_meta['attempts'])
 
     def test_load(self):
         queued = [self._write_test_envelope(),
@@ -73,7 +73,7 @@ class TestDiskStorage(unittest.TestCase):
                     written_env = self.disk.ops.read_env(loaded_id)
                     written_meta = self.disk.ops.read_meta(loaded_id)
                     self.assertEqual(vars(env), vars(written_env))
-                    self.assertEqual(timestamp, self.meta[queued_id]['timestamp'])
+                    self.assertEqual(timestamp, written_meta['timestamp'])
                     break
             else:
                 raise ValueError('Queued does not match loaded')

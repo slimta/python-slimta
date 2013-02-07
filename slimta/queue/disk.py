@@ -28,7 +28,9 @@ import uuid
 import os.path
 import cPickle
 
-from pyaio.gevent import aioFile
+from pyaio import aio_init, aio_read, aio_write
+import gevent
+from gevent.event import AsyncResult
 
 from slimta.queue import QueueStorage 
 from slimta import logging
@@ -38,30 +40,100 @@ __all__ = ['DiskStorage']
 log = logging.getQueueStorageLogger(__name__)
 
 
-class aioFileWithReadline(aioFile):
+class AioFile(object):
 
-    def read(self, *args, **kwargs):
-        return str(super(aioFileWithReadline, self).read(*args, **kwargs))
+    _keep_awake_thread = None
+    _keep_awake_refs = 0
 
-    def readline(self, size=None):
-        linebuf = bytearray()
-        print 'ohi'
+    def __init__(self, path, chunk_size=(16<<10)):
+        self.path = path
+        self.event = AsyncResult()
+        self.chunk_size = chunk_size
+
+    @classmethod
+    def _start_keep_awake_thread(cls):
+        if not cls._keep_awake_thread:
+            cls._keep_awake_thread = gevent.spawn(cls._keep_awake)
+        cls._keep_awake_refs += 1
+
+    @classmethod
+    def _stop_keep_awake_thread(cls):
+        cls._keep_awake_refs -= 1
+        if cls._keep_awake_refs <= 0:
+            cls._keep_awake_thread.kill()
+
+    @classmethod
+    def _keep_awake(cls):
         while True:
-            piece = super(aioFileWithReadline, self).read(64)
-            if piece is None:
-                return str(linebuf)
-            endl_index = piece.find('\n')
-            if endl_index == -1:
-                linebuf.extend(piece)
-            else:
-                piece_view = memoryview(piece)
-                linebuf.extend(piece_view[0:endl_index+1])
-                if endl_index+1 < len(piece):
-                    leftover = piece_view[endl_index+1:]
-                    self._read_buf[0:0] = leftover
-                    self._offset -= len(leftover)
-                    self._eof = False
-                return str(linebuf)
+            gevent.sleep(0.001)
+
+    def _write_callback(self, ret, errno):
+        if ret > 0:
+            self.event.set(ret)
+        else:
+            exc = IOError(errno, os.strerror(errno))
+            self.event.set_exception(exc)
+
+    def _write_piece(self, fd, data, data_len, offset):
+        remaining = data_len - offset
+        if remaining > self.chunk_size:
+            remaining = self.chunk_size
+        piece = data[offset:offset+remaining]
+        aio_write(fd, piece, offset, self._write_callback)
+        return self.event.get()
+
+    def dump(self, data):
+        data_view = memoryview(data)
+        data_len = len(data)
+        offset = 0
+        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
+        self._start_keep_awake_thread()
+        try:
+            while True:
+                ret = self._write_piece(fd, data_view, data_len, offset)
+                offset += ret
+                if offset >= data_len:
+                    break
+                break
+        finally:
+            os.close(fd)
+            self._stop_keep_awake_thread()
+
+    def pickle_dump(self, obj):
+        return self.dump(cPickle.dumps(obj))
+
+    def _read_callback(self, buf, ret, errno):
+        if ret > 0:
+            self.event.set(buf)
+        elif ret == 0:
+            exc = EOFError()
+            self.event.set_exception(exc)
+        else:
+            exc = IOError(errno, os.strerror(errno))
+            self.event.set_exception(exc)
+
+    def _read_piece(self, fd, offset):
+        aio_read(fd, offset, self.chunk_size, self._read_callback)
+        return self.event.get()
+
+    def load(self):
+        data = bytearray()
+        offset = 0
+        fd = os.open(self.path, os.O_RDONLY)
+        self._start_keep_awake_thread()
+        try:
+            while True:
+                buf = self._read_piece(fd, offset)
+                offset += len(buf)
+                data.extend(buf)
+        except EOFError:
+            return str(data)
+        finally:
+            os.close(fd)
+            self._stop_keep_awake_thread()
+
+    def pickle_load(self):
+        return cPickle.loads(self.load())
 
 
 class DiskOps(object):
@@ -78,26 +150,22 @@ class DiskOps(object):
     def write_env(self, id, envelope):
         tmp_path = os.path.join(self.tmp_dir, id)
         final_path = os.path.join(self.env_dir, id)
-        with aioFileWithReadline(tmp_path, 'w') as f:
-            cPickle.dump(envelope, f)
+        AioFile(tmp_path).pickle_dump(envelope)
         os.rename(tmp_path, final_path)
 
     def write_meta(self, id, meta):
         tmp_path = os.path.join(self.tmp_dir, id+'.meta')
         final_path = os.path.join(self.meta_dir, id+'.meta')
-        with aioFileWithReadline(tmp_path, 'w') as f:
-            cPickle.dump(meta, f)
+        AioFile(tmp_path).pickle_dump(meta)
         os.rename(tmp_path, final_path)
 
     def read_meta(self, id):
         path = os.path.join(self.meta_dir, id+'.meta')
-        with aioFileWithReadline(path, 'r') as f:
-            return cPickle.load(f)
+        return AioFile(path).pickle_load()
 
     def read_env(self, id):
         path = os.path.join(self.env_dir, id)
-        with aioFileWithReadline(path, 'r') as f:
-            return cPickle.load(f)
+        return AioFile(path).pickle_load()
 
     def get_ids(self):
         return os.listdir(self.env_dir)
