@@ -28,7 +28,7 @@ import uuid
 import os.path
 import cPickle
 
-from pyaio import aio_init, aio_read, aio_write
+from pyaio import aio_read, aio_write
 import gevent
 from gevent.event import AsyncResult
 
