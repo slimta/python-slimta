@@ -69,7 +69,7 @@ openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout cert.pem
   
 Please see in the in-line example documentation by running:
 
-    (.venv)$ ./slimta-mail.py
+    (.venv)$ ./slimta-mail.py --help
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
