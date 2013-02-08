@@ -94,7 +94,6 @@ class AioFile(object):
                 offset += ret
                 if offset >= data_len:
                     break
-                break
         finally:
             os.close(fd)
             self._stop_keep_awake_thread()
