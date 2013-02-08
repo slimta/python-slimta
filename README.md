@@ -29,16 +29,39 @@ Use a [virtualenv][2] to get started developing against `slimta`:
 
 To run the suite of unit tests included with `slimta`:
 
-    (.venv)$ pip install nose
-    (.venv)$ python setup.py nosetests
+    (.venv)$ pip install nose mox testfixtures
+    (.venv)$ nosetests
 
-To run one of the included examples:
+Running the Example
+===================
 
-    (.venv)$ python examples/smtpmx.py
+The example in [`examples/slimta-mail.py`](examples/slimta-mail.py) provides a
+fully functional mail server for inbound and outbound email. It needs several
+things to run:
 
-***Note:*** Though this particular example will create an [open relay][3] on
-port `1337`, it is only accessible from localhost. Hit *Control-C* to exit and
-kill the open relay.
+* An activated `virtualenv` as created above in *Getting Started*.
+
+* A TLS certificate and key file. The easiest way to generate one:
+
+```
+openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout cert.pem -out cert.pem
+```
+    
+* Superuser privileges at startup.
+
+  The example starts services on ports 25, 587, and 465 by default, which are
+  privileged ports on Linux machines.
+
+* A user and group to run as.
+
+  Once the privileged ports are open, the example attempts to drop down to a
+  non-privileged user and group for security purposes.
+  
+* A populated [`examples/site_data.py`](examples/site_data.py) config file.
+  
+Please see in the in-line example documentation by running:
+
+    (.venv)$ ./slimta-mail.py --help
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
