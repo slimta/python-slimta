@@ -32,14 +32,6 @@ To run the suite of unit tests included with `slimta`:
     (.venv)$ pip install nose
     (.venv)$ python setup.py nosetests
 
-To run one of the included examples:
-
-    (.venv)$ python examples/smtpmx.py
-
-***Note:*** Though this particular example will create an [open relay][3] on
-port `1337`, it is only accessible from localhost. Hit *Control-C* to exit and
-kill the open relay.
-
 Running the Example
 ===================
 
