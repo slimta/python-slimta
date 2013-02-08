@@ -40,6 +40,37 @@ To run one of the included examples:
 port `1337`, it is only accessible from localhost. Hit *Control-C* to exit and
 kill the open relay.
 
+Running the Example
+===================
+
+The example in [`examples/slimta-mail.py`](examples/slimta-mail.py) provides a
+fully functional mail server for inbound and outbound email. It needs several
+things to run:
+
+* An activated `virtualenv` as created above in *Getting Started*.
+
+* A TLS certificate and key file. The easiest way to generate one:
+
+```
+openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout cert.pem -out cert.pem
+```
+    
+* Superuser privileges at startup.
+
+  The example starts services on ports 25, 587, and 465 by default, which are
+  privileged ports on Linux machines.
+
+* A user and group to run as.
+
+  Once the privileged ports are open, the example attempts to drop down to a
+  non-privileged user and group for security purposes.
+  
+* A populated [`examples/site_data.py`](examples/site_data.py) config file.
+  
+Please see in the in-line example documentation by running:
+
+    (.venv)$ ./slimta-mail.py
+
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
 [3]: http://en.wikipedia.org/wiki/Open_mail_relay
