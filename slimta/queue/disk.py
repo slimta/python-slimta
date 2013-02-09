@@ -79,7 +79,7 @@ class AioFile(object):
         if remaining > self.chunk_size:
             remaining = self.chunk_size
         piece = data[offset:offset+remaining]
-        aio_write(fd, piece, offset, self._write_callback)
+        aio_write(fd, piece.tobytes(), offset, self._write_callback)
         return self.event.get()
 
     def dump(self, data):
