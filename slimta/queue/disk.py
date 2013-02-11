@@ -19,7 +19,12 @@
 # THE SOFTWARE.
 #
 
-"""Package implementing the :mod:`slimta.queue` system on disk.
+"""Package implementing the :mod:`~slimta.queue` storage system on disk. Disk
+reads and writes are built using the aio_ interface, provided in python by the
+pyaio_ project.
+
+.. _aio: http://www.kernel.org/doc/man-pages/online/pages/man7/aio.7.html
+.. _pyaio: https://github.com/felipecruz/pyaio
 
 """
 
@@ -185,7 +190,8 @@ class DiskOps(object):
 
 
 class DiskStorage(QueueStorage):
-    """Stores |Envelope| and queue metadata in two files on disk.
+    """|QueueStorage| mechanism that stores |Envelope| and queue metadata in
+    two separate files on disk.
 
     :param env_dir: Directory where queue envelope files are stored. These
                     files may be large and will not be modified after initial
