@@ -14,6 +14,4 @@ slimta.queue
 .. toctree::
 
    slimta.queue.dict
-   slimta.queue.disk
-   slimta.queue.proxy
 
