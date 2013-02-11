@@ -84,7 +84,7 @@ class AioFile(object):
         if remaining > self.chunk_size:
             remaining = self.chunk_size
         piece = data[offset:offset+remaining]
-        aio_write(fd, piece.tobytes(), offset, self._write_callback)
+        aio_write(fd, piece, offset, self._write_callback)
         return self.event.get()
 
     def dump(self, data):
@@ -244,6 +244,7 @@ class DiskStorage(QueueStorage):
     def remove(self, id):
         self.ops.delete_env(id)
         self.ops.delete_meta(id)
+        log.remove(id)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
