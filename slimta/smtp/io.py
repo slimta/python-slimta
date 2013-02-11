@@ -53,7 +53,11 @@ class IO(object):
     def close(self):
         log.close(self.socket)
         if isinstance(self.socket, SSLSocket):
-            self.socket.unwrap()
+            try:
+                self.socket.unwrap()
+            except socket.error, (errno, message):
+                if errno != 0:
+                    raise
         self.socket.close()
 
     def raw_send(self, data):
