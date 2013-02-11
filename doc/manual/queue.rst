@@ -23,9 +23,36 @@ also keep track of when a message's next delivery attempt should be and how many
 attempts a message has undergone. In essence, a queue's storage mechanism allows
 *slimta* to be stopped and restarted without losing state.
 
+In-Memory
+'''''''''
+
 The :class:`~slimta.queue.dict.DictStorage` class is a simple storage mechanism
-that, by itself, *does not* provide on-disk persistence. It should be used in
-conjunction with :mod:`shelve` dict-like objects for persistence.
+that, by itself, *does not* provide on-disk persistence. By default, it creates
+two dicts in memory for queue data, but passing in :mod:`shelve` objects will
+allow basic persistence. Be aware, however, that :mod:`shelve` may not handle
+system or process failure and could leave corruption.
+
+The :class:`~slimta.queue.dict.DictStorage` class is very useful for development
+and testing, but probably should be avoided for live systems.
+
+Local Disk
+''''''''''
+
+The :class:`~slimta.queue.disk.DiskStorage` class stores queue data persistently
+on disk, using two files for each queued message. Files are never created or
+edited in-place, but are instead created as new files in a scratch directory and
+atomically moved into place. Asynchronous disk I/O is used in an effort to
+prevent blocking the process and stopping network I/O.
+
+:class:`~slimta.queue.disk.DiskStorage` is likely the best current mechanism for
+live mail systems.
+
+Redis
+'''''
+
+The future plan is to have a |QueueStorage| implementation which uses redis_ as
+the back-end. This will essentially "out-source" the difficult problem of
+balancing and disconnecting storage and processing.
 
 Delivery Attempts
 """""""""""""""""
