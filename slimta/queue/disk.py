@@ -152,11 +152,11 @@ class DiskOps(object):
         self.tmp_dir = tmp_dir
 
     def check_exists(self, id):
-        path = os.path.join(self.env_dir, id)
+        path = os.path.join(self.env_dir, id+'.env')
         return os.path.lexists(path)
 
     def write_env(self, id, envelope):
-        final_path = os.path.join(self.env_dir, id)
+        final_path = os.path.join(self.env_dir, id+'.env')
         AioFile(final_path, self.tmp_dir).pickle_dump(envelope)
 
     def write_meta(self, id, meta):
@@ -168,14 +168,15 @@ class DiskOps(object):
         return AioFile(path).pickle_load()
 
     def read_env(self, id):
-        path = os.path.join(self.env_dir, id)
+        path = os.path.join(self.env_dir, id+'.env')
         return AioFile(path).pickle_load()
 
     def get_ids(self):
-        return os.listdir(self.env_dir)
+        return [fn[:-4] for fn in os.listdir(self.env_dir)
+                if fn.endswith('.env')]
 
     def delete_env(self, id):
-        env_path = os.path.join(self.env_dir, id)
+        env_path = os.path.join(self.env_dir, id+'.env')
         try:
             os.remove(env_path)
         except OSError:
