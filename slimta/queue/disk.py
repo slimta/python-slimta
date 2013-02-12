@@ -32,6 +32,7 @@ import os
 import uuid
 import os.path
 import cPickle
+from tempfile import mkstemp
 
 from pyaio import aio_read, aio_write
 import gevent
@@ -50,10 +51,12 @@ class AioFile(object):
     _keep_awake_thread = None
     _keep_awake_refs = 0
 
-    def __init__(self, path, chunk_size=(16<<10)):
+    chunk_size = (16 << 10)
+
+    def __init__(self, path, tmp_dir=None):
         self.path = path
+        self.tmp_dir = tmp_dir
         self.event = AsyncResult()
-        self.chunk_size = chunk_size
 
     @classmethod
     def _start_keep_awake_thread(cls):
@@ -91,20 +94,21 @@ class AioFile(object):
         data_view = memoryview(data)
         data_len = len(data)
         offset = 0
-        fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
         self._start_keep_awake_thread()
+        fd, filename = mkstemp(dir=self.tmp_dir)
         try:
             while True:
                 ret = self._write_piece(fd, data_view, data_len, offset)
                 offset += ret
                 if offset >= data_len:
                     break
+            os.rename(filename, self.path)
         finally:
             os.close(fd)
             self._stop_keep_awake_thread()
 
     def pickle_dump(self, obj):
-        return self.dump(cPickle.dumps(obj))
+        return self.dump(cPickle.dumps(obj, cPickle.HIGHEST_PROTOCOL))
 
     def _read_callback(self, buf, ret, errno):
         if ret > 0:
@@ -123,8 +127,8 @@ class AioFile(object):
     def load(self):
         data = bytearray()
         offset = 0
-        fd = os.open(self.path, os.O_RDONLY)
         self._start_keep_awake_thread()
+        fd = os.open(self.path, os.O_RDONLY)
         try:
             while True:
                 buf = self._read_piece(fd, offset)
@@ -152,16 +156,12 @@ class DiskOps(object):
         return os.path.lexists(path)
 
     def write_env(self, id, envelope):
-        tmp_path = os.path.join(self.tmp_dir, id)
         final_path = os.path.join(self.env_dir, id)
-        AioFile(tmp_path).pickle_dump(envelope)
-        os.rename(tmp_path, final_path)
+        AioFile(final_path, self.tmp_dir).pickle_dump(envelope)
 
     def write_meta(self, id, meta):
-        tmp_path = os.path.join(self.tmp_dir, id+'.meta')
         final_path = os.path.join(self.meta_dir, id+'.meta')
-        AioFile(tmp_path).pickle_dump(meta)
-        os.rename(tmp_path, final_path)
+        AioFile(final_path, self.tmp_dir).pickle_dump(meta)
 
     def read_meta(self, id):
         path = os.path.join(self.meta_dir, id+'.meta')
@@ -200,10 +200,11 @@ class DiskStorage(QueueStorage):
                      will be small and volatile.
     :param tmp_dir: Directory that may be used as scratch space. New files are
                     written here and then moved to their final destination.
+                    System temp directories are used by default.
 
     """
 
-    def __init__(self, env_dir, meta_dir, tmp_dir='/tmp'):
+    def __init__(self, env_dir, meta_dir, tmp_dir=None):
         super(DiskStorage, self).__init__()
         self.ops = DiskOps(env_dir, meta_dir, tmp_dir)
 

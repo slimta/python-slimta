@@ -30,6 +30,10 @@ class TestDiskStorage(unittest.TestCase):
         id = self.disk.write(env, 1234567890)
         return id, env
 
+    def test_tmp_cleanup(self):
+        id, env = self._write_test_envelope()
+        self.assertEqual([], os.listdir(self.tmp_dir))
+
     def test_write(self):
         id, env = self._write_test_envelope()
 
