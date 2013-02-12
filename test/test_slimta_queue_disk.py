@@ -99,10 +99,5 @@ class TestDiskStorage(unittest.TestCase):
         self.disk.ops.delete_meta(id)
         self.disk.remove(id)
 
-    def test_read_error(self):
-        with self.assertRaises(IOError) as cm:
-            self.disk.ops.read_env('')
-        self.assertEqual(21, cm.exception.errno)
-
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
