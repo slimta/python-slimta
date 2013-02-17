@@ -246,8 +246,16 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
 
+# -- Other options------------- ------------------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://gevent.org/': 'http://gevent.org/objects.inv',
                        'http://redis-py.readthedocs.org/': 'http://redis-py.readthedocs.org/en/latest/objects.inv'}
+
+autodoc_member_order = 'bysource'
+
+sys.path.insert(0, os.path.abspath('../extra/maildrop'))
+sys.path.insert(0, os.path.abspath('../extra/diskstorage'))
+sys.path.insert(0, os.path.abspath('..'))
+

@@ -1,0 +1,4 @@
+gevent
+dnspython
+gevent_subprocess
+pyaio >= 0.4
