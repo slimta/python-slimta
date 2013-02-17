@@ -19,45 +19,21 @@
 # THE SOFTWARE.
 #
 
-"""Root package for :mod:`slimta` SMTP client and server libraries."""
+"""Root package for ``slimta``. Contains :class:`SlimtaError`, the package's
+base exception.
 
-from slimta.core import SlimtaError
+"""
 
-__all__ = ['SmtpError',
-           'ConnectionLost',
-           'MessageTooBig',
-           'BadReply']
+__all__ = ['VERSION', 'SlimtaError']
 
 
-class SmtpError(SlimtaError):
-    """Base exception for all custom SMTP exceptions."""
+#: The ``slimta`` version string.
+VERSION = '0.1.5'
+
+
+class SlimtaError(Exception):
+    """The base exception for all custom errors in :mod:`slimta`."""
     pass
-
-
-class ConnectionLost(SmtpError):
-    """Thrown when the socket is closed prematurely."""
-    pass
-
-
-class MessageTooBig(SmtpError):
-    """Thrown when a message exceeds the maximum size given by the SMTP ``SIZE``
-    extension, if supported.
-
-    """
-    pass
-
-
-class BadReply(SmtpError):
-    """Thrown when an SMTP server replies with a syntax-invalid code.
-
-    :param data: The data that was expected to start with an SMTP code, made
-                 available in the ``data`` attribute.
-
-    """
-
-    def __init__(self, data):
-        super(BadReply, self).__init__('Bad SMTP reply from server.')
-        self.data = data
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -35,7 +35,7 @@ for policies that have to do with delivery, such as forwarding.
 
 """
 
-from slimta import SlimtaError
+from slimta.core import SlimtaError
 
 __all__ = ['PolicyError', 'QueuePolicy', 'RelayPolicy']
 

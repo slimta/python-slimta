@@ -19,21 +19,5 @@
 # THE SOFTWARE.
 #
 
-"""Root package for ``slimta``. Contains :class:`SlimtaError`, the package's
-base exception.
-
-"""
-
-__all__ = ['VERSION', 'SlimtaError']
-
-
-#: The ``slimta`` version string.
-VERSION = '0.1.5'
-
-
-class SlimtaError(Exception):
-    """The base exception for all custom errors in :mod:`slimta`."""
-    pass
-
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

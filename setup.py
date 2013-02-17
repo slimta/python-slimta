@@ -21,7 +21,7 @@
 
 from setuptools import setup, find_packages
 
-from slimta import VERSION
+from slimta.core import VERSION
 
 
 setup(name='python-slimta',

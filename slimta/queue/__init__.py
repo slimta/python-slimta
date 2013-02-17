@@ -35,7 +35,7 @@ from gevent.event import Event
 from gevent.coros import Semaphore
 from gevent.pool import Pool
 
-from slimta import SlimtaError
+from slimta.core import SlimtaError
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.smtp.reply import Reply
 from slimta.bounce import Bounce

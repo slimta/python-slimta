@@ -24,7 +24,7 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 
 """
 
-from slimta import SlimtaError
+from slimta.core import SlimtaError
 from slimta.policy import RelayPolicy
 
 __all__ = ['PermanentRelayError', 'TransientRelayError', 'Relay']
