@@ -7,4 +7,5 @@ API Reference
 .. toctree::
 
    api/slimta
+   api/extra
 
