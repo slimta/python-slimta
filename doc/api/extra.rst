@@ -4,6 +4,10 @@
 Available Extensions
 ====================
 
+Some modules are only available from separate Python packages, and have their
+own set of additional dependencies. These modules can be installed alongside
+``slimta`` and used just their built-in counterparts.
+
 **Modules:**
 
 .. toctree::
