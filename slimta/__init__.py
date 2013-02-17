@@ -20,4 +20,7 @@
 #
 
 
+__import__('pkg_resources').declare_namespace(__name__)
+
+
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
