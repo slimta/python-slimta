@@ -5,7 +5,7 @@ from mox import MoxTestBase, IsA
 from gevent import Timeout
 import gevent_subprocess
 
-from slimta.relay.maildrop import MaildropRelay
+from slimta.maildroprelay import MaildropRelay
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
