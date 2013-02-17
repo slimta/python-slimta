@@ -5,7 +5,7 @@ import re
 from tempfile import mkdtemp
 from shutil import rmtree
 
-from slimta.queue.disk import DiskStorage
+from slimta.diskstorage import DiskStorage
 from slimta.envelope import Envelope
 
 

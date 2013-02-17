@@ -19,32 +19,8 @@
 # THE SOFTWARE.
 #
 
-from setuptools import setup, find_packages
 
-from slimta.core import VERSION
-
-
-setup(name='python-slimta',
-      version=VERSION,
-      author='Ian Good',
-      author_email='icgood@gmail.com',
-      description='Lightweight, asynchronous SMTP libraries',
-      license='MIT',
-      url='http://slimta.org/',
-      packages=find_packages(),
-      namespace_packages=['slimta'],
-      install_requires=['gevent',
-                        'dnspython'],
-      tests_require=['nose',
-                     'mox',
-                     'testfixtures'],
-      test_suite = 'nose.collector',
-      classifiers=['Development Status :: 3 - Alpha',
-                   'Topic :: Communications :: Email :: Mail Transport Agents',
-                   'Intended Audience :: Developers',
-                   'Intended Audience :: Information Technology',
-                   'License :: OSI Approved :: MIT License',
-                   'Programming Language :: Python'])
+__import__('pkg_resources').declare_namespace(__name__)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

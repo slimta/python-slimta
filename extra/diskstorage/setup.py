@@ -21,10 +21,10 @@
 
 from setuptools import setup, find_packages
 
-from slimta.core import VERSION
+from slimta.diskstorage.version import VERSION
 
 
-setup(name='python-slimta',
+setup(name='python-slimta-diskstorage',
       version=VERSION,
       author='Ian Good',
       author_email='icgood@gmail.com',
@@ -34,10 +34,8 @@ setup(name='python-slimta',
       packages=find_packages(),
       namespace_packages=['slimta'],
       install_requires=['gevent',
-                        'dnspython'],
-      tests_require=['nose',
-                     'mox',
-                     'testfixtures'],
+                        'pyaio >= 0.4'],
+      tests_require=['nose'],
       test_suite = 'nose.collector',
       classifiers=['Development Status :: 3 - Alpha',
                    'Topic :: Communications :: Email :: Mail Transport Agents',
