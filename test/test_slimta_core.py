@@ -8,8 +8,8 @@ class TestSlimtaCore(unittest.TestCase):
         import slimta
 
     def test_import_slimta_core_version(self):
-        from slimta.core import VERSION
-        self.assert_(isinstance(VERSION, basestring))
+        from slimta.core import __version__
+        self.assert_(isinstance(__version__, basestring))
 
     def test_import_slimta_core_slimtaerror(self):
         from slimta.core import SlimtaError

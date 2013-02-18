@@ -31,7 +31,7 @@ from math import floor
 from gevent.socket import getfqdn
 
 from slimta.policy import QueuePolicy
-from slimta.core import VERSION
+from slimta.core import __version__ as VERSION
 
 __all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader']
 
