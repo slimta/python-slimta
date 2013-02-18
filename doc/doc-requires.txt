@@ -1,4 +1,2 @@
-gevent
-dnspython
-gevent_subprocess
-pyaio >= 0.4
+extra/diskstorage/
+extra/maildrop/
