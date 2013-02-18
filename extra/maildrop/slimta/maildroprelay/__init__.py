@@ -28,11 +28,9 @@ from slimta.smtp.reply import Reply
 from slimta.relay import Relay, PermanentRelayError, TransientRelayError
 from slimta import logging
 
-__all__ = ['VERSION', 'MaildropRelay']
+__all__ = ['MaildropRelay']
 
 log = logging.getSubprocessLogger(__name__)
-
-VERSION = '0.1.0'
 
 
 class MaildropRelay(Relay):

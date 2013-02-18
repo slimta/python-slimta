@@ -21,11 +21,9 @@
 
 from setuptools import setup, find_packages
 
-from slimta.maildroprelay.version import VERSION
-
 
 setup(name='python-slimta-maildrop',
-      version=VERSION,
+      version='0.1.0',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries',

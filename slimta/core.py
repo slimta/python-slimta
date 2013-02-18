@@ -19,16 +19,16 @@
 # THE SOFTWARE.
 #
 
-"""Root package for ``slimta``. Contains :class:`SlimtaError`, the package's
-base exception.
+"""Module containing :class:`SlimtaError`, the package's base exception. Also
+defines the package's version number in ``__version__``.
 
 """
 
-__all__ = ['VERSION', 'SlimtaError']
+__all__ = ['SlimtaError']
 
 
 #: The ``slimta`` version string.
-VERSION = '0.1.5'
+__version__ = '0.1.5'
 
 
 class SlimtaError(Exception):
