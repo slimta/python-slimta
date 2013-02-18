@@ -28,7 +28,7 @@ __all__ = ['SlimtaError']
 
 
 #: The ``slimta`` version string.
-__version__ = '0.1.5'
+__version__ = '0.2.0'
 
 
 class SlimtaError(Exception):
