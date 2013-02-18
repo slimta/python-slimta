@@ -70,8 +70,12 @@ Courier Maildrop Relaying
 When *slimta* is configured to be the final destination for the email message,
 it can use the ``maildrop`` command provided by courier-maildrop_ to deliver
 messages locally. This relay is provided by the
-:class:`~slimta.relay.maildrop.MaildropRelay` class::
+:class:`~slimta.maildroprelay.MaildropRelay` class::
 
     from slimta.relay.maildrop import MaildropRelay
     relay = MaildropRelay(timeout=10.0)
 
+The :class:`~slimta.maildroprelay.MaildropRelay` class is packaged separately as
+an extension and can be installed with::
+
+    pip install python-slimta-maildrop

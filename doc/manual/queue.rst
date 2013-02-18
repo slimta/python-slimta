@@ -38,14 +38,16 @@ and testing, but probably should be avoided for live systems.
 Local Disk
 ''''''''''
 
-The :class:`~slimta.queue.disk.DiskStorage` class stores queue data persistently
-on disk, using two files for each queued message. Files are never created or
-edited in-place, but are instead created as new files in a scratch directory and
-atomically moved into place. Asynchronous disk I/O is used in an effort to
-prevent blocking the process and stopping network I/O.
+The :class:`~slimta.diskstorage.DiskStorage` class stores queue data
+persistently on disk, using two files for each queued message. Files are never
+created or edited in-place, but are instead created as new files in a scratch
+directory and atomically moved into place. Asynchronous disk I/O is used in an
+effort to prevent blocking the process and stopping network I/O.
 
-:class:`~slimta.queue.disk.DiskStorage` is likely the best current mechanism for
-live mail systems.
+:class:`~slimta.diskstorage.DiskStorage` is likely the current best mechanism
+for live mail systems. Install it with::
+
+    pip install python-slimta-diskstorage
 
 Redis
 '''''

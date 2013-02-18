@@ -4,6 +4,8 @@
 Mail Delivery Agent
 ===================
 
+*Note:* This example requires the ``python-slimta-maildrop`` package.
+
 Step 1: Create the Relay
 ------------------------
 
