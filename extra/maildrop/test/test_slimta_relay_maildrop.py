@@ -50,6 +50,25 @@ class TestMaildropRelay(MoxTestBase):
         self.assertEqual(MaildropRelay.EX_TEMPFAIL, status)
         self.assertEqual('error msg', msg)
 
+    def test_exec_maildrop_custom(self):
+        pmock = self.mox.CreateMock(gevent_subprocess.Popen)
+        self.mox.StubOutWithMock(gevent_subprocess, 'Popen')
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        gevent_subprocess.Popen(['maildrop', '-f', 'sender@example.com', 'testarg'],
+                                executable='testexec',
+                                stdin=gevent_subprocess.PIPE,
+                                stdout=gevent_subprocess.PIPE,
+                                stderr=gevent_subprocess.PIPE).AndReturn(pmock)
+        pmock.communicate('From: sender@example.com\r\n\r\ntest test\r\n').AndReturn(('', ''))
+        pmock.pid = -1
+        pmock.returncode = 0
+        self.mox.ReplayAll()
+        m = MaildropRelay(executable='testexec', extra_args=['testarg'])
+        status, msg = m._exec_maildrop(env)
+        self.assertEqual(0, status)
+        self.assertEqual(None, msg)
+
     def test_attempt(self):
         env = Envelope()
         m = MaildropRelay()
