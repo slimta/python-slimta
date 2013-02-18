@@ -48,7 +48,7 @@ copyright = u'2012, Ian Good'
 # built documents.
 #
 # The short X.Y version.
-from slimta.core import VERSION as slimta_version
+from slimta.core import __version__ as slimta_version
 version = slimta_version
 # The full version, including alpha/beta/rc tags.
 release = slimta_version
