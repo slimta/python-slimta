@@ -19,5 +19,31 @@
 # THE SOFTWARE.
 #
 
+from celery import Task
+
+from slimta.queue import QueueError
+from slimta.bounce import Bounce
+
+__all__ = ['CeleryQueue']
+
+
+class CeleryQueue(object):
+
+    def __init__(self, task_module):
+        self.deliver_envelope = task_module.deliver_envelope
+        self.attempt_delivery = task_module.attempt_delivery
+        self.generate_bounce = task_module.generate_bounce
+
+    def enqueue(self, envelope):
+        attempt = self.attempt_delivery.s(envelope)
+        result = self.deliver_envelope.apply_async((attempt, ),
+                 link_error=self.generate_bounce.s(envelope))
+        return [(env, result.id)]
+
+
+class DeliverEnvelopeTask(Task):
+
+    abstract = True
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
