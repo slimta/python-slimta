@@ -251,7 +251,8 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://gevent.org/': 'http://gevent.org/objects.inv',
-                       'http://redis-py.readthedocs.org/': 'http://redis-py.readthedocs.org/en/latest/objects.inv'}
+                       'http://redis-py.readthedocs.org/': 'http://redis-py.readthedocs.org/en/latest/objects.inv',
+                       'http://docs.celeryproject.org/': 'http://docs.celeryproject.org/en/latest/objects.inv'}
 
 autodoc_member_order = 'bysource'
 
