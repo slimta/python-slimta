@@ -131,7 +131,7 @@ class CeleryQueue(object):
         except TransientRelayError, exc:
             wait = self.backoff(envelope, attempts+1)
             if wait:
-                return self._initiate_attempt(envelope, attempts+1, wait=wait)
+                self._initiate_attempt(envelope, attempts+1, wait=wait)
             else:
                 exc.reply.message += ' (Too many retries)'
                 self.enqueue_bounce(envelope, exc.reply)
