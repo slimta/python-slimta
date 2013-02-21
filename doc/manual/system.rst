@@ -13,7 +13,7 @@ security.
 Daemonization
 """""""""""""
 
-Running *slimta* in the background as a daemon is relatively easy::
+Running |slimta| in the background as a daemon is relatively easy::
 
    pid = slimta.system.daemonize()
 
@@ -35,10 +35,10 @@ Before calling :func:`~slimta.system.daemonize()`, you should first call
 Dropping System Privileges
 """"""""""""""""""""""""""
 
-Most ports that *slimta* systems will often need to open require root
+Most ports that |slimta| systems will often need to open require root
 privileges, such as port 25. However, once these sockets are open, there is
 little reason to retain those privileges.
 
 A call to :func:`slimta.system.drop_privileges()` is *highly* recommended after
-opening all ports, if running *slimta* as root.
+opening all ports, if running |slimta| as root.
 

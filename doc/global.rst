@@ -1,5 +1,11 @@
 :orphan:
 
+.. Useful Links
+.. _slimta: http://slimta.org/
+
+.. Useful Substitutions
+.. |slimta| replace:: **slimta_**
+.. |slimta-mod| replace:: :mod:`slimta`
 .. |Edge| replace:: :class:`~slimta.edge.Edge`
 .. |SmtpEdge| replace:: :class:`~slimta.edge.smtp.SmtpEdge`
 .. |Extensions| replace:: :class:`~slimta.smtp.extensions.Extensions`

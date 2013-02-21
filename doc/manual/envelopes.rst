@@ -4,7 +4,7 @@
 Envelope Objects
 ================
 
-In *slimta*, an email message is thought of like a 'snail mail' envelope, it's
+In |slimta|, an email message is thought of like a 'snail mail' envelope, it's
 not just the message contents but also sending and receiving addresses and other
 logistical information. An |Envelope| object represents all of this information.
 
@@ -26,7 +26,7 @@ delete *headers only*, it does not contain the message payload as described by
 |Envelope| object is Python string containing the contents of the message,
 everything after the headers.
 
-For delivery, *slimta* |Relay| transports will call
+For delivery, |slimta| |Relay| transports will call
 :meth:`~slimta.envelope.Envelope.flatten` to convert the ``headers`` (with any
 modifications) and ``message`` into a single string. After flattening, the
 message headers portion of the generated string is guaranteed to use ``\r\n``
@@ -42,7 +42,7 @@ the message has been queued, there is no way of reporting to the client that the
 message was delivered (successfully or unsuccessfully).
 
 As such, the message sender should assume that a message was delivered
-successfully unless told otherwise. If *slimta* failed to deliver a message,
+successfully unless told otherwise. If |slimta| failed to deliver a message,
 either because of too many delivery attempts or a permanent error, it will
 generate and deliver a *bounce* message back to the original sender address of
 the message. From this *bounce* message, the sender should be able to tell which

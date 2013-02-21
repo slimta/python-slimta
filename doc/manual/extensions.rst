@@ -83,7 +83,7 @@ Celery Distributed Queuing
 Why It's Better
 '''''''''''''''
 
-One of the original inspirations for ``slimta`` was splitting apart the "big 3"
+One of the original inspirations for |slimta| was splitting apart the "big 3"
 components of an MTA in such a way that different server clusters could be
 responsible for each component. These "big 3" components are called the *edge*,
 the *queue*, and the *relay* in this library.
@@ -138,7 +138,7 @@ Simply creating a :class:`~slimta.celeryqueue.CeleryQueue` instance will
 register a new celery task called ``attempt_delivery``. Each delivery attempt
 and retry will call this task, including delivery of bounce messages.
 
-Now, back inside your ``slimta`` application code, you can import ``queue``
+Now, back inside your |slimta| application code, you can import ``queue``
 from this file, add your policies, and create your |Edge|::
 
     from mytasks import queue

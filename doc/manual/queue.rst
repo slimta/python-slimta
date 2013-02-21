@@ -21,7 +21,7 @@ A storage mechanism should store the entirety of an |Envelope| object, such that
 it can be recreated on restart. Along with the envelope, queue services must
 also keep track of when a message's next delivery attempt should be and how many
 attempts a message has undergone. In essence, a queue's storage mechanism allows
-*slimta* to be stopped and restarted without losing state.
+|slimta| to be stopped and restarted without losing state.
 
 In-Memory
 '''''''''

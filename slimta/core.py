@@ -27,7 +27,7 @@ defines the package's version number in ``__version__``.
 __all__ = ['SlimtaError']
 
 
-#: The ``slimta`` version string.
+#: The |slimta| version string.
 __version__ = '0.2.0'
 
 

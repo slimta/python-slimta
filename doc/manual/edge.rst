@@ -5,10 +5,10 @@ Edge Services
 =============
 
 The term *edge* is not necessarily common among other *MTAs*. It was adapted
-loosely by *slimta* from the `Edge Transport Server Role`_ in Microsoft
+loosely by |slimta| from the `Edge Transport Server Role`_ in Microsoft
 Exchange, but the name is about where the similarities end.
 
-In *slimta*, an edge service are those that are listening for new messages
+In |slimta|, an edge service are those that are listening for new messages
 entering the system. The protocol does not matter, an edge service produces an
 |Envelope| object and hands it off to the next stage of delivery.
 

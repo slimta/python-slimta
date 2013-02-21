@@ -6,7 +6,7 @@
 Deciphering Message Delivery Responses
 ======================================
 
-Because *slimta* is an email server, responses are always given as or translated
+Because |slimta| is an email server, responses are always given as or translated
 to SMTP-style code and message. That is, a 3-digit code and a free-form message
 describing the success or what caused the failure. The |Reply| objects that
 represent the responses have ``code`` and ``message`` properties for accessing
@@ -25,6 +25,6 @@ and *5xx* error codes for server errors (often transient).
 
 If a response message begins with an ENHANCEDSTATUSCODES_ string, it is made
 available by the ``enhanced_status_code`` property. This value *can* be used
-programmatically, though *slimta* does not currently do so. No other part of the
+programmatically, though |slimta| does not currently do so. No other part of the
 response message should be parsed programmatically.
 

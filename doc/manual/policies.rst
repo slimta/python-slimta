@@ -7,18 +7,18 @@
 Policy Implementation
 =====================
 
-Many policies in *slimta* will be applied directly before queuing the message.
+Many policies in |slimta| will be applied directly before queuing the message.
 These are called queue policies, and they are especially useful because they
 are executed **once** for every message and the results are persistently
 stored.  Spam filtering is an example of a great queue policy, because it is
 expensive and the results can be stored in the |Envelope| object as an
 attribute or header.
 
-Other policies in *slimta* will be applied directly before each delivery
+Other policies in |slimta| will be applied directly before each delivery
 attempt, called relay policies. A great example of a relay policy would be
 recipient forwarding looked up from a database; you would want to make sure the
 latest forwarding rules are applied on each delivery attempt, to not use a
-stale rule. At the moment, no relay policies are included with ``slimta``.
+stale rule. At the moment, no relay policies are included with |slimta|.
 
 .. _policy-add-date-header:
 
@@ -65,7 +65,7 @@ The ``Received:`` header is the most unique and complicated header of those that
 MTAs should add to a message. The header should be pre-pended to every message,
 so that the order that each MTA handled the message is preserved. The header
 does not have a strict, RFC-mandated format, but `cr.yp.to`_ has a good
-recommendation that fits what *most* good MTAs will do, and *slimta* attempts to
+recommendation that fits what *most* good MTAs will do, and |slimta| attempts to
 follow.
 
 The ``Received:`` header addition is a queue policy, given by the
@@ -80,7 +80,7 @@ Recipient Forwarding
 """"""""""""""""""""
 
 Forwarding policies range from quite simple to exorbitantly complex. The
-:class:`~slimta.policy.forward.Forward` policy included with *slimta* can only
+:class:`~slimta.policy.forward.Forward` policy included with |slimta| can only
 handle *static* rules (e.g. not queried from a database) using regular
 expression-based substitution.
 

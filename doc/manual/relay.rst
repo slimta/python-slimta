@@ -10,7 +10,7 @@ Relay Services
 Relay services are given an existing message and attempt to delivery it to the
 message's next destination. In a traditional MTA, this next destination will be
 looked up by the recipient's domain MX record and delivery is done with SMTP.
-In other cases, such as when acting as an *MDA*, *slimta* is the final
+In other cases, such as when acting as an *MDA*, |slimta| is the final
 destination and delivery occurs locally with something like courier-maildrop_.
 
 In any case, the relay will report either its attempt was a success or whether
@@ -67,7 +67,7 @@ to a certain hostname using the
 Courier Maildrop Relaying
 """""""""""""""""""""""""
 
-When *slimta* is configured to be the final destination for the email message,
+When |slimta| is configured to be the final destination for the email message,
 it can use the ``maildrop`` command provided by courier-maildrop_ to deliver
 messages locally. This relay is provided by the
 :class:`~slimta.maildroprelay.MaildropRelay` class::
