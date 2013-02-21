@@ -58,10 +58,10 @@ filesystem as the envelope and meta directories (``env_dir`` and ``meta_dir``
 arguments, respectively).
 
 The files created in the envelope directory will be identified by a
-:func:`~uuid.uuid4` hexadecimal string appended with the suffix ``.env``. The
-files created in the meta directory will be identified by the same uuid string
-as its corresponding envelope file, but with the suffix ``.meta``. The envelope
-and meta directories can be the same, but two
+:func:`~uuid.uuid4`.:attr:`~uuid.UUID.hex` string appended with the suffix
+``.env``. The files created in the meta directory will be identified by the
+same uuid string as its corresponding envelope file, but with the suffix
+``.meta``. The envelope and meta directories can be the same, but two
 :class:`~slimta.diskstorage.DiskStorage` should not share directories.
 
 To install this extension::
