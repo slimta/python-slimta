@@ -1,6 +1,7 @@
 :orphan:
 
 .. |Edge| replace:: :class:`~slimta.edge.Edge`
+.. |SmtpEdge| replace:: :class:`~slimta.edge.smtp.SmtpEdge`
 .. |Extensions| replace:: :class:`~slimta.smtp.extensions.Extensions`
 .. |Reply| replace:: :class:`~slimta.smtp.reply.Reply`
 .. |IO| replace:: :class:`~slimta.smtp.io.IO`

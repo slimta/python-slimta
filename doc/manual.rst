@@ -15,6 +15,7 @@ Usage Manual
    manual/integrating
    manual/mda
    manual/msa
+   manual/extensions
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
@@ -45,4 +46,10 @@ Usage Manual
 
   * :doc:`manual/mda`
   * :doc:`manual/msa`
+
+* :doc:`manual/extensions`
+
+  * :ref:`Maildrop Delivery <maildrop-relay>`
+  * :ref:`Disk Storage <disk-storage>`
+  * :ref:`Celery Queuing <celery-queue>`
 
