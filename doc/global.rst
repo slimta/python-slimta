@@ -4,7 +4,7 @@
 .. _slimta: http://slimta.org/
 
 .. Useful Substitutions
-.. |slimta| replace:: **slimta_**
+.. |slimta| replace:: `slimta`_
 .. |slimta-mod| replace:: :mod:`slimta`
 .. |Edge| replace:: :class:`~slimta.edge.Edge`
 .. |SmtpEdge| replace:: :class:`~slimta.edge.smtp.SmtpEdge`
