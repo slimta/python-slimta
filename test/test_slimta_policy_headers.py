@@ -46,7 +46,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_received_header(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
-        env.parse('')
+        env.parse('From: test@example.com\r\n')
         env.timestamp = 1234567890
         env.client['name'] = 'mail.example.com'
         env.client['ip'] = '1.2.3.4'
@@ -57,6 +57,12 @@ class TestPolicyHeaders(unittest.TestCase):
         self.assertRegexpMatches(env.headers['Received'],
                 r'from mail\.example\.com \(unknown \[1.2.3.4\]\) by test.com '
                 r'\(slimta [^\)]+\) with ESMTPS for <rcpt@example.com>; ')
+
+    def test_add_received_header_prepended(self):
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: test@example.com\r\n')
+        AddReceivedHeader().apply(env)
+        self.assertEqual(['Received', 'From'], env.headers.keys())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
