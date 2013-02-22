@@ -127,7 +127,10 @@ class AddReceivedHeader(QueuePolicy):
         date = strftime(self.date_format, t)
 
         data = ' '.join(parts) + '; ' + date
-        envelope.headers['Received'] = data
+
+        # Python does not provide header prepending, so this is a bit of a hack.
+        # Works in Python 2.7.3.
+        envelope.headers._headers.insert(0, ('Received', data))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
