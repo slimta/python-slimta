@@ -9,6 +9,11 @@ from slimta.smtp.reply import Reply
 
 class TestEnvelope(unittest.TestCase):
 
+    def test_repr(self):
+        env = Envelope('sender@example.com')
+        s = repr(env)
+        self.assertRegexpMatches(s, r"<Envelope at 0x[a-fA-F0-9]+, sender='sender@example.com'>")
+
     def test_flatten(self):
         headers = Message()
         headers['From'] = 'sender@example.com'
@@ -47,6 +52,18 @@ Subject: important things
         self.assertEqual('sender@example.com', env.headers['from'])
         self.assertEqual('important things', env.headers['subject'])
         self.assertEqual('', env.message)
+
+    def test_parse_message_object(self):
+        data = Message()
+        data['From'] = 'sender@example.com'
+        data['To'] = 'rcpt1@example.com'
+        data['To'] = 'rcpt2@example.com'
+        data.set_payload('test test\r\n')
+        env = Envelope()
+        env.parse(data)
+        self.assertEqual('sender@example.com', env.headers['from'])
+        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env.headers.get_all('to'))
+        self.assertEqual('test test\r\n', env.message)
 
     def test_bounce(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',

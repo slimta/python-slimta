@@ -26,6 +26,7 @@ metadata.
 
 import re
 import cStringIO
+from email.message import Message
 from email.generator import Generator
 from email.parser import Parser
 
@@ -91,13 +92,17 @@ class Envelope(object):
         return header_data, self.message
 
     def parse(self, data):
-        """Parses the given string to populate the :attr:`headers` and
-        :attr:`message` attributes.
+        """Parses the given string or :class:`~email.message.Message` to
+        populate the :attr:`headers` and :attr:`message` attributes.
 
         :param data: The complete message, headers and message body.
-        :type data: string
+        :type data: string or :class:`~email.message.Message`
 
         """
+        if isinstance(data, Message):
+            outfp = cStringIO.StringIO()
+            Generator(outfp).flatten(data, False)
+            data = outfp.getvalue()
         match = header_boundary.search(data)
         if not match:
             header_data = data
