@@ -1,13 +1,13 @@
 
 import unittest
 
-from slimta.edge import Edge
+from slimta.edge import EdgeServer
 
 
 class TestEdge(unittest.TestCase):
 
     def test_edge_interface(self):
-        e = Edge(('127.0.0.1', 0), None)
+        e = EdgeServer(('127.0.0.1', 0), None)
         self.assertRaises(NotImplementedError, e.handle, None, None)
 
 

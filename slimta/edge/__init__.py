@@ -30,38 +30,31 @@ from gevent.ssl import SSLSocket
 
 from slimta import logging
 
-__all__ = ['Edge']
+__all__ = ['Edge', 'EdgeServer']
 
 log = logging.getSocketLogger(__name__)
 
 
-class Edge(gevent.Greenlet):
-    """This class implements a :class:`~gevent.Greenlet` serving a
-    :class:`~gevent.server.StreamServer` until killed. Connections are accepted
-    on the socket and passed to :meth:`.handle()`, which should be overriden
-    by implementers of this base class. The socket will be closed automatically.
+class Edge(object):
+    """This class should be used as the base for all *edge* services. Most will
+    directly inherit :class:`EdgeServer` and thus indirectly inherit
+    :class:`Edge`.
 
-    :param listener: Usually a (ip, port) tuple defining the interface and
-                     port upon which to listen for connections.
-    :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
-                  envelope is properly queued before acknowledged by the edge
-                  service.
-    :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
-                 use for new greenlets.
+    :param queue: |Queue| (Or |Queue|-like) object that will take responsibility
+                  for delivery of messages received by the :class:`Edge`.
 
     """
 
-    def __init__(self, listener, queue, pool=None):
+    def __init__(self, queue):
         super(Edge, self).__init__()
-        spawn = pool or 'default'
-        self.server = StreamServer(listener, self._handle, spawn=spawn)
         self.queue = queue
 
     def handoff(self, envelope):
-        """When :meth:`.handle()` finishes receiving a message, it should pass
-        the new |Envelope| object to this method. Because a |QueuePolicy| may
-        generate new |Envelope| objects, this method returns a list of tuples,
-        ``(envelope, result)`` where ``result`` is either an ID string or a
+        """This method may be called manually or by whatever mechanism a
+        sub-class uses to receive new |Envelope| messages from a client.
+        Because a |QueuePolicy| may generate new |Envelope| objects, this
+        method returns a list of tuples, ``(envelope, result)`` where
+        ``result`` is either an ID string or a
         :class:`~slimta.queue.QueueError`. The edge service can then use this
         information to report back success or failure to the client.
 
@@ -71,6 +64,28 @@ class Edge(gevent.Greenlet):
 
         """
         return self.queue.enqueue(envelope)
+
+
+class EdgeServer(Edge, gevent.Greenlet):
+    """This class implements a :class:`~gevent.Greenlet` serving a
+    :class:`~gevent.server.StreamServer` until killed. Connections are accepted
+    on the socket and passed to :meth:`.handle()`, which should be overriden
+    by implementers of this base class. The socket will be closed automatically.
+
+    :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
+                  envelope is properly queued before acknowledged by the edge
+                  service.
+    :param listener: Usually a (ip, port) tuple defining the interface and
+                     port upon which to listen for connections.
+    :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
+                 use for new greenlets.
+
+    """
+
+    def __init__(self, listener, queue, pool=None):
+        super(EdgeServer, self).__init__(queue)
+        spawn = pool or 'default'
+        self.server = StreamServer(listener, self._handle, spawn=spawn)
 
     def _handle(self, socket, address):
         log.accept(self.server.socket, socket, address)

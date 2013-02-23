@@ -34,7 +34,7 @@ from dns import resolver, reversename
 from dns.exception import DNSException
 
 from slimta.envelope import Envelope
-from slimta.edge import Edge
+from slimta.edge import EdgeServer
 from slimta.smtp.server import Server
 from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import ConnectionLost, MessageTooBig
@@ -193,7 +193,7 @@ class SmtpSession(object):
         self.envelope = None
 
 
-class SmtpEdge(Edge):
+class SmtpEdge(EdgeServer):
     """Class that uses :mod:`slimta.smtp.server` to implement an edge
     service to receive messages.
 
