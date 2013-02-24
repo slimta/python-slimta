@@ -55,7 +55,7 @@ class IO(object):
         if isinstance(self.socket, SSLSocket):
             try:
                 self.socket.unwrap()
-            except socket.error, (errno, message):
+            except socket.error as (errno, message):
                 if errno != 0:
                     raise
         self.socket.close()
@@ -63,7 +63,7 @@ class IO(object):
     def raw_send(self, data):
         try:
             self.socket.sendall(data)
-        except socket.error, (errno, message):
+        except socket.error as (errno, message):
             if errno == ECONNRESET:
                 raise ConnectionLost()
             raise
@@ -72,7 +72,7 @@ class IO(object):
     def raw_recv(self):
         try:
             data = self.socket.recv(4096)
-        except socket.error, (errno, message):
+        except socket.error as (errno, message):
             if errno == ECONNRESET:
                 raise ConnectionLost()
             raise

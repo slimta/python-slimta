@@ -141,7 +141,7 @@ class Server(object):
             data = reader.recv()
         except ConnectionLost:
             raise
-        except SmtpError, e:
+        except SmtpError as e:
             data = None
             err = e
         finally:
@@ -201,7 +201,7 @@ class Server(object):
                 timed_out.send(self.io)
                 self.io.flush_send()
                 break
-            except Exception, e:
+            except Exception as e:
                 unhandled_error.send(self.io)
                 raise
             finally:
@@ -290,7 +290,7 @@ class Server(object):
         reply = Reply('235', '2.7.0 Authentication successful')
         try:
             result = auth.server_attempt(self.io, arg)
-        except ServerAuthError, e:
+        except ServerAuthError as e:
             reply.copy(e.reply)
             result = None
         reply.send(self.io)

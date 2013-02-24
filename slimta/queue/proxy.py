@@ -56,7 +56,7 @@ class ProxyQueue(object):
     def enqueue(self, envelope):
         try:
             self.relay._attempt(envelope, 0)
-        except RelayError, e:
+        except RelayError as e:
             return [(envelope, e)]
         else:
             return [(envelope, uuid.uuid4().hex)]

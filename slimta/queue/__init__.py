@@ -274,9 +274,9 @@ class Queue(Greenlet):
     def _attempt(self, id, envelope, attempts):
         try:
             self.relay._attempt(envelope, attempts)
-        except TransientRelayError, e:
+        except TransientRelayError as e:
             self._pool_spawn('store', self._retry_later, id, envelope, e.reply)
-        except PermanentRelayError, e:
+        except PermanentRelayError as e:
             self._perm_fail(id, envelope, e.reply)
         else:
             self._pool_spawn('store', self.store.remove, id)
