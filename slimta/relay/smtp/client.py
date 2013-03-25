@@ -148,14 +148,14 @@ class SmtpRelayClient(Greenlet):
             if data and not data.is_error():
                 with Timeout(self.data_timeout):
                     self.client.send_empty_data()
-            self._rset()
             result.set_exception(e)
+            self._rset()
             return False
         try:
             self._send_message_data(envelope)
         except SmtpRelayError as e:
-            self._rset()
             result.set_exception(e)
+            self._rset()
             return False
         return True
 
