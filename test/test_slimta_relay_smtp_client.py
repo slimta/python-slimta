@@ -6,6 +6,7 @@ from gevent.socket import socket
 from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
+from slimta.smtp import ConnectionLost
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
@@ -197,6 +198,24 @@ class TestSmtpRelayClient(MoxTestBase):
         client._connect()
         client._ehlo()
         client._send_envelope(result, env)
+
+    def test_send_envelope_rset_exception(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        self.sock.sendall('EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
+        self.sock.sendall('MAIL FROM:<sender@example.com>\r\nRCPT TO:<rcpt@example.com>\r\nDATA\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n250 Ok\r\n450 No!\r\n')
+        result.set_exception(IsA(TransientRelayError))
+        self.sock.sendall('RSET\r\n')
+        self.sock.recv(IsA(int)).AndRaise(ConnectionLost)
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._connect()
+        client._ehlo()
+        with self.assertRaises(ConnectionLost):
+            client._send_envelope(result, env)
 
     def test_disconnect(self):
         self.sock.sendall('QUIT\r\n')
