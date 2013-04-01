@@ -59,6 +59,15 @@ class TestCeleryQueue(MoxTestBase):
         queue = CeleryQueue(self.celery, self.relay)
         queue.attempt_delivery(self.env, 0)
 
+    def test_attempt_delivery_suffix(self):
+        task_func = self.mox.CreateMockAnything()
+        self.celery.task(name='attempt_delivery_test').AndReturn(task_func)
+        task_func.__call__(IgnoreArg())
+        self.relay.attempt(self.env, 0)
+        self.mox.ReplayAll()
+        queue = CeleryQueue(self.celery, self.relay, 'test')
+        queue.attempt_delivery(self.env, 0)
+
     def test_attempt_delivery_transientrelayerror(self):
         task = self.mox.CreateMockAnything()
         subtask = self.mox.CreateMockAnything()

@@ -50,6 +50,9 @@ class CeleryQueue(object):
 
     :param celery: :class:`celery.Celery` object to register delivery task with.
     :param relay: |Relay| instance to attempt delivery with.
+    :param suffix: If given, the task registered in the :class:`~celery.Celery`
+                   object will have its name suffixed wih an underscore and this
+                   string.
     :param backoff: Function that, given an |Envelope| and number of delivery
                     attempts, will return the number of seconds before the next
                     attempt. If it returns ``None``, the message will be
@@ -63,8 +66,13 @@ class CeleryQueue(object):
 
     """
 
-    def __init__(self, celery, relay, backoff=None, bounce_factory=None):
-        self.attempt_task = celery.task(self.attempt_delivery)
+    def __init__(self, celery, relay, suffix=None, backoff=None,
+                       bounce_factory=None):
+        if suffix:
+            task_decorator = celery.task(name='attempt_delivery_'+suffix)
+            self.attempt_task = task_decorator(self.attempt_delivery)
+        else:
+            self.attempt_task = celery.task(self.attempt_delivery)
         self.relay = relay
         self.bounce_factory = bounce_factory or Bounce
         self.backoff = backoff or self._default_backoff
