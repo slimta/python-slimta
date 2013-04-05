@@ -43,6 +43,10 @@ class ProxyQueue(object):
     def __init__(self, relay):
         self.relay = relay
 
+    def add_policy(self, *args):
+        msg = 'ProxyQueue objects do not support add_policy()'
+        raise NotImplementedError(msg)
+
     def start(self):
         # No-op, because this class does not inherit from Greenlet. Provided
         # for backwards compatibility with the standard Queue class.

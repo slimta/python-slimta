@@ -47,5 +47,11 @@ class TestProxyQueue(MoxTestBase):
         q = ProxyQueue(self.relay)
         q.flush()
 
+    def test_add_policy_error(self):
+        self.mox.ReplayAll()
+        q = ProxyQueue(self.relay)
+        with self.assertRaises(NotImplementedError):
+            q.add_policy('test')
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
