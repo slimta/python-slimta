@@ -75,7 +75,7 @@ class EdgeServer(Edge, gevent.Greenlet):
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge
                   service.
-    :param listener: Usually a (ip, port) tuple defining the interface and
+    :param listener: Usually a ``(ip, port)`` tuple defining the interface and
                      port upon which to listen for connections.
     :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                  use for new greenlets.
