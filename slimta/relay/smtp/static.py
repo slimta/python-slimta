@@ -25,10 +25,12 @@ out.
 
 """
 
+from __future__ import absolute_import
+
 from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
-from slimta.relay import Relay
+from .. import Relay
 
 __all__ = ['StaticSmtpRelay']
 

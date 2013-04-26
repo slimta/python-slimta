@@ -19,6 +19,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import absolute_import
+
 import re
 import uuid
 import time
@@ -26,7 +28,7 @@ import cStringIO
 
 from gevent.socket import getfqdn
 
-from envelope import Envelope
+from .envelope import Envelope
 
 __all__ = ['Bounce']
 

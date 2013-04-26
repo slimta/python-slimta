@@ -21,6 +21,8 @@
 
 """Utilities to make logging consistent and easy in :mod:`slimta` packages."""
 
+from __future__ import absolute_import
+
 import threading
 threading._DummyThread._Thread__stop = lambda x: 42
 
@@ -29,9 +31,9 @@ import repr
 import logging
 from ast import literal_eval
 
-from slimta.logging.socket import SocketLogger
-from slimta.logging.subprocess import SubprocessLogger
-from slimta.logging.queuestorage import QueueStorageLogger
+from .socket import SocketLogger
+from .subprocess import SubprocessLogger
+from .queuestorage import QueueStorageLogger
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger']
 

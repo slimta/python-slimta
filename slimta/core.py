@@ -24,6 +24,8 @@ defines the package's version number in ``__version__``.
 
 """
 
+from __future__ import absolute_import
+
 __all__ = ['SlimtaError']
 
 

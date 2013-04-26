@@ -26,14 +26,16 @@ matched symbols in ``X-Spam-Symbols``).
 
 """
 
+from __future__ import absolute_import
+
 import re
 import cStringIO
 
 from gevent import Timeout
 from gevent.socket import create_connection, SHUT_WR
 
-from slimta.policy import PolicyError, QueuePolicy
 from slimta import logging
+from . import PolicyError, QueuePolicy
 
 __all__ = ['SpamAssassinError', 'SpamAssassin']
 

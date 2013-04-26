@@ -21,6 +21,8 @@
 
 """Relays an |Envelope| locally with ``courier-maildrop``."""
 
+from __future__ import absolute_import
+
 from gevent import Timeout
 import gevent_subprocess
 

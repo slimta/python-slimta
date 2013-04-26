@@ -24,14 +24,16 @@ standard RFC headers.
 
 """
 
+from __future__ import absolute_import
+
 import uuid
 from time import strftime, gmtime, localtime
 from math import floor
 
 from gevent.socket import getfqdn
 
-from slimta.policy import QueuePolicy
 from slimta.core import __version__ as VERSION
+from . import QueuePolicy
 
 __all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader']
 

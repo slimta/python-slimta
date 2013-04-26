@@ -21,6 +21,8 @@
 
 """Root package for :mod:`slimta` SMTP client and server libraries."""
 
+from __future__ import absolute_import
+
 from slimta.core import SlimtaError
 
 __all__ = ['SmtpError',

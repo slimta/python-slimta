@@ -34,6 +34,8 @@ objects are expected to support it.
 
 """
 
+from __future__ import absolute_import
+
 from celery.result import AsyncResult
 
 from slimta.queue import QueueError

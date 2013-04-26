@@ -19,6 +19,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import absolute_import
+
 import time
 
 import gevent
@@ -26,9 +28,9 @@ from gevent import Timeout, Greenlet
 from gevent.socket import create_connection, getfqdn
 from gevent.queue import Queue, Empty
 
-from slimta.relay.smtp import SmtpRelayError
 from slimta.smtp.client import Client
 from slimta import logging
+from . import SmtpRelayError
 
 __all__ = ['SmtpRelayClient']
 

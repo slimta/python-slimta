@@ -21,14 +21,16 @@
 
 """An SMTP client library that supports PIPELINING commands."""
 
+from __future__ import absolute_import
+
 from gevent import Timeout
 from gevent.ssl import SSLSocket
 from gevent.socket import wait_read
 
-from io import IO
-from extensions import Extensions
-from reply import Reply
-from datasender import DataSender
+from .io import IO
+from .extensions import Extensions
+from .reply import Reply
+from .datasender import DataSender
 
 __all__ = ['Client']
 

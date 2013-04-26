@@ -25,14 +25,16 @@ provide basic persistence.
 
 """
 
+from __future__ import absolute_import
+
 import uuid
 
 import gevent
 from gevent import Greenlet
 from gevent.pool import Pool
 
-from slimta.queue import QueueStorage 
 from slimta import logging
+from . import QueueStorage 
 
 __all__ = ['DictStorage']
 

@@ -26,11 +26,13 @@ other data should have the prefixed ``.`` removed.
 
 """
 
+from __future__ import absolute_import
+
 import re
 import cStringIO
 from pprint import pformat
 
-from slimta.smtp import ConnectionLost, MessageTooBig
+from . import ConnectionLost, MessageTooBig
 
 __all__ = ['DataReader']
 

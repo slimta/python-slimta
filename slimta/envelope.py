@@ -24,6 +24,8 @@ metadata.
 
 """
 
+from __future__ import absolute_import
+
 import re
 import cStringIO
 from email.message import Message

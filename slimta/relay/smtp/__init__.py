@@ -27,7 +27,9 @@ involve local static routing.
 
 """
 
-from slimta.relay import RelayError, TransientRelayError, PermanentRelayError
+from __future__ import absolute_import
+
+from .. import RelayError, TransientRelayError, PermanentRelayError
 
 __all__ = ['SmtpRelayError']
 

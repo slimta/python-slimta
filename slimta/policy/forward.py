@@ -21,9 +21,11 @@
 
 """Implements a simple forwarding policy, to transform or replace recipients."""
 
+from __future__ import absolute_import
+
 import re
 
-from slimta.policy import QueuePolicy
+from . import QueuePolicy
 
 __all__ = ['Forward']
 

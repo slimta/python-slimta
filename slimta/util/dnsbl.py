@@ -26,6 +26,8 @@ These lists can be hugely helpful and inexpensive ways of filtering spam.
 
 """
 
+from __future__ import absolute_import
+
 from functools import wraps
 
 import gevent

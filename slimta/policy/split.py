@@ -25,9 +25,11 @@ messages well, such as :class:`~slimta.relay.smtp.mx.MxSmtpRelay`.
 
 """
 
+from __future__ import absolute_import
+
 import copy
 
-from slimta.policy import QueuePolicy
+from . import QueuePolicy
 
 __all__ = ['RecipientSplit', 'RecipientDomainSplit']
 

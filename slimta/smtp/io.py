@@ -19,6 +19,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import absolute_import
+
 import re
 import cStringIO
 from errno import ECONNRESET
@@ -26,9 +28,9 @@ from errno import ECONNRESET
 from gevent.ssl import SSLSocket, SSLError
 from gevent import socket
 
-from slimta.smtp import ConnectionLost, BadReply
-from slimta.smtp.reply import Reply
 from slimta import logging
+from . import ConnectionLost, BadReply
+from .reply import Reply
 
 __all__ = ['IO']
 

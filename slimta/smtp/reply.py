@@ -24,6 +24,8 @@ and a message, as well as a few pre-defined standard replies.
 
 """
 
+from __future__ import absolute_import
+
 import re
 
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',

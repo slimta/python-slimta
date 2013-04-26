@@ -24,6 +24,8 @@ a listening socket under various protocols.
 
 """
 
+from __future__ import absolute_import
+
 import gevent
 from gevent.server import StreamServer
 from gevent.ssl import SSLSocket

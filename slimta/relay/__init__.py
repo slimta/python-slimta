@@ -24,6 +24,8 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 
 """
 
+from __future__ import absolute_import
+
 from slimta.core import SlimtaError
 from slimta.policy import RelayPolicy
 

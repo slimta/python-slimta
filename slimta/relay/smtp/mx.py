@@ -27,14 +27,16 @@ the number of delivery attempts to cycle through the options.
 
 """
 
+from __future__ import absolute_import
+
 import time
 
 from gevent import monkey; monkey.patch_all()
 import dns.resolver
 
-from slimta.relay import PermanentRelayError, Relay
-from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.smtp.reply import Reply
+from .. import PermanentRelayError, Relay
+from .static import StaticSmtpRelay
 
 __all__ = ['MxSmtpRelay']
 

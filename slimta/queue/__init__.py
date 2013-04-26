@@ -26,6 +26,8 @@ SMTP queues will retry messages after certain periods of time.
 
 """
 
+from __future__ import absolute_import
+
 import time
 from itertools import imap, izip, repeat, chain
 

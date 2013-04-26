@@ -31,10 +31,12 @@ as well. Your |Auth| sub-class may be passed in to your
 
 """
 
+from __future__ import absolute_import
+
 import re
 
-from slimta.smtp import SmtpError
-from slimta.smtp.reply import Reply
+from .. import SmtpError
+from ..reply import Reply
 
 __all__ = ['CredentialsInvalidError', 'Auth']
 

@@ -26,10 +26,12 @@ be issued.
 
 """
 
+from __future__ import absolute_import
+
 import uuid
 
-from slimta.queue import QueueError
 from slimta.relay import RelayError
+from . import QueueError
 
 
 class ProxyQueue(object):

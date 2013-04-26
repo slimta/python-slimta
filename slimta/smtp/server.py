@@ -25,6 +25,8 @@ certain situations (typically when a client sends various commands).
 
 """
 
+from __future__ import absolute_import
+
 import re
 
 from gevent.ssl import SSLError
@@ -32,12 +34,12 @@ from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from gevent.timeout import Timeout as TimeoutHappened
 
-from slimta.smtp import SmtpError, ConnectionLost
-from slimta.smtp.datareader import DataReader
-from slimta.smtp.io import IO
-from slimta.smtp.extensions import Extensions
-from slimta.smtp.auth import ServerAuthError
-from slimta.smtp.reply import *
+from . import SmtpError, ConnectionLost
+from .datareader import DataReader
+from .io import IO
+from .extensions import Extensions
+from .auth import ServerAuthError
+from .reply import *
 
 __all__ = ['Server']
 
