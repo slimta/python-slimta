@@ -26,11 +26,8 @@ Attempts to follow the SMTP server RFCs.
 
 from __future__ import absolute_import
 
-import time
-
 import gevent
 from gevent.server import StreamServer
-from gevent.socket import getfqdn
 from gevent import monkey; monkey.patch_all()
 from dns import resolver, reversename
 from dns.exception import DNSException
@@ -178,8 +175,6 @@ class SmtpSession(object):
         if hasattr(self, '_ptr_lookup_thread'):
             self._ptr_lookup_thread.kill(block=False)
 
-        self.envelope.receiver = getfqdn()
-        self.envelope.timestamp = time.time()
         self.envelope.parse(data)
 
         results = self.handoff(self.envelope)
@@ -217,14 +212,17 @@ class SmtpEdge(EdgeServer):
     :param data_timeout: Seconds before the connection times out while
                          receiving data. This is a cumulative timeout that
                          is not tricked by the client sending data.
+    :param hostname: String identifying the local machine. See |Edge| for more
+                     details.
 
     """
 
     def __init__(self, listener, queue, pool=None, max_size=None,
                        validator_class=None, auth_class=None,
                        tls=None, tls_immediately=False,
-                       command_timeout=None, data_timeout=None):
-        super(SmtpEdge, self).__init__(listener, queue, pool)
+                       command_timeout=None, data_timeout=None,
+                       hostname=None):
+        super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
         self.max_size = max_size
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout

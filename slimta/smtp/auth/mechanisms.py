@@ -35,7 +35,7 @@ import hmac
 import hashlib
 import base64
 
-from gevent.socket import getfqdn
+from gevent.socket import gethostname
 
 from slimta.smtp.reply import Reply
 from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError, \
@@ -135,7 +135,7 @@ class CramMd5(Mechanism):
     secure = True
 
     #: This is the hostname used when generating the initial challenge.
-    hostname = getfqdn()
+    hostname = gethostname()
 
     pattern = re.compile(r'^(.*) ([^ ]+)$')
 

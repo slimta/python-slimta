@@ -26,7 +26,10 @@ a listening socket under various protocols.
 
 from __future__ import absolute_import
 
+import time
+
 import gevent
+from gevent.socket import getfqdn
 from gevent.server import StreamServer
 from gevent.ssl import SSLSocket
 
@@ -44,12 +47,18 @@ class Edge(object):
 
     :param queue: |Queue| (Or |Queue|-like) object that will take responsibility
                   for delivery of messages received by the :class:`Edge`.
+    :param hostname: String identifying the local machine, stamped to each
+                     received message in its
+                     :attr:`~slimta.envelope.Envelope.receiver` attribute for
+                     use in headers and bounce messages. By default, the return
+                     value of :func:`~gevent.socket.getfqdn()` is used.
 
     """
 
-    def __init__(self, queue):
+    def __init__(self, queue, hostname=None):
         super(Edge, self).__init__()
         self.queue = queue
+        self.hostname = hostname or getfqdn()
 
     def handoff(self, envelope):
         """This method may be called manually or by whatever mechanism a
@@ -65,6 +74,9 @@ class Edge(object):
                   corresponding ID string or :class:`~slimta.queue.QueueError`.
 
         """
+        envelope.receiver = self.hostname
+        envelope.timestamp = time.time()
+
         return self.queue.enqueue(envelope)
 
 
@@ -81,11 +93,13 @@ class EdgeServer(Edge, gevent.Greenlet):
                      port upon which to listen for connections.
     :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                  use for new greenlets.
+    :param hostname: String identifying the local machine. See |Edge| for more
+                     details.
 
     """
 
-    def __init__(self, listener, queue, pool=None):
-        super(EdgeServer, self).__init__(queue)
+    def __init__(self, listener, queue, pool=None, hostname=None):
+        super(EdgeServer, self).__init__(queue, hostname)
         spawn = pool or 'default'
         self.server = StreamServer(listener, self._handle, spawn=spawn)
 

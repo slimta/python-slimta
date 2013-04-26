@@ -26,8 +26,6 @@ import uuid
 import time
 import cStringIO
 
-from gevent.socket import getfqdn
-
 from .envelope import Envelope
 
 __all__ = ['Bounce']
@@ -113,8 +111,9 @@ class Bounce(Envelope):
               'host': 'localhost'}
 
     #: String injected as the :attr:`~slimta.envelope.Envelope.receiver`
-    #: attribute of bounce messages.
-    receiver = getfqdn()
+    #: attribute of bounce messages. By default, this value is copied from the
+    #: |Envelope| itself.
+    receiver = None
 
     def __init__(self, envelope, reply, headers_only=False):
         super(Bounce, self).__init__(sender=self.sender,
@@ -122,7 +121,7 @@ class Bounce(Envelope):
         self._build_message(envelope, reply, headers_only)
         self.timestamp = time.time()
         self.client = Bounce.client
-        self.receiver = Bounce.receiver
+        self.receiver = Bounce.receiver or envelope.receiver
 
     def _get_substitution_table(self, envelope, reply):
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
