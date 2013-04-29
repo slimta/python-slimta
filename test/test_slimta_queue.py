@@ -1,5 +1,7 @@
 
+import sys
 import unittest
+from functools import wraps
 
 from mox import MoxTestBase, IsA
 import gevent
@@ -10,6 +12,19 @@ from slimta.smtp.reply import Reply
 from slimta.relay import Relay, TransientRelayError, PermanentRelayError
 from slimta.policy import QueuePolicy
 from slimta.envelope import Envelope
+
+
+def _redirect_stderr(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        print 'NOTE: stderr is redirected to stdout for this test.'
+        old_stderr = sys.stderr
+        sys.stderr = sys.stdout
+        try:
+            return f(*args, **kwargs)
+        finally:
+            sys.stderr = old_stderr
+    return wrapper
 
 
 class TestQueue(MoxTestBase):
@@ -142,6 +157,19 @@ class TestQueue(MoxTestBase):
         def no_bounce(envelope, reply):
             return None
         queue = Queue(self.store, self.relay, bounce_factory=no_bounce, relay_pool=5)
+        queue.enqueue(self.env)
+        queue.relay_pool.join()
+
+    @_redirect_stderr
+    def test_enqueue_wait_unhandledfail(self):
+        self.store.write(self.env, IsA(float)).AndReturn('1234')
+        self.relay._attempt(self.env, 0).AndRaise(Exception('unhandled error'))
+        self.store.increment_attempts('1234')
+        self.store.set_timestamp('1234', IsA(float))
+        self.mox.ReplayAll()
+        def backoff(envelope, attempts):
+            return 0
+        queue = Queue(self.store, self.relay, backoff=backoff, relay_pool=5)
         queue.enqueue(self.env)
         queue.relay_pool.join()
 

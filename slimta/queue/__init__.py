@@ -280,6 +280,10 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, e.reply)
         except PermanentRelayError as e:
             self._perm_fail(id, envelope, e.reply)
+        except Exception as e:
+            reply = Reply('450', '4.0.0 Unhandled delivery error: '+str(e))
+            self._pool_spawn('store', self._retry_later, id, envelope, reply)
+            raise
         else:
             self._pool_spawn('store', self.store.remove, id)
 
