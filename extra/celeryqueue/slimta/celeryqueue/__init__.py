@@ -42,6 +42,7 @@ from slimta.queue import QueueError
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.bounce import Bounce
 from slimta.policy import QueuePolicy
+from slimta.smtp.reply import Reply
 
 __all__ = ['CeleryQueue']
 
@@ -139,14 +140,21 @@ class CeleryQueue(object):
         try:
             self.relay.attempt(envelope, attempts)
         except TransientRelayError, exc:
-            wait = self.backoff(envelope, attempts+1)
-            if wait:
-                self._initiate_attempt(envelope, attempts+1, wait=wait)
-            else:
-                exc.reply.message += ' (Too many retries)'
-                self.enqueue_bounce(envelope, exc.reply)
+            self._handle_transient_failure(envelope, attempts, exc.reply)
         except PermanentRelayError, exc:
             self.enqueue_bounce(envelope, exc.reply)
+        except Exception, exc:
+            reply = Reply('450', '4.0.0 Unhandled delivery error: '+str(exc))
+            self._handle_transient_failure(envelope, attempts, reply)
+            raise
+
+    def _handle_transient_failure(self, envelope, attempts, reply):
+        wait = self.backoff(envelope, attempts+1)
+        if wait:
+            self._initiate_attempt(envelope, attempts+1, wait=wait)
+        else:
+            reply.message += ' (Too many retries)'
+            self.enqueue_bounce(envelope, reply)
 
     def enqueue_bounce(self, envelope, reply):
         bounce = self.bounce_factory(envelope, reply)

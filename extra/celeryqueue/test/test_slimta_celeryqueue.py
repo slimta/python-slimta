@@ -122,5 +122,28 @@ class TestCeleryQueue(MoxTestBase):
         queue = CeleryQueue(self.celery, self.relay, backoff=no_retry, bounce_factory=return_bounce)
         queue.attempt_delivery(self.env, 0)
 
+    def test_attempt_delivery_unhandlederror(self):
+        task = self.mox.CreateMockAnything()
+        subtask = self.mox.CreateMockAnything()
+        result = self.mox.CreateMockAnything()
+        result.id = '12345'
+        self.relay.attempt(self.env, 0).AndRaise(Exception('unhandled error'))
+        self.celery.task(IgnoreArg()).AndReturn(task)
+        task.s(self.bounce, 0).AndReturn(subtask)
+        subtask.apply_async().AndReturn(result)
+        self.mox.ReplayAll()
+        def return_bounce(envelope, reply):
+            self.assertEqual(self.env, envelope)
+            self.assertEqual('4.0.0 Unhandled delivery error: unhandled error (Too many retries)', reply.message)
+            return self.bounce
+        def no_retry(envelope, attempts):
+            self.assertEqual(self.env, envelope)
+            self.assertEqual(1, attempts)
+            return None
+        queue = CeleryQueue(self.celery, self.relay, backoff=no_retry, bounce_factory=return_bounce)
+        with self.assertRaises(Exception) as e:
+            queue.attempt_delivery(self.env, 0)
+            self.assertEqual('unhandled error', str(e.exception))
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
