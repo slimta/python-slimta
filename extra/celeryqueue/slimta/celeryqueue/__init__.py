@@ -139,11 +139,11 @@ class CeleryQueue(object):
     def attempt_delivery(self, envelope, attempts):
         try:
             self.relay.attempt(envelope, attempts)
-        except TransientRelayError, exc:
+        except TransientRelayError as exc:
             self._handle_transient_failure(envelope, attempts, exc.reply)
-        except PermanentRelayError, exc:
+        except PermanentRelayError as exc:
             self.enqueue_bounce(envelope, exc.reply)
-        except Exception, exc:
+        except Exception as exc:
             reply = Reply('450', '4.0.0 Unhandled delivery error: '+str(exc))
             self._handle_transient_failure(envelope, attempts, reply)
             raise
