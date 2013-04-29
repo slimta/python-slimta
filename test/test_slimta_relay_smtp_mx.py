@@ -4,6 +4,7 @@ import unittest
 from mox import MoxTestBase, IsA
 import dns.resolver
 
+from slimta.relay import PermanentRelayError
 from slimta.relay.smtp.mx import MxSmtpRelay, MxRecord, NoDomainError
 from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.envelope import Envelope
@@ -60,6 +61,17 @@ class TestMxSmtpRelay(MoxTestBase):
         self.mox.ReplayAll()
         mx.attempt(env, 0)
         mx.attempt(env, 1)
+
+    def test_attempt_nxdomain(self):
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        mx = MxSmtpRelay()
+        static = self.mox.CreateMock(StaticSmtpRelay)
+        self.mox.StubOutWithMock(mx, 'new_static_relay')
+        self.mox.StubOutWithMock(dns.resolver, 'query')
+        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
+        self.mox.ReplayAll()
+        with self.assertRaises(PermanentRelayError):
+            mx.attempt(env, 0)
 
     def test_attempt_expiredmx(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])

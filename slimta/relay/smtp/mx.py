@@ -175,7 +175,12 @@ class MxSmtpRelay(Relay):
             dest, port = self._force_mx[domain]
         else:
             record = self._mx_records.setdefault(domain, MxRecord(domain))
-            dest = self.choose_mx(record.get(), attempts)
+            try:
+                dest = self.choose_mx(record.get(), attempts)
+            except dns.resolver.NXDOMAIN:
+                msg = 'Domain has no MX records: '+domain
+                reply = Reply('550', '5.0.0 '+msg)
+                raise PermanentRelayError(msg, reply)
             port = 25
         try:
             relayer = self._relayers[(dest, port)]
