@@ -30,7 +30,7 @@ __all__ = ['SlimtaError']
 
 
 #: The |slimta| version string.
-__version__ = '0.3.1'
+__version__ = '0.3.2'
 
 
 class SlimtaError(Exception):
