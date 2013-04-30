@@ -28,6 +28,7 @@ from gevent import Timeout, Greenlet
 from gevent.socket import create_connection, getfqdn
 from gevent.queue import Queue, Empty
 
+from slimta.smtp.reply import Reply
 from slimta.smtp.client import Client
 from slimta import logging
 from . import SmtpRelayError
@@ -177,14 +178,24 @@ class SmtpRelayClient(Greenlet):
             if self.client:
                 self.client.io.close()
 
+    def _pop_message(self):
+        self.idle = True
+        try:
+            n, result, envelope = self.queue.get(timeout=self.idle_timeout)
+            return result, envelope
+        except Empty:
+            return None, None
+        finally:
+            self.idle = False
+
     def _run(self):
+        result, envelope = self._pop_message()
+        if not result:
+            return
         try:
             self._connect()
             self._handshake()
-            while True:
-                self.idle = True
-                n, result, envelope = self.queue.get(timeout=self.idle_timeout)
-                self.idle = False
+            while result:
                 if self._check_server_timeout():
                     self.queue.put((0, result, envelope))
                     break
@@ -192,8 +203,12 @@ class SmtpRelayClient(Greenlet):
                     result.set(True)
                 if self.idle_timeout is None:
                     break
-        except (Empty, Timeout):
-            pass
+                result, envelope = self._pop_message()
+        except SmtpRelayError as e:
+            result.set_exception(e)
+        except Exception as e:
+            result.set_exception(e)
+            raise
         finally:
             self._disconnect()
 

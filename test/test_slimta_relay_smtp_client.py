@@ -249,14 +249,8 @@ class TestSmtpRelayClient(MoxTestBase):
 
     def test_run_nomessages(self):
         queue = PriorityQueue()
-        self.sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
-        self.sock.sendall('EHLO test\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
-        self.sock.sendall('QUIT\r\n')
-        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
-        self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test', idle_timeout=0)
+        client = SmtpRelayClient(None, queue, idle_timeout=0)
         client._run()
 
 
