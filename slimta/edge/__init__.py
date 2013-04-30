@@ -77,7 +77,11 @@ class Edge(object):
         envelope.receiver = self.hostname
         envelope.timestamp = time.time()
 
-        return self.queue.enqueue(envelope)
+        try:
+            return self.queue.enqueue(envelope)
+        except Exception:
+            logging.log_exception(__name__)
+            raise
 
 
 class EdgeServer(Edge, gevent.Greenlet):
@@ -105,7 +109,11 @@ class EdgeServer(Edge, gevent.Greenlet):
 
     def _handle(self, socket, address):
         log.accept(self.server.socket, socket, address)
-        self.handle(socket, address)
+        try:
+            self.handle(socket, address)
+        except Exception:
+            logging.log_exception(__name__)
+            raise
 
     def handle(self, socket, address):
         """Override this function to receive messages on the socket and call

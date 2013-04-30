@@ -37,6 +37,7 @@ from gevent.event import Event
 from gevent.coros import Semaphore
 from gevent.pool import Pool
 
+from slimta.logging import log_exception
 from slimta.core import SlimtaError
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.smtp.reply import Reply
@@ -281,6 +282,7 @@ class Queue(Greenlet):
         except PermanentRelayError as e:
             self._perm_fail(id, envelope, e.reply)
         except Exception as e:
+            log_exception(__name__)
             reply = Reply('450', '4.0.0 Unhandled delivery error: '+str(e))
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise

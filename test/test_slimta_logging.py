@@ -1,7 +1,9 @@
 
 import unittest
 
-from slimta.logging import logline, parseline
+from testfixtures import log_capture
+
+from slimta.logging import logline, parseline, log_exception
 
 
 class TestLogging(unittest.TestCase):
@@ -52,6 +54,26 @@ class TestLogging(unittest.TestCase):
         self.assertEqual('jkl', id)
         self.assertEqual('baddata', op)
         self.assertEqual({}, data)
+
+    @log_capture()
+    def test_log_exception(self, l):
+        log_exception('test', extra='not logged')
+        try:
+            raise ValueError('testing stuff')
+        except Exception:
+            log_exception('test', extra='more stuff')
+        self.assertEqual(1, len(l.records))
+        rec = l.records[0]
+        self.assertEqual('test', rec.name)
+        self.assertEqual('ERROR', rec.levelname)
+        type, id, op, data = parseline(rec.msg)
+        self.assertEqual('exception', type)
+        self.assertEqual('ValueError', id)
+        self.assertEqual('unhandled', op)
+        self.assertEqual('more stuff', data['extra'])
+        self.assertEqual(('testing stuff', ), data['args'])
+        self.assertEqual('testing stuff', data['message'])
+        self.assertTrue(data['traceback'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

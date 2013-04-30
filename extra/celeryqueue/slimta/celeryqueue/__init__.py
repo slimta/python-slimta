@@ -38,6 +38,7 @@ from __future__ import absolute_import
 
 from celery.result import AsyncResult
 
+from slimta.logging import log_exception
 from slimta.queue import QueueError
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.bounce import Bounce
@@ -144,6 +145,7 @@ class CeleryQueue(object):
         except PermanentRelayError as exc:
             self.enqueue_bounce(envelope, exc.reply)
         except Exception as exc:
+            log_exception(__name__)
             reply = Reply('450', '4.0.0 Unhandled delivery error: '+str(exc))
             self._handle_transient_failure(envelope, attempts, reply)
             raise

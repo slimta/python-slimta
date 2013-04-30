@@ -96,7 +96,7 @@ def log_exception(name, **kwargs):
     exc_repr.maxstring = 1000
     logger = logging.getLogger(name)
     data = kwargs.copy()
-    data['value'] = str(value)
+    data['message'] = str(value)
     data['traceback'] = traceback.format_exception(type, value, tb)
     data['args'] = value.args
     data_str = ' '.join(['='.join((key, exc_repr.repr(val)))
