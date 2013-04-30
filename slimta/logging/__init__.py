@@ -79,7 +79,7 @@ def getQueueStorageLogger(name):
     return QueueStorageLogger(logger)
 
 
-def exception(name, **kwargs):
+def log_exception(name, **kwargs):
     """Logs an exception, along with relevant information such as message,
     traceback, and anything provided pertinent to the situation. This function
     does nothing unless called while an exception is being handled.
