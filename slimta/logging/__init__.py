@@ -26,6 +26,8 @@ from __future__ import absolute_import
 import threading
 threading._DummyThread._Thread__stop = lambda x: 42
 
+import sys
+import traceback
 import re
 import repr
 import logging
@@ -75,6 +77,31 @@ def getQueueStorageLogger(name):
     """
     logger = logging.getLogger(name)
     return QueueStorageLogger(logger)
+
+
+def exception(name, **kwargs):
+    """Logs an exception, along with relevant information such as message,
+    traceback, and anything provided pertinent to the situation. This function
+    does nothing unless called while an exception is being handled.
+
+    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param kwargs: Other keywords may be passed in and will be included in the
+                   produced log line.
+
+    """
+    type, value, tb = sys.exc_info()
+    if not value:
+        return
+    exc_repr = repr.Repr()
+    exc_repr.maxstring = 1000
+    logger = logging.getLogger(name)
+    data = kwargs.copy()
+    data['value'] = str(value)
+    data['traceback'] = traceback.format_exception(type, value, tb)
+    data['args'] = value.args
+    data_str = ' '.join(['='.join((key, exc_repr.repr(val)))
+                         for key, val in sorted(data.iteritems())])
+    logger.error('exception:{0}:unhandled {1}'.format(type.__name__, data_str))
 
 
 log_repr = repr.Repr()
