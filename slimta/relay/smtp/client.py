@@ -103,8 +103,9 @@ class SmtpRelayClient(Greenlet):
         self._banner()
         self._ehlo()
         if self.tls and not self.tls_immediately:
-            self._starttls()
-            self._ehlo()
+            if self.tls_required or 'STARTTLS' in self.client.extensions:
+                self._starttls()
+                self._ehlo()
 
     def _rset(self):
         with Timeout(self.command_timeout):
