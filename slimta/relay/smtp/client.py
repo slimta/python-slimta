@@ -26,6 +26,7 @@ import time
 import gevent
 from gevent import Timeout, Greenlet
 from gevent.socket import create_connection, getfqdn
+from gevent.socket import error as socket_error
 from gevent.queue import Queue, Empty
 
 from slimta.smtp.reply import Reply
@@ -70,8 +71,12 @@ class SmtpRelayClient(Greenlet):
         return socket
 
     def _connect(self):
-        with Timeout(self.connect_timeout):
-            self.socket = self._socket_creator(self.address)
+        try:
+            with Timeout(self.connect_timeout):
+                self.socket = self._socket_creator(self.address)
+        except socket_error as (err, msg):
+            reply = Reply('451', '4.3.0 Connection failed')
+            raise SmtpRelayError.factory(reply)
         self.client = Client(self.socket, self.tls_wrapper)
 
     def _banner(self):
