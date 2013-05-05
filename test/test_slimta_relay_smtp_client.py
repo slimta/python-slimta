@@ -89,7 +89,7 @@ class TestSmtpRelayClient(MoxTestBase):
             return sock
         sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
         sock.sendall('EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn('250 Hello\r\n')
+        sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 STARTTLS\r\n')
         sock.sendall('STARTTLS\r\n')
         sock.recv(IsA(int)).AndReturn('220 Go ahead\r\n')
         sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
