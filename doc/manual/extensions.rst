@@ -8,6 +8,7 @@
 .. _ESPs: http://en.wikipedia.org/wiki/E-mail_service_provider
 .. _spam-filled world: http://www.maawg.org/email_metrics_report
 .. _Celery Distributed Task Queue: http://www.celeryproject.org/
+.. _SPF: http://en.wikipedia.org/wiki/Sender_Policy_Framework
 
 Extensions
 ==========
@@ -163,4 +164,38 @@ with the same backend and broker. You're now free to scale your *queue* by
 scaling your backend and broker (might be easier with RabbitMQ than Redis).
 And finally, you're free to scale your *relay* by adding machines designated as
 Celery task workers. Go nuts!
+
+Sender Policy Framework (SPF)
+"""""""""""""""""""""""""""""
+
+SPF_ is a tool that, at its most basic, allows domains to explicitly list the
+outbound hosts/IPs from which they are legitimately sending mail. Domains may
+set DNS records of special formats that email receivers query and compare
+against the information they know about the sending client.
+
+To set it up, you need to create rules for the different types of results. You
+do this by creating a :class:`~slimta.spf.EnforceSpf` object and calling
+:meth:`~slimta.spf.EnforceSpf.set_enforcement` for each different results you
+want to act upon. These results are:
+
+* `none <http://tools.ietf.org/html/rfc4408#section-2.5.1>`_
+* `neutral <http://tools.ietf.org/html/rfc4408#section-2.5.2>`_
+* `pass <http://tools.ietf.org/html/rfc4408#section-2.5.3>`_
+* `fail <http://tools.ietf.org/html/rfc4408#section-2.5.4>`_
+* `softfail <http://tools.ietf.org/html/rfc4408#section-2.5.5>`_
+* `temperror <http://tools.ietf.org/html/rfc4408#section-2.5.6>`_
+* `permerror <http://tools.ietf.org/html/rfc4408#section-2.5.7>`_
+
+So we create our rules::
+
+    spf = EnforceSpf()
+    spf.set_enforcement('fail', match_message='5.7.1 Access denied: {reason}')
+    spf.set_enforcement('softfail', match_code='250', match_message='2.0.0 Ok: {reason}')
+
+And then in our :class:`~slimta.edge.smtp.SmtpValidators` class, use the
+:meth:`~slimta.spf.EnforceSpf.check` decorator::
+
+    @spf.check
+    def validate_mail(self, reply, sender):
+        pass
 

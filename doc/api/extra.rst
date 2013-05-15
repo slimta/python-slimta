@@ -15,4 +15,5 @@ own set of additional dependencies. These modules can be installed alongside
    extra.maildrop
    extra.diskstorage
    extra.celeryqueue
+   extra.spf
 
