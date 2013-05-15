@@ -1,3 +1,4 @@
 extra/diskstorage/
 extra/maildrop/
 extra/celeryqueue/
+extra/spf/
