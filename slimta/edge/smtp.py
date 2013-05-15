@@ -73,6 +73,8 @@ class SmtpValidators(object):
         #:  * ``auth_result``: The authentication result returned by |Auth|
         #:                     after successful authentication, or ``None`` if
         #:                     the client has not authenticated.
+        #:  * ``envelope``: The |Envelope| being pieced together to send by the
+        #:                  connecting client.
         self.session = session
 
 
