@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 #
 
-"""This module provides classes to check SPF_ the SPF secords of the sending
+"""This module provides classes to check the `SPF`_ records of the sending
 client address.
 
 .. _SPF: http://en.wikipedia.org/wiki/Sender_Policy_Framework
