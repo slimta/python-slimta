@@ -22,7 +22,7 @@
 """This module provides classes to check SPF_ the SPF secords of the sending
 client address.
 
-.. SPF: http://en.wikipedia.org/wiki/Sender_Policy_Framework
+.. _SPF: http://en.wikipedia.org/wiki/Sender_Policy_Framework
 
 """
 
@@ -43,7 +43,7 @@ class EnforceSpf(object):
     By default, results are logged but not acted upon.
 
     :param timeout: Timeout in seconds before giving up the check. An SPF check
-                    that times out is equivalent to a ``'temperrror'`` result.
+                    that times out is equivalent to a ``'temperror'`` result.
 
     """
 
