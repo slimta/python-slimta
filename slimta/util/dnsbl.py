@@ -185,7 +185,8 @@ class DnsBlocklistGroup(object):
         return reasons
 
 
-def check_dnsbl(address, match_code=None, match_message=None, timeout=10.0):
+def check_dnsbl(address, match_code='550', match_message='5.7.1 Access denied',
+                timeout=10.0):
     """Decorator for :class:`~slimta.edge.smtp.SmtpValidators` methods that are
     given a |Reply| object. It will check the current SMTP session's connecting
     IP address against the DNSBL provided at domain name ``address``. If the IP
@@ -194,18 +195,15 @@ def check_dnsbl(address, match_code=None, match_message=None, timeout=10.0):
     :param address: :class:`DnsBlocklist` object, :class:`DnsBlocklistGroup`
                     object, or DNSBL domain name string.
     :param match_code: When the connecting IP address matches, set the |Reply|
-                       code to this string, default ``550``.
+                       code to this string.
     :param match_message: When the connecting IP address matches, set the
-                          |Reply| message to this string, default
-                          ``5.7.1 Access denied``.
+                          |Reply| message to this string.
     :param timeout: Timeout in seconds before giving up the check.
 
     """
     if not isinstance(address, DnsBlocklist) and \
        not isinstance(address, DnsBlocklistGroup):
         address = DnsBlocklist(address)
-    match_code = match_code or '550'
-    match_message = match_message or '5.7.1 Access denied'
 
     def new_decorator(f):
         @wraps(f)
