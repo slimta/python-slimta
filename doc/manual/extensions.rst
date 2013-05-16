@@ -165,6 +165,8 @@ scaling your backend and broker (might be easier with RabbitMQ than Redis).
 And finally, you're free to scale your *relay* by adding machines designated as
 Celery task workers. Go nuts!
 
+.. _spf:
+
 Sender Policy Framework (SPF)
 """""""""""""""""""""""""""""
 
@@ -190,7 +192,7 @@ So we create our rules::
 
     spf = EnforceSpf()
     spf.set_enforcement('fail', match_message='5.7.1 Access denied: {reason}')
-    spf.set_enforcement('softfail', match_code='250', match_message='2.0.0 Ok: {reason}')
+    spf.set_enforcement('softfail', match_code='250', match_message='2.0.0 Ok; {reason}')
 
 And then in our :class:`~slimta.edge.smtp.SmtpValidators` class, use the
 :meth:`~slimta.spf.EnforceSpf.check` decorator::
