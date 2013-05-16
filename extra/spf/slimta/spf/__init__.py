@@ -71,7 +71,16 @@ class EnforceSpf(object):
             raise ValueError(result)
         self.policies[result.lower()] = (match_code, match_message)
 
-    def _query(self, ip, sender, ehlo_as):
+    def query(self, sender, ip, ehlo_as):
+        """Performs a direct query to check the sender's domain to see if the
+        given IP and EHLO string are authorized to send for that domain.
+
+        :param sender: The sender address.
+        :param ip: The IP address string of the sending client.
+        :param ehlo_as: The EHLO string given by the sending client.
+        :returns: A tuple of the result and reason strings.
+
+        """
         result, reason = 'temperror', 'Timed out'
         with gevent.Timeout(self.timeout, False):
             result, reason = spf.check2(i=ip, s=sender, h=ehlo_as)
@@ -93,7 +102,7 @@ class EnforceSpf(object):
             ip = f_self.session.address[0]
             ehlo_as = f_self.session.ehlo_as
             sender = f_self.session.envelope.sender
-            result, reason = self._query(ip, sender, ehlo_as)
+            result, reason = self.query(sender, ip, ehlo_as)
             if result in self.policies:
                 reply.code = self.policies[result][0]
                 reply.message = self.policies[result][1].format(reason=reason)
