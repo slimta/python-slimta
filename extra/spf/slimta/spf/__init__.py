@@ -93,6 +93,9 @@ class EnforceSpf(object):
         If enforcement policies are set for the result, the |Reply| is modified
         before calling the validator method.
 
+        This decorator can only be used on ``handle_mail()``, ``handle_rcpt()``,
+        and ``handle_data()``.
+
         :param f: The overloaded :class:`~slimta.edge.smtp.SmtpValidators`
                   method to decorate.
 
@@ -101,7 +104,10 @@ class EnforceSpf(object):
         def new_f(f_self, reply, *args, **kwargs):
             ip = f_self.session.address[0]
             ehlo_as = f_self.session.ehlo_as
-            sender = f_self.session.envelope.sender
+            if f_self.session.envelope:
+                sender = f_self.session.envelope.sender
+            else:
+                sender = args[0]
             result, reason = self.query(sender, ip, ehlo_as)
             if result in self.policies:
                 reply.code = self.policies[result][0]

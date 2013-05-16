@@ -27,7 +27,7 @@ class TestEnforceSpf(MoxTestBase):
         espf.set_enforcement('fail', match_code='550')
         class TestSession(object):
             address = ('1.2.3.4', 56789)
-            envelope = Envelope('sender@example.com')
+            envelope = None
             ehlo_as = 'testehlo'
         class TestValidators(object):
             def __init__(self):
@@ -40,7 +40,7 @@ class TestEnforceSpf(MoxTestBase):
         self.mox.ReplayAll()
         validators = TestValidators()
         reply = Reply('250', '2.0.0 Ok')
-        validators.validate_mail(reply, 'asdf')
+        validators.validate_mail(reply, 'sender@example.com')
         self.assertEqual('250', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
 
@@ -49,7 +49,7 @@ class TestEnforceSpf(MoxTestBase):
         espf.set_enforcement('fail', match_code='550')
         class TestSession(object):
             address = ('1.2.3.4', 56789)
-            envelope = Envelope('sender@example.com')
+            envelope = None
             ehlo_as = 'testehlo'
         class TestValidators(object):
             def __init__(self):
@@ -62,7 +62,29 @@ class TestEnforceSpf(MoxTestBase):
         self.mox.ReplayAll()
         validators = TestValidators()
         reply = Reply('250', '2.0.0 Ok')
-        validators.validate_mail(reply, 'asdf')
+        validators.validate_mail(reply, 'sender@example.com')
+        self.assertEqual('550', reply.code)
+        self.assertEqual('5.7.1 Access denied', reply.message)
+
+    def test_on_validate_rcpt(self):
+        espf = EnforceSpf()
+        espf.set_enforcement('fail', match_code='550')
+        class TestSession(object):
+            address = ('1.2.3.4', 56789)
+            envelope = Envelope('sender@example.com')
+            ehlo_as = 'testehlo'
+        class TestValidators(object):
+            def __init__(self):
+                self.session = TestSession()
+            @espf.check
+            def validate_rcpt(self, reply, recipient):
+                pass
+
+        spf.check2(i='1.2.3.4', s='sender@example.com', h='testehlo').AndReturn(('fail', 'the reason'))
+        self.mox.ReplayAll()
+        validators = TestValidators()
+        reply = Reply('250', '2.0.0 Ok')
+        validators.validate_rcpt(reply, 'asdf')
         self.assertEqual('550', reply.code)
         self.assertEqual('5.7.1 Access denied', reply.message)
 
@@ -71,7 +93,7 @@ class TestEnforceSpf(MoxTestBase):
         espf.set_enforcement('pass', match_code='250', match_message='{reason}')
         class TestSession(object):
             address = ('1.2.3.4', 56789)
-            envelope = Envelope('sender@example.com')
+            envelope = None
             ehlo_as = 'testehlo'
         class TestValidators(object):
             def __init__(self):
@@ -84,7 +106,7 @@ class TestEnforceSpf(MoxTestBase):
         self.mox.ReplayAll()
         validators = TestValidators()
         reply = Reply('250', '2.0.0 Ok')
-        validators.validate_mail(reply, 'asdf')
+        validators.validate_mail(reply, 'sender@example.com')
         self.assertEqual('250', reply.code)
         self.assertEqual('2.0.0 the reason', reply.message)
 
