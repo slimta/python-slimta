@@ -52,5 +52,5 @@ Usage Manual
   * :ref:`Maildrop Delivery <maildrop-relay>`
   * :ref:`Disk Storage <disk-storage>`
   * :ref:`Celery Queuing <celery-queue>`
-  * :ref:`SPF <spf>`
+  * :ref:`Sender Policy Framework (SPF) <enforce-spf>`
 

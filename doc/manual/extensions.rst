@@ -165,7 +165,7 @@ scaling your backend and broker (might be easier with RabbitMQ than Redis).
 And finally, you're free to scale your *relay* by adding machines designated as
 Celery task workers. Go nuts!
 
-.. _spf:
+.. _enforce-spf:
 
 Sender Policy Framework (SPF)
 """""""""""""""""""""""""""""
