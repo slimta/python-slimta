@@ -16,6 +16,7 @@ Usage Manual
    manual/mda
    manual/msa
    manual/extensions
+   manual/slimta
 
 * :doc:`manual/terminology`
 * :doc:`manual/system`
@@ -53,4 +54,6 @@ Usage Manual
   * :ref:`Disk Storage <disk-storage>`
   * :ref:`Celery Queuing <celery-queue>`
   * :ref:`Sender Policy Framework (SPF) <enforce-spf>`
+
+* :doc:`manual/slimta`
 
