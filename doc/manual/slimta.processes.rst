@@ -64,10 +64,10 @@ Logging Configuration
 .. _dictionary schema: http://docs.python.org/2/library/logging.config.html#configuration-dictionary-schema
 .. _logging.conf: https://github.com/icgood/slimta/blob/master/etc/logging.conf.sample
 
-Because ``logging`` sub-section is parsed into a dictionary-like object, it is
-compatible with the :func:`logging.config.dictConfig` function. The `dictionary
-schema`_ explains how to use this configuration, and the `logging.conf`_ sample
-config has a good starting point.
+Because the ``logging`` sub-section is parsed into a dictionary-like object, it
+is compatible with the :func:`logging.config.dictConfig` function. The
+`dictionary schema`_ explains how to use this configuration, and the
+`logging.conf`_ sample config has a good starting point.
 
 A more advanced, logging config that produces log files ready for rotation in a
 readable and parseable format might look like this::

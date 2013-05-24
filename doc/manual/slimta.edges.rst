@@ -104,9 +104,9 @@ Only one additional key is required by the ``"custom"`` edge type:
 
 * ``factory``: String, required
 
-  This is a string of the form ``package.module:symbol``. The package and module
-  are imported with normal import behavior, and then the symbol is fetched from
-  the loaded module.
+  This is a string of the form ``package.module:symbol``. The package and
+  module portion are imported with :func:`importlib.import_module`, and then
+  the symbol is fetched from the loaded module with :func:`getattr()`.
 
   The result of loading the symbol must be a function that takes two arguments,
   the options object (that contains the ``type``, ``queue``, and ``factory``
