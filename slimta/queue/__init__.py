@@ -238,6 +238,16 @@ class Queue(Greenlet):
         self.wake.set()
 
     def enqueue(self, envelope):
+        """Drops a new message in the queue for delivery. The first delivery
+        attempt is made immediately (depending on relay pool availability). This
+        method is not typically called directly, |Edge| objects use it when they
+        receive new messages.
+
+        :param envelope: |Envelope| object to enqueue.
+        :returns: Zipped list of envelopes and their respective queue IDs (or
+                  thrown :exc:`QueueError` objects).
+
+        """
         now = time.time()
         envelopes = self._run_policies(envelope)
         ids = self._pool_imap('store', self.store.write, envelopes, repeat(now))
