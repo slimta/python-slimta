@@ -51,14 +51,14 @@ class TestSmtpAuth(MoxTestBase):
     def test_get_available_mechanisms(self):
         auth = Auth(None)
         self.assertEqual([CramMd5], auth.get_available_mechanisms())
-        self.assertEqual([Plain, Login, CramMd5],
+        self.assertEqual([CramMd5, Plain, Login],
                          auth.get_available_mechanisms(True))
 
     def test_str(self):
         auth = Auth(FakeSession(False))
         self.assertEqual('CRAM-MD5', str(auth))
         auth = Auth(FakeSession(True))
-        self.assertEqual('PLAIN LOGIN CRAM-MD5', str(auth))
+        self.assertEqual('CRAM-MD5 PLAIN LOGIN', str(auth))
 
     def test_unimplemented_means_invalid(self):
         auth = Auth(None)
