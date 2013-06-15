@@ -31,6 +31,7 @@ from .io import IO
 from .extensions import Extensions
 from .reply import Reply
 from .datasender import DataSender
+from .auth.mechanisms import Mechanism, supported as supported_mechanisms
 
 __all__ = ['Client']
 
@@ -202,6 +203,35 @@ class Client(object):
         if reply.code == '220':
             self.encrypt(tls)
         return reply
+
+    def auth(self, authcid, secret, authzid=None, mechanism=None):
+        """Negotiates authentication for the current SMTP session. This
+        transaction may involve several back-and-forth packets to the server,
+        depending on the SASL mechanism used, and this function will only return
+        once all have completed.
+
+        :param authcid: The authentication identity, usually the username.
+        :param secret: The secret (i.e. password) string to send for the given
+                       authentication and authorization identities.
+        :param authzid: The authorization identity, if applicable.
+        :param mechanism: Force the usage of the given SASL mechanism sub-class.
+                          If not given, the best mechanism available is used.
+        :type mechanism: :class:`~slimta.smtp.auth.mechanisms.Mechanism`
+        :returns: |Reply| object populated with the response.
+
+        """
+        if not mechanism:
+            server_supports = self.extensions.getparam('AUTH') or []
+            for mech in supported_mechanisms:
+                if mech.name in server_supports:
+                    mechanism = mech
+                    break
+            else:
+                mechanism = supported_mechanisms[-1]
+        elif not issubclass(mechanism, Mechanism):
+            raise TypeError(mechanism)
+        self._flush_pipeline()
+        return mechanism.client_attempt(self.io, authcid, secret, authzid)
 
     def mailfrom(self, address, data_size=None):
         """Sends the MAIL command with the ``address`` and possibly the message

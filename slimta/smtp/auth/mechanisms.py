@@ -45,6 +45,15 @@ __all__ = ['Plain', 'Login', 'CramMd5']
 
 
 class Mechanism(object):
+    """Base class of SASL authentication mechanism implementations.
+
+    :param verify_secret: Function used by an SMTP server to verify credentials
+                          given by the client.
+    :param get_secret: Function used by an SMTP server to retrieve the secret
+                       (password) string for comparison with credentials given
+                       by the client.
+
+    """
 
     def __init__(self, verify_secret, get_secret):
         self.verify_secret = verify_secret
@@ -57,7 +66,54 @@ class Mechanism(object):
             raise AuthenticationCanceled()
         return ret
 
+    @classmethod
+    def _send_response_get_challenge(cls, io, response_str, first=False):
+        if first:
+            if response_str:
+                command = 'AUTH {0} {1}'.format(cls.name, response_str)
+            else:
+                command = 'AUTH {0}'.format(cls.name)
+        else:
+            command = response_str
+        io.send_command(command)
+        io.flush_send()
+        ret = Reply(command='AUTH')
+        ret.recv(io)
+        return ret
+
     def server_attempt(self, io, initial_response):
+        """Communicates back-and-forth with the connected client to negotiate
+        authentication, based on the client's auth string. This method must be
+        overidden by sub-classes to be used by server-side SMTP sessions.
+
+        :param io: The underlying IO object.
+        :type io: :class:`~slimta.smtp.io.IO`
+        :param initial_response: The initial string sent by the client along
+                                 with its AUTH command.
+        :returns: A representation of the identity that was successfully
+                  authenticated. This may be ``authcid``, ``authzid``, a tuple
+                  of both, or any alternative.
+        :raises: :class:`CredentialsInvalidError`
+
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def client_attempt(cls, io, authcid, secret, authzid):
+        """Communicates back-and-forth with a server to negotiate
+        authentication, based on the desired credentials. This class method must
+        be overidden by sub-classes to be used by client-side SMTP sessions.
+
+        :param io: The underlying IO object.
+        :type io: :class:`~slimta.smtp.io.IO`
+        :param authcid: The authentication identity, usually the username.
+        :param secret: The secret (i.e. password) string to send for the given
+                       authentication and authorization identities.
+        :param authzid: The authorization identity, if applicable.
+        :returns: |Reply| object received by the final authentication
+                  negotiation response from the server.
+
+        """
         raise NotImplementedError()
 
 
@@ -91,6 +147,11 @@ class Plain(Mechanism):
 
         return self.verify_secret(cid, secret, zid)
 
+    @classmethod
+    def client_attempt(cls, io, authcid, secret, authzid):
+        response = '{0}\x00{1}\x00{2}'.format(authzid or '', authcid, secret)
+        b64_response = base64.b64encode(response)
+        return cls._send_response_get_challenge(io, b64_response, True)
 
 class Login(Mechanism):
     """``LOGIN`` authentication mechanism. Simply a back-and-forth request from
@@ -115,6 +176,18 @@ class Login(Mechanism):
         ret = self._send_challenge_get_response(io, 'UGFzc3dvcmQ6')
         password = base64.b64decode(ret)
         return self.verify_secret(username, password)
+
+    @classmethod
+    def client_attempt(cls, io, authcid, secret, authzid):
+        initial_ret = cls._send_response_get_challenge(io, None, True)
+        if initial_ret.code != '334':
+            return initial_ret
+        username_str = base64.b64encode(authcid)
+        username_ret = cls._send_response_get_challenge(io, username_str)
+        if username_ret.code != '334':
+            return username_ret
+        password_str = base64.b64encode(secret)
+        return cls._send_response_get_challenge(io, password_str)
 
 
 class CramMd5(Mechanism):
@@ -164,8 +237,19 @@ class CramMd5(Mechanism):
 
         return identity
 
+    @classmethod
+    def client_attempt(cls, io, authcid, secret, authzid):
+        initial_ret = cls._send_response_get_challenge(io, None, True)
+        if initial_ret.code != '334':
+            return initial_ret
+        challenge = base64.b64decode(initial_ret.message)
 
-supported = [Plain, Login, CramMd5]
+        digest = hmac.new(secret, challenge, hashlib.md5).hexdigest()
+        response_str = base64.b64encode('{0} {1}'.format(authcid, digest))
+        return cls._send_response_get_challenge(io, response_str)
+
+
+supported = [CramMd5, Plain, Login]
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
