@@ -152,5 +152,73 @@ class TestSmtpAuth(MoxTestBase):
         with self.assertRaises(ServerAuthError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
 
+    def test_client_plain(self):
+        self.sock.sendall('AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = Plain.client_attempt(io, 'test@example.com', 'asdf', 'jkl')
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_client_login(self):
+        self.sock.sendall('AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn('334 VXNlcm5hbWU6\r\n')
+        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbQ==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('334 UGFzc3dvcmQ6\r\n')
+        self.sock.sendall('YXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_client_login_bad_mech(self):
+        self.sock.sendall('AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_client_login_bad_username(self):
+        self.sock.sendall('AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn('334 VXNlcm5hbWU6\r\n')
+        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbQ==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_client_crammd5(self):
+        self.sock.sendall('AUTH CRAM-MD5\r\n')
+        self.sock.recv(IsA(int)).AndReturn('334 dGVzdCBjaGFsbGVuZ2U=\r\n')
+        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbSA1Yzk1OTBjZGE3ZTgxMDY5Mzk2ZjhiYjlkMzU1MzE1Yg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_client_crammd5_bad_mech(self):
+        self.sock.sendall('AUTH CRAM-MD5\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
