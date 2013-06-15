@@ -100,6 +100,21 @@ class TestSmtpRelayClient(MoxTestBase):
         client._connect()
         client._handshake()
 
+    def test_handshake_authenticate(self):
+        sock = self.mox.CreateMockAnything()
+        sock.fileno = lambda: -1
+        def socket_creator(address):
+            return sock
+        sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
+        sock.sendall('EHLO test\r\n')
+        sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 AUTH PLAIN\r\n')
+        sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='test')
+        client._connect()
+        client._handshake()
+
     def test_rset(self):
         self.sock.sendall('RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
@@ -107,6 +122,22 @@ class TestSmtpRelayClient(MoxTestBase):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._rset()
+
+    def test_handshake_authenticate_badcreds(self):
+        sock = self.mox.CreateMockAnything()
+        sock.fileno = lambda: -1
+        def socket_creator(address):
+            return sock
+        sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
+        sock.sendall('EHLO test\r\n')
+        sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 AUTH PLAIN\r\n')
+        sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='test')
+        client._connect()
+        with self.assertRaises(PermanentRelayError):
+            client._handshake()
 
     def test_mailfrom(self):
         self.sock.sendall('MAIL FROM:<sender>\r\n')

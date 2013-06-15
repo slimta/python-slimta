@@ -46,7 +46,8 @@ class SmtpRelayClient(Greenlet):
                        tls=None, tls_immediately=False,
                        tls_required=False, tls_wrapper=None,
                        connect_timeout=None, command_timeout=None,
-                       data_timeout=None, idle_timeout=None):
+                       data_timeout=None, idle_timeout=None,
+                       credentials=None):
         super(SmtpRelayClient, self).__init__()
         self.address = address
         self.queue = queue
@@ -64,6 +65,7 @@ class SmtpRelayClient(Greenlet):
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.idle_timeout = idle_timeout
+        self.credentials = credentials
 
     def _socket_creator(self, address):
         socket = create_connection(address)
@@ -97,6 +99,12 @@ class SmtpRelayClient(Greenlet):
         if starttls.is_error() and self.tls_required:
             raise SmtpRelayError.factory(starttls)
 
+    def _authenticate(self):
+        with Timeout(self.command_timeout):
+            auth = self.client.auth(*self.credentials)
+        if auth.is_error():
+            raise SmtpRelayError.factory(auth)
+
     def _handshake(self):
         if self.tls and self.tls_immediately:
             self.client.encrypt(self.tls)
@@ -106,6 +114,8 @@ class SmtpRelayClient(Greenlet):
             if self.tls_required or 'STARTTLS' in self.client.extensions:
                 self._starttls()
                 self._ehlo()
+        if self.credentials:
+            self._authenticate()
 
     def _rset(self):
         with Timeout(self.command_timeout):
