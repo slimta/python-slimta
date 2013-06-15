@@ -41,7 +41,7 @@ from slimta.smtp.reply import Reply
 from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError, \
                              AuthenticationCanceled
 
-__all__ = ['Plain', 'Login', 'CramMd5']
+__all__ = ['Mechanism', 'Plain', 'Login', 'CramMd5']
 
 
 class Mechanism(object):
