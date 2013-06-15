@@ -5,6 +5,7 @@ from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
 from slimta.smtp.client import Client
+from slimta.smtp.auth.mechanisms import Plain
 
 
 class TestSmtpClient(MoxTestBase):
@@ -89,6 +90,27 @@ class TestSmtpClient(MoxTestBase):
         self.assertEqual('420', reply.code)
         self.assertEqual('4.0.0 Nope', reply.message)
         self.assertEqual('STARTTLS', reply.command)
+
+    def test_auth(self):
+        self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        client = Client(self.sock)
+        client.extensions.add('AUTH', 'PLAIN')
+        reply = client.auth('test@example.com', 'asdf')
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
+        self.assertEqual('AUTH', reply.command)
+
+    def test_auth_force_mechanism(self):
+        self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        client = Client(self.sock)
+        reply = client.auth('test@example.com', 'asdf', mechanism=Plain)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
+        self.assertEqual('AUTH', reply.command)
 
     def test_mailfrom(self):
         self.sock.sendall('MAIL FROM:<test>\r\n')

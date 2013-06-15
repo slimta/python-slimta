@@ -160,7 +160,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = Plain.client_attempt(io, 'test@example.com', 'asdf', 'jkl')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
     def test_client_login(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -174,7 +173,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
     def test_client_login_bad_mech(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -184,7 +182,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
     def test_client_login_bad_username(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -196,7 +193,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
     def test_client_crammd5(self):
         self.sock.sendall('AUTH CRAM-MD5\r\n')
@@ -208,7 +204,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
     def test_client_crammd5_bad_mech(self):
         self.sock.sendall('AUTH CRAM-MD5\r\n')
@@ -218,7 +213,6 @@ class TestSmtpAuth(MoxTestBase):
         reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
-        self.assertEqual('AUTH', reply.command)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
