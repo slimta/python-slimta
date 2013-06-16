@@ -115,6 +115,24 @@ class TestSmtpRelayClient(MoxTestBase):
         client._connect()
         client._handshake()
 
+    def test_handshake_authenticate_callable(self):
+        sock = self.mox.CreateMockAnything()
+        sock.fileno = lambda: -1
+        def socket_creator(address):
+            return sock
+        sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
+        sock.sendall('EHLO test\r\n')
+        sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 AUTH PLAIN\r\n')
+        sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        def yield_creds():
+            yield 'test@example.com'
+            yield 'passwd'
+        client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator, credentials=yield_creds, ehlo_as='test')
+        client._connect()
+        client._handshake()
+
     def test_rset(self):
         self.sock.sendall('RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')

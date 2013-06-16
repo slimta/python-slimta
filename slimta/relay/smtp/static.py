@@ -62,8 +62,9 @@ class StaticSmtpRelay(Relay):
                          default, QUIT is sent immediately and connections are
                          never re-used.
     :param credentials: Information used to authenticate the created SMTP
-                        sessions. This should be an iterable that will be
-                        passed as arguments directly into the
+                        sessions. This can be an iterable or a callable that
+                        returns or generates an iterable. The iterable will be
+                        passed as the arguments into the
                         :meth:`~slimta.smtp.client.Client.auth` method of the
                         session. By default, no authentication is attempted.
 

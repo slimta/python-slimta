@@ -101,7 +101,10 @@ class SmtpRelayClient(Greenlet):
 
     def _authenticate(self):
         with Timeout(self.command_timeout):
-            auth = self.client.auth(*self.credentials)
+            if callable(self.credentials):
+                auth = self.client.auth(*self.credentials())
+            else:
+                auth = self.client.auth(*self.credentials)
         if auth.is_error():
             raise SmtpRelayError.factory(auth)
 
