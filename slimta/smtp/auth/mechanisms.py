@@ -91,7 +91,7 @@ class Mechanism(object):
         return ret
 
     @classmethod
-    def send_response_get_challenge(cls, io, response_str=None, first=False):
+    def send_response_get_challenge(cls, io, response_str='', first=False):
         """This method can be used in :meth:`client_attempt` implementations to
         send response strings to the server and wait for its challenge. It is
         up to the implementation to check if this challenge is ``334`` (and
@@ -99,8 +99,7 @@ class Mechanism(object):
 
         :param io: The underlying IO object.
         :type io: :class:`~slimta.smtp.io.IO`
-        :param response_str: The response string to send to the server. By
-                             default, this is an empty string.
+        :param response_str: The response string to send to the server.
         :param first: Every SASL implementation must first send a response with
                       this argument as ``True`` to initiate the authentication
                       request. Subsequent calls should use ``False``.
@@ -220,7 +219,7 @@ class Login(Mechanism):
 
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):
-        initial_ret = cls.send_response_get_challenge(io, None, True)
+        initial_ret = cls.send_response_get_challenge(io, first=True)
         if initial_ret.code != '334':
             return initial_ret
         username_str = base64.b64encode(authcid)
@@ -280,7 +279,7 @@ class CramMd5(Mechanism):
 
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):
-        initial_ret = cls.send_response_get_challenge(io, None, True)
+        initial_ret = cls.send_response_get_challenge(io, first=True)
         if initial_ret.code != '334':
             return initial_ret
         challenge = base64.b64decode(initial_ret.message)
