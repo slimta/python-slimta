@@ -55,11 +55,35 @@ class Mechanism(object):
 
     """
 
+    #: This static flag should be overidden by sub-classes to specify whether
+    #: the implementation is safe to use over unencrypted channels. By default,
+    #: unsafe mechanisms will not be advertised until TLS is negotiated.
+    secure = False
+
+    #: This static string should be overriden by sub-classes to specify the SASL
+    #: name that identifies this mechanism. This string will be used in the SMTP
+    #: session. Custom mechanisms should be prefixed with ``X``.
+    name = None
+
     def __init__(self, verify_secret, get_secret):
         self.verify_secret = verify_secret
         self.get_secret = get_secret
 
-    def _send_challenge_get_response(self, io, challenge_str):
+    def send_challenge_get_response(self, io, challenge_str):
+        """This method can be used in :meth:`server_attempt` implementations to
+        send intermediate SASL challenge strings to the client. The challenge
+        string will be automatically prefixed with the ``334 `` code to
+        indicate it expects a response from the client. The cancellation
+        response ``*`` is also handled by this method, which raises an internal
+        exception to break out of the :meth:`server_attempt` method.
+
+        :param io: The underlying IO object.
+        :type io: :class:`~slimta.smtp.io.IO`
+        :param challenge_str: The challenge string to send to the client.
+        :returns: The string sent back by the client in response to the
+                  challenge.
+
+        """
         Reply('334', challenge_str).send(io, flush=True)
         ret = io.recv_line()
         if ret == '*':
@@ -67,7 +91,25 @@ class Mechanism(object):
         return ret
 
     @classmethod
-    def _send_response_get_challenge(cls, io, response_str, first=False):
+    def send_response_get_challenge(cls, io, response_str=None, first=False):
+        """This method can be used in :meth:`client_attempt` implementations to
+        send response strings to the server and wait for its challenge. It is
+        up to the implementation to check if this challenge is ``334 `` (and
+        thus requires another response) or if it is the final reply.
+
+        :param io: The underlying IO object.
+        :type io: :class:`~slimta.smtp.io.IO`
+        :param response_str: The response string to send to the server. By
+                             default, this is an empty string.
+        :param first: Every SASL implementation must first send a response with
+                      this argument as ``True`` to initiate the authentication
+                      request. Subsequent calls should use ``False``.
+        :type first: bool
+        :returns: The challenge or final reply sent back by the server after the
+                  response.
+        :rtype: |Reply|
+
+        """
         if first:
             if response_str:
                 command = 'AUTH {0} {1}'.format(cls.name, response_str)
@@ -135,7 +177,7 @@ class Plain(Mechanism):
 
     def server_attempt(self, io, initial_response):
         if not initial_response:
-            initial_response = self._send_challenge_get_response(io, '')
+            initial_response = self.send_challenge_get_response(io, '')
 
         decoded = base64.b64decode(initial_response)
         match = self.pattern.match(decoded)
@@ -151,7 +193,7 @@ class Plain(Mechanism):
     def client_attempt(cls, io, authcid, secret, authzid):
         response = '{0}\x00{1}\x00{2}'.format(authzid or '', authcid, secret)
         b64_response = base64.b64encode(response)
-        return cls._send_response_get_challenge(io, b64_response, True)
+        return cls.send_response_get_challenge(io, b64_response, True)
 
 class Login(Mechanism):
     """``LOGIN`` authentication mechanism. Simply a back-and-forth request from
@@ -168,26 +210,26 @@ class Login(Mechanism):
     def server_attempt(self, io, initial_response):
         if not initial_response:
             # base64.b64encode('Username:')
-            ret = self._send_challenge_get_response(io, 'VXNlcm5hbWU6')
+            ret = self.send_challenge_get_response(io, 'VXNlcm5hbWU6')
             username = base64.b64decode(ret)
         else:
             username = base64.b64decode(initial_response)
         # base64.b64encode('Password:')
-        ret = self._send_challenge_get_response(io, 'UGFzc3dvcmQ6')
+        ret = self.send_challenge_get_response(io, 'UGFzc3dvcmQ6')
         password = base64.b64decode(ret)
         return self.verify_secret(username, password)
 
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):
-        initial_ret = cls._send_response_get_challenge(io, None, True)
+        initial_ret = cls.send_response_get_challenge(io, None, True)
         if initial_ret.code != '334':
             return initial_ret
         username_str = base64.b64encode(authcid)
-        username_ret = cls._send_response_get_challenge(io, username_str)
+        username_ret = cls.send_response_get_challenge(io, username_str)
         if username_ret.code != '334':
             return username_ret
         password_str = base64.b64encode(secret)
-        return cls._send_response_get_challenge(io, password_str)
+        return cls.send_response_get_challenge(io, password_str)
 
 
 class CramMd5(Mechanism):
@@ -220,7 +262,7 @@ class CramMd5(Mechanism):
     def server_attempt(self, io, initial_response):
         challenge = self._build_initial_challenge()
         encoded_challenge = base64.b64encode(challenge)
-        response = self._send_challenge_get_response(io, encoded_challenge)
+        response = self.send_challenge_get_response(io, encoded_challenge)
 
         decoded = base64.b64decode(response)
         match = self.pattern.match(decoded)
@@ -239,14 +281,14 @@ class CramMd5(Mechanism):
 
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):
-        initial_ret = cls._send_response_get_challenge(io, None, True)
+        initial_ret = cls.send_response_get_challenge(io, None, True)
         if initial_ret.code != '334':
             return initial_ret
         challenge = base64.b64decode(initial_ret.message)
 
         digest = hmac.new(secret, challenge, hashlib.md5).hexdigest()
         response_str = base64.b64encode('{0} {1}'.format(authcid, digest))
-        return cls._send_response_get_challenge(io, response_str)
+        return cls.send_response_get_challenge(io, response_str)
 
 
 supported = [CramMd5, Plain, Login]
