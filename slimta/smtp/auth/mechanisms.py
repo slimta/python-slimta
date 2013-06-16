@@ -72,7 +72,7 @@ class Mechanism(object):
     def send_challenge_get_response(self, io, challenge_str):
         """This method can be used in :meth:`server_attempt` implementations to
         send intermediate SASL challenge strings to the client. The challenge
-        string will be automatically prefixed with the ``334 `` code to
+        string will be automatically prefixed with the ``334`` code to
         indicate it expects a response from the client. The cancellation
         response ``*`` is also handled by this method, which raises an internal
         exception to break out of the :meth:`server_attempt` method.
@@ -94,7 +94,7 @@ class Mechanism(object):
     def send_response_get_challenge(cls, io, response_str=None, first=False):
         """This method can be used in :meth:`client_attempt` implementations to
         send response strings to the server and wait for its challenge. It is
-        up to the implementation to check if this challenge is ``334 `` (and
+        up to the implementation to check if this challenge is ``334`` (and
         thus requires another response) or if it is the final reply.
 
         :param io: The underlying IO object.
