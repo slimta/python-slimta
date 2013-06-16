@@ -105,9 +105,8 @@ class Mechanism(object):
                       this argument as ``True`` to initiate the authentication
                       request. Subsequent calls should use ``False``.
         :type first: bool
-        :returns: The challenge or final reply sent back by the server after the
-                  response.
-        :rtype: |Reply|
+        :returns: The challenge or final |Reply| sent back by the server after
+                  the response.
 
         """
         if first:
