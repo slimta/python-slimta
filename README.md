@@ -15,7 +15,7 @@ community.
 
 The `slimta` project is released under the [MIT License][4].
 
-[![Build Status](http://ci.slimta.org/job/slimta/badge/icon)](http://ci.slimta.org/job/slimta/)
+[![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
 
 Getting Started
 ===============
