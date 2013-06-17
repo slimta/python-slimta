@@ -137,7 +137,12 @@ class Extensions(object):
         lines = [header]
         for k, v in self.extensions.iteritems():
             if v:
-                lines.append(' '.join((k, str(v))))
+                try:
+                    value_str = str(v)
+                except ValueError:
+                    pass
+                else:
+                    lines.append(' '.join((k, value_str)))
             else:
                 lines.append(k)
         return '\r\n'.join(lines)

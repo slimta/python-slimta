@@ -31,8 +31,17 @@ class FakeAuth(Auth):
             raise CredentialsInvalidError()
         return 'testpassword', None
 
-    def get_available_mechanisms(self, encrypted=False):
+    def get_available_mechanisms(self, encrypted):
         return [Plain, Login, StaticCramMd5]
+
+
+class FakeAuthNoSecure(Auth):
+
+    def get_available_mechanisms(self, encrypted):
+        if encrypted:
+            return [Plain, Login]
+        else:
+            return []
 
 
 class FakeSession(object):
@@ -59,6 +68,13 @@ class TestSmtpAuth(MoxTestBase):
         self.assertEqual('CRAM-MD5', str(auth))
         auth = Auth(FakeSession(True))
         self.assertEqual('CRAM-MD5 PLAIN LOGIN', str(auth))
+
+    def test_str_no_secure_mechanisms(self):
+        auth = FakeAuthNoSecure(FakeSession(True))
+        self.assertEqual('PLAIN LOGIN', str(auth))
+        auth = FakeAuthNoSecure(FakeSession(False))
+        with self.assertRaises(ValueError):
+            str(auth)
 
     def test_unimplemented_means_invalid(self):
         auth = Auth(None)

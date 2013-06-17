@@ -82,12 +82,11 @@ class CredentialsInvalidError(ServerAuthError):
 
 
 class Auth(object):
-    """Base class that handles the authentication for an SMTP client or server
-    session. This class should be inherited with its methods overridden as
-    necessary.
+    """Base class that handles the authentication for an SMTP server session.
+    This class should be inherited with its methods overridden as necessary.
 
-    :param session: One of either a :class:`~slimta.smtp.server.Server` or a
-                    :class:`~slimta.smtp.client.Client` object for the session.
+    :param session: An active server session object.
+    :type session: :class:`~slimta.smtp.server.Server`
 
     """
 
@@ -135,16 +134,19 @@ class Auth(object):
         raise CredentialsInvalidError()
 
     def get_available_mechanisms(self, connection_secure=False):
-        """Returns a list of mechanism classes from the
-        :mod:`~slimta.smtp.auth.mechanisms` module that are available on the
-        session. This usually depends on whether the connection is ``secure``,
-        as plain-text mechanisms should not be used unencrypted.
+        """Returns a list of mechanism classes that inherit
+        :class:`~slimta.smtp.auth.mechanisms.Mechanism` that are available on
+        the session. This usually depends on whether the connection is
+        ``secure``, as plain-text mechanisms should not be used unencrypted.
 
         Unless overridden, this method will return attempt to use all built-in
         auth mechanisms.
 
-        :param connection_secure: Whether or not the session is encrypted.
-        :type secure: ``True`` or ``False``
+        :param connection_secure: ``True`` if the current connection has been
+                                  secured with TLS, ``False`` otherwise. This
+                                  flag can be used to adjust which mechanisms
+                                  are available to unencrypted sessions.
+        :type connection_secure: boolean
         :returns: List of available mechanism classes.
 
         """
@@ -155,7 +157,10 @@ class Auth(object):
 
     def __str__(self):
         available = self.get_available_mechanisms(self.session.encrypted)
-        return ' '.join([mech.name for mech in available])
+        if available:
+            return ' '.join([mech.name for mech in available])
+        else:
+            raise ValueError('No mechanisms available')
 
     def _parse_arg(self, arg):
         match = noarg_pattern.match(arg)

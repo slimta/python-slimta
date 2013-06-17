@@ -66,5 +66,16 @@ EMPTY""")
         ret = self.ext.build_string('the header').replace('\r', '')
         self.assertTrue(ret in possibilities)
 
+    def test_build_string_valueerror(self):
+        class MyExtension(object):
+            def __init__(self):
+                pass
+            def __str__(self):
+                raise ValueError('test')
+        ext = Extensions()
+        ext.extensions = {'ONE': 'OK VALUE', 'TWO': MyExtension()}
+        expected = """the header\r\nONE OK VALUE"""
+        self.assertEqual(expected, ext.build_string('the header'))
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
