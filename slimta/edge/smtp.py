@@ -68,7 +68,8 @@ class SmtpValidators(object):
     """
 
     def __init__(self, session):
-        #: This object has a set of attributes that may be useful in validation:
+        #: This instance attribute is an object that has its own set of
+        #: attributes which may be useful in validation:
         #: 
         #:  * ``address``: The address tuple of the connecting client.
         #:  * ``extended_smtp``: The client used EHLO instead of HELO.
