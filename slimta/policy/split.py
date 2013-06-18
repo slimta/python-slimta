@@ -27,8 +27,6 @@ messages well, such as :class:`~slimta.relay.smtp.mx.MxSmtpRelay`.
 
 from __future__ import absolute_import
 
-import copy
-
 from . import QueuePolicy
 
 __all__ = ['RecipientSplit', 'RecipientDomainSplit']
@@ -48,9 +46,8 @@ class RecipientSplit(QueuePolicy):
             return
         ret = []
         for rcpt in envelope.recipients:
-            new_env = copy.copy(envelope)
+            new_env = envelope.copy()
             new_env.recipients = [rcpt]
-            new_env.headers = copy.deepcopy(envelope.headers)
             ret.append(new_env)
         return ret
 
@@ -86,9 +83,8 @@ class RecipientDomainSplit(QueuePolicy):
         return groups, bad_rcpts
 
     def _append_envelope_copy(self, envelope, copies, rcpts):
-        new_env = copy.copy(envelope)
+        new_env = envelope.copy()
         new_env.recipients = rcpts
-        new_env.headers = copy.deepcopy(envelope.headers)
         copies.append(new_env)
 
     def apply(self, envelope):

@@ -59,10 +59,13 @@ class QueuePolicy(object):
         will be called by the |Queue| before storage.
 
         :param envelope: The |Envelope| object the policy execution should apply
-                         any changes to.
-        :returns: Optionally return a new list of |Envelope| objects to replace
-                  the given ``envelope`` going forward. Returning ``None`` or an
-                  empty list will keep using ``envelope``.
+                         any changes to. This envelope object *may* be
+                         modified, though if new envelopes are returned this
+                         object is discarded.
+        :returns: Optionally return or generate an iterable of |Envelope|
+                  objects to replace the given ``envelope`` going forward.
+                  Returning ``None`` or an empty list will keep using
+                  ``envelope``.
 
         """
         raise NotImplementedError()

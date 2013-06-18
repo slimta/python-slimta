@@ -27,6 +27,7 @@ metadata.
 from __future__ import absolute_import
 
 import re
+import copy
 import cStringIO
 from email.message import Message
 from email.generator import Generator
@@ -64,8 +65,8 @@ class Envelope(object):
         #: String of message data, not including headers.
         self.message = message
 
-        #: Information about the client that sent the message. Utilized keys
-        #: include:
+        #: Dictionary of information about the client that sent the message.
+        #: Utilized keys include:
         #:
         #: * ``ip``: The IP of the client.
         #: * ``host``: The reverse-lookup of the client IP.
@@ -81,6 +82,15 @@ class Envelope(object):
 
         #: Timestamp when the message was received.
         self.timestamp = None
+
+    def copy(self):
+        """Builds and returns an exact copy if the current object. This method
+        uses a deep-copying so internal datastructures are not shared.
+
+        :returns: An exact, deep copy of the current object.
+
+        """
+        return copy.deepcopy(self)
 
     def flatten(self):
         """Produces two strings representing the headers and message body.

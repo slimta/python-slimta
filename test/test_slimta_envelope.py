@@ -9,6 +9,24 @@ from slimta.smtp.reply import Reply
 
 class TestEnvelope(unittest.TestCase):
 
+    def test_copy(self):
+        env1 = Envelope('sender@example.com', ['rcpt1@example.com'])
+        env1.parse("""\
+From: sender@example.com
+To: rcpt1@example.com
+
+test test
+""".replace('\n', '\r\n'))
+        env2 = env1.copy()
+        env2.recipients.append('rcpt2@example.com')
+        env2.headers['To'] = 'rcpt2@example.com'
+        self.assertEqual('sender@example.com', env1.sender)
+        self.assertEqual(['rcpt1@example.com'], env1.recipients)
+        self.assertEqual(['rcpt1@example.com'], env1.headers.get_all('To'))
+        self.assertEqual('sender@example.com', env2.sender)
+        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env2.recipients)
+        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env2.headers.get_all('To'))
+
     def test_repr(self):
         env = Envelope('sender@example.com')
         s = repr(env)
