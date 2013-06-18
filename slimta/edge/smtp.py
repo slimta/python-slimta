@@ -61,6 +61,10 @@ class SmtpValidators(object):
     * ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
 
+    :param session: When sub-classes are instantiated, instances are passed this
+                    object, stored and described in :attr:`session` below, that
+                    have useful information about the current session.
+
     """
 
     def __init__(self, session):
@@ -198,7 +202,7 @@ class SmtpEdge(EdgeServer):
 
     :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
     :param queue: |Queue| object for handing off messages, as described in
-                  :meth:`Edge.handoff()`.
+                  :meth:`~slimta.edge.Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.
     :param max_size: Maximum size of incoming messages.
     :param validator_class: :class:`SmtpValidators` sub-class to validate
