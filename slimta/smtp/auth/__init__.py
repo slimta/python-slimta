@@ -80,7 +80,6 @@ class CredentialsInvalidError(ServerAuthError):
         super(CredentialsInvalidError, self).__init__(msg, reply)
 
 
-
 class Auth(object):
     """Base class that handles the authentication for an SMTP server session.
     This class should be inherited with its methods overridden as necessary.
