@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 # {{{ _start_inbound_relay()
 def _start_inbound_relay(args):
-    from slimta.relay.maildrop import MaildropRelay
+    from slimta.maildroprelay import MaildropRelay
 
     relay = MaildropRelay(executable='/usr/bin/maildrop')
     return relay
