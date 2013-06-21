@@ -24,6 +24,19 @@ class FakeMxAnswer(object):
         return iter(self.rdata)
 
 
+class FakeAAnswer(object):
+
+    def __init__(self, expired, rdata):
+        class FakeARdata(object):
+            def __init__(self, address):
+                self.address = address
+        self.expiration = float('-inf') if expired else float('inf')
+        self.rdata = [FakeARdata(*rr) for rr in rdata]
+
+    def __iter__(self):
+        return iter(self.rdata)
+
+
 class TestMxSmtpRelay(MoxTestBase):
 
     def test_get_rcpt_domain(self):
@@ -62,13 +75,28 @@ class TestMxSmtpRelay(MoxTestBase):
         mx.attempt(env, 0)
         mx.attempt(env, 1)
 
-    def test_attempt_nxdomain(self):
+    def test_attempt_no_mx(self):
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        a_ret = FakeAAnswer(False, [('1.2.3.4', )])
+        mx = MxSmtpRelay()
+        static = self.mox.CreateMock(StaticSmtpRelay)
+        self.mox.StubOutWithMock(mx, 'new_static_relay')
+        self.mox.StubOutWithMock(dns.resolver, 'query')
+        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
+        dns.resolver.query('example.com', 'A').AndReturn(a_ret)
+        mx.new_static_relay('1.2.3.4', 25).AndReturn(static)
+        static.attempt(env, 0)
+        self.mox.ReplayAll()
+        mx.attempt(env, 0)
+
+    def test_attempt_no_records(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
         self.mox.StubOutWithMock(dns.resolver, 'query')
         dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
+        dns.resolver.query('example.com', 'A').AndRaise(dns.resolver.NXDOMAIN)
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             mx.attempt(env, 0)

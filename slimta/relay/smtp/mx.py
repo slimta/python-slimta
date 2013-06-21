@@ -72,7 +72,15 @@ class MxRecord(object):
             self._records, self._expiration = self._resolve()
             return self._records
 
-    def _resolve(self):
+    def _resolve_a(self):
+        answer = dns.resolver.query(self.domain, 'A')
+        ret = []
+        for rdata in answer:
+            ret.append((0, str(rdata.address)))
+            break
+        return ret, answer.expiration
+
+    def _resolve_mx(self):
         answer = dns.resolver.query(self.domain, 'MX')
         ret = []
         for rdata in answer:
@@ -83,6 +91,16 @@ class MxRecord(object):
             else:
                 ret.append((rdata.preference, str(rdata.exchange)))
         return ret, answer.expiration
+
+    def _resolve(self):
+        try:
+            return self._resolve_mx()
+        except dns.resolver.NXDOMAIN:
+            try:
+                return self._resolve_a()
+            except dns.resolver.NXDOMAIN:
+                msg = 'No usable DNS records found: '+self.domain
+                raise ValueError(msg)
 
     @property
     def expired(self):
@@ -177,8 +195,8 @@ class MxSmtpRelay(Relay):
             record = self._mx_records.setdefault(domain, MxRecord(domain))
             try:
                 dest = self.choose_mx(record.get(), attempts)
-            except dns.resolver.NXDOMAIN:
-                msg = 'Domain has no MX records: '+domain
+            except ValueError as exc:
+                msg = str(exc)
                 reply = Reply('550', '5.1.2 '+msg)
                 raise PermanentRelayError(msg, reply)
             port = 25
