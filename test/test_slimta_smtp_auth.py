@@ -8,6 +8,7 @@ from slimta.smtp.io import IO
 from slimta.smtp.auth import Auth, CredentialsInvalidError, ServerAuthError, \
                              InvalidMechanismError, AuthenticationCanceled
 from slimta.smtp.auth.mechanisms import *
+from slimta.smtp.auth.oauth import OAuth2
 
 
 class StaticCramMd5(CramMd5):
@@ -227,6 +228,26 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
+
+    def test_client_xoauth2(self):
+        self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
+        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
+
+    def test_client_xoauth2_error(self):
+        self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
+        self.sock.recv(IsA(int)).AndReturn('334 eyJzdGF0dXMiOiI0MDEiLCJzY2hlbWVzIjoiYmVhcmVyIG1hYyIsInNjb3BlIjoiaHR0cHM6Ly9tYWlsLmdvb2dsZS5jb20vIn0K\r\n')
+        self.sock.sendall('\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
 

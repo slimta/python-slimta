@@ -38,8 +38,8 @@ import base64
 from gevent.socket import gethostname
 
 from slimta.smtp.reply import Reply
-from slimta.smtp.auth import ServerAuthError, CredentialsInvalidError, \
-                             AuthenticationCanceled
+from . import ServerAuthError, CredentialsInvalidError, \
+              AuthenticationCanceled
 
 __all__ = ['Mechanism', 'Plain', 'Login', 'CramMd5']
 
@@ -192,6 +192,7 @@ class Plain(Mechanism):
         response = '{0}\x00{1}\x00{2}'.format(authzid or '', authcid, secret)
         b64_response = base64.b64encode(response)
         return cls.send_response_get_challenge(io, b64_response, True)
+
 
 class Login(Mechanism):
     """``LOGIN`` authentication mechanism. Simply a back-and-forth request from
