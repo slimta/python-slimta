@@ -23,7 +23,7 @@
 systems to authenticate using access tokens.
 
 .. _XOAUTH2: https://developers.google.com/gmail/xoauth2_protocol
-.. _OAuth 2.0: https://developers.google.com/accounts/docs/OAuth2
+.. _OAuth 2.0: http://tools.ietf.org/html/draft-ietf-oauth-v2-22
 
 """
 

@@ -94,6 +94,9 @@ class Auth(object):
         self.session = session
         from .standard import standard_mechanisms
         self.server_mechanisms = standard_mechanisms
+        if id(Auth.get_secret.__func__) == id(self.get_secret.__func__):
+            self.server_mechanisms = [mech for mech in self.server_mechanisms
+                                      if not mech.requires_get_secret]
 
     def verify_secret(self, authcid, secret, authzid=None):
         """For SMTP server authentication, this method should be overriden
@@ -203,7 +206,14 @@ class ServerMechanism(object):
     #: session. Custom mechanisms should be prefixed with ``X``.
     name = None
 
-    preference = 0
+    #: This static flag should be overridden by sub-classes if use of the
+    #: mechanism requires direct access to the original password, such as
+    #: :class:`~slimta.smtp.auth.standard.CramMd5`.
+    #:
+    #: If an |Auth| sub-class does not override
+    #: :meth:`~slimta.smtp.auth.Auth.get_secret`, mechanisms that have set this
+    #: flag to ``True`` will be automatically removed.
+    requires_get_secret = False
 
     def __init__(self, verify_secret, get_secret):
         self.verify_secret = verify_secret
@@ -259,8 +269,6 @@ class ClientMechanism(object):
     #: name that identifies this mechanism. This string will be used in the SMTP
     #: session. Custom mechanisms should be prefixed with ``X``.
     name = None
-
-    preference = 0
 
     @classmethod
     def send_response_get_challenge(cls, io, response_str='', first=False):

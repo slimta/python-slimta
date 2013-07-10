@@ -45,6 +45,11 @@ class FakeAuthNoSecure(Auth):
             return []
 
 
+class FakeAuthWithGetSecret(Auth):
+
+    def get_secret(self):
+        pass
+
 class FakeSession(object):
 
     def __init__(self, encrypted):
@@ -59,16 +64,20 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.fileno = lambda: -1
 
     def test_get_available_mechanisms(self):
-        auth = Auth(None)
-        self.assertEqual([CramMd5], auth.get_available_mechanisms())
+        auth1 = Auth(None)
+        auth2 = FakeAuthWithGetSecret(None)
+        self.assertEqual([], auth1.get_available_mechanisms())
+        self.assertEqual([Plain, Login],
+                         auth1.get_available_mechanisms(True))
+        self.assertEqual([CramMd5], auth2.get_available_mechanisms())
         self.assertEqual([CramMd5, Plain, Login],
-                         auth.get_available_mechanisms(True))
+                         auth2.get_available_mechanisms(True))
 
     def test_str(self):
-        auth = Auth(FakeSession(False))
+        auth = FakeAuthWithGetSecret(FakeSession(False))
         self.assertEqual('CRAM-MD5', str(auth))
         auth = Auth(FakeSession(True))
-        self.assertEqual('CRAM-MD5 PLAIN LOGIN', str(auth))
+        self.assertEqual('PLAIN LOGIN', str(auth))
 
     def test_str_no_secure_mechanisms(self):
         auth = FakeAuthNoSecure(FakeSession(True))

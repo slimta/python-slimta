@@ -138,6 +138,11 @@ class CramMd5(ServerMechanism, ClientMechanism):
     #: This is the hostname used when generating the initial challenge.
     hostname = gethostname()
 
+    #: This mechanism requires direct access to the original password using
+    #: :meth:`~slimta.smtp.auth.Auth.get_secret`. |Auth| sub-classes must
+    #: implement that method or this mechanism will be unavailable.
+    requires_get_secret = True
+
     pattern = re.compile(r'^(.*) ([^ ]+)$')
 
     def _build_initial_challenge(self):
