@@ -19,13 +19,11 @@
 # THE SOFTWARE.
 #
 
-"""Module containing the definition of the SASL `XOAUTH2`_ and deprecated
-`XOAUTH`_ mechanisms, used by `OAuth`_ systems to authenticate using access
-tokens.
+"""Module containing the definition of the SASL `XOAUTH2`_, used by `OAuth 2.0`_
+systems to authenticate using access tokens.
 
-.. _XOAUTH: https://developers.google.com/gmail/oauth_protocol
 .. _XOAUTH2: https://developers.google.com/gmail/xoauth2_protocol
-.. _OAuth: https://developers.google.com/accounts/docs/OAuth2
+.. _OAuth 2.0: https://developers.google.com/accounts/docs/OAuth2
 
 """
 
