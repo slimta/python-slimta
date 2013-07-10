@@ -7,7 +7,7 @@ from gevent.socket import socket
 from slimta.smtp.io import IO
 from slimta.smtp.auth import Auth, CredentialsInvalidError, ServerAuthError, \
                              InvalidMechanismError, AuthenticationCanceled
-from slimta.smtp.auth.mechanisms import *
+from slimta.smtp.auth.standard import *
 from slimta.smtp.auth.oauth import OAuth2
 
 

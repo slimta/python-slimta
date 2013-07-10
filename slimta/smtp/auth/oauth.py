@@ -33,26 +33,23 @@ from __future__ import absolute_import
 
 import base64
 
-from .mechanisms import Mechanism
-from . import ServerAuthError, CredentialsInvalidError, \
-              AuthenticationCanceled
+from . import ClientMechanism
 
 __all__ = ['OAuth2']
 
 
-class OAuth2(Mechanism):
+class OAuth2(ClientMechanism):
     """``XOAUTH2`` authentication mechanism. Used by email servers that provide
     OAuth 2.0 authentication, such as Gmail. Using their credentials, clients
     will receive a temporary access token string from the identity service. This
     token string is then used by ``XOAUTH2`` to authenticate the SMTP session.
 
+    This mechanism is only available for client-side authentication.
+
     """
 
     #: This mechanism identifies itself as ``XOAUTH2``.
     name = 'XOAUTH2'
-
-    #: This mechanism is **not** secure for use on unencrypted channels.
-    secure = False
 
     response_tmpl = 'user={user}\001auth=Bearer{token}\001\001'
 

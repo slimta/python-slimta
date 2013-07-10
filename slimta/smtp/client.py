@@ -31,7 +31,7 @@ from .io import IO
 from .extensions import Extensions
 from .reply import Reply
 from .datasender import DataSender
-from .auth.mechanisms import Mechanism, supported as supported_mechanisms
+from .auth import ClientMechanism
 
 __all__ = ['Client']
 
@@ -56,6 +56,8 @@ class Client(object):
     def __init__(self, socket, tls_wrapper=None):
         self.io = IO(socket, tls_wrapper)
         self.reply_queue = []
+        from .auth.standard import standard_mechanisms
+        self.client_mechanisms = standard_mechanisms
 
         #: :class:`Extensions` object of the client, populated once the EHLO
         #: command returns its response.
@@ -216,19 +218,17 @@ class Client(object):
         :param authzid: The authorization identity, if applicable.
         :param mechanism: Force the usage of the given SASL mechanism sub-class.
                           If not given, the best mechanism available is used.
-        :type mechanism: :class:`~slimta.smtp.auth.mechanisms.Mechanism`
+        :type mechanism: :class:`~slimta.smtp.auth.ClientMechanism`
         :returns: |Reply| object populated with the response.
 
         """
         if not mechanism:
             server_supports = self.extensions.getparam('AUTH') or []
-            for mech in supported_mechanisms:
+            for mech in self.client_mechanisms:
+                mechanism = mech
                 if mech.name in server_supports:
-                    mechanism = mech
                     break
-            else:
-                mechanism = supported_mechanisms[-1]
-        elif not issubclass(mechanism, Mechanism):
+        elif not issubclass(mechanism, ClientMechanism):
             raise TypeError(mechanism)
         self._flush_pipeline()
         return mechanism.client_attempt(self.io, authcid, secret, authzid)

@@ -7,7 +7,7 @@ from gevent.ssl import SSLError
 
 from slimta.smtp.server import Server
 from slimta.smtp.auth import Auth, CredentialsInvalidError
-from slimta.smtp.auth.mechanisms import Plain
+from slimta.smtp.auth.standard import Plain
 from slimta.smtp import ConnectionLost
 
 

@@ -13,6 +13,6 @@ slimta.smtp.auth
 
 .. toctree::
 
-   slimta.smtp.auth.mechanisms
+   slimta.smtp.auth.standard
    slimta.smtp.auth.oauth
 
