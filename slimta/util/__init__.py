@@ -19,5 +19,51 @@
 # THE SOFTWARE.
 #
 
+"""Module containing useful tools, helpers, and other features that didn't
+belong under any other module.
+
+"""
+
+from __future__ import absolute_import
+
+from slimta.smtp.auth import Auth, CredentialsInvalidError
+
+
+def build_auth_from_dict(dict, lower_case=False, only_verify=True):
+    """Helper function that constructs an |Auth| class that authenticates a
+    user by checking a dictionary with the username as the key and their
+    password is the associated value.
+    
+    :param dict: A dictionary or object that implements ``__getitem__()`` that
+                 contains usernames mapping to passwords.
+    :param lower_case: If ``True``, the username string will be lower-cased
+                       before checking for it in the dictionary.
+    :param only_verify: If ``True``, the resulting sub-class will not implement
+                        :meth:`~slimta.smtp.auth.Auth.get_secret` or support
+                        ``CRAM-MD5``.
+    :returns: Generated sub-class of |Auth|.
+
+    """
+    class CustomAuth(Auth):
+
+        def verify_secret(self, authcid, secret, authzid):
+            username = authcid.lower() if lower_case else authcid
+            try:
+                assert dict[username] == secret
+            except (KeyError, AssertionError):
+                raise CredentialsInvalidError()
+
+        def get_secret(self, authcid, authzid):
+            username = authcid.lower() if lower_case else authcid
+            try:
+                return dict[username]
+            except KeyError:
+                raise CredentialsInvalidError()
+
+    if only_verify:
+        CustomAuth.get_secret = Auth.get_secret
+
+    return CustomAuth
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
