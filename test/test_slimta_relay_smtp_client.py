@@ -2,7 +2,7 @@
 import unittest
 
 from mox import MoxTestBase, IsA
-from gevent.socket import socket
+from gevent.socket import socket, error as socket_error
 from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
@@ -28,6 +28,14 @@ class TestSmtpRelayClient(MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
+
+    def test_connect_failure(self):
+        def socket_creator(address):
+            raise socket_error(None, None)
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator)
+        with self.assertRaises(TransientRelayError):
+            client._connect()
 
     def test_banner(self):
         self.sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
@@ -248,6 +256,23 @@ class TestSmtpRelayClient(MoxTestBase):
         client._ehlo()
         client._send_envelope(result, env)
 
+    def test_send_envelope_badrcpts(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        self.sock.sendall('EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
+        self.sock.sendall('MAIL FROM:<sender@example.com>\r\nRCPT TO:<rcpt@example.com>\r\nDATA\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n550 Not ok\r\n354 Go ahead\r\n')
+        self.sock.sendall('.\r\nRSET\r\n')
+        self.sock.recv(IsA(int)).AndReturn('550 Yikes\r\n250 Ok\r\n')
+        result.set_exception(IsA(PermanentRelayError))
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._connect()
+        client._ehlo()
+        client._send_envelope(result, env)
+
     def test_send_envelope_rset_exception(self):
         result = self.mox.CreateMock(AsyncResult)
         env = Envelope('sender@example.com', ['rcpt@example.com'])
@@ -275,6 +300,15 @@ class TestSmtpRelayClient(MoxTestBase):
         client._connect()
         client._disconnect()
 
+    def test_disconnect_failure(self):
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndRaise(socket_error(None, None))
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._connect()
+        client._disconnect()
+
     def test_run(self):
         result = self.mox.CreateMock(AsyncResult)
         env = Envelope('sender@example.com', ['rcpt@example.com'])
@@ -289,6 +323,67 @@ class TestSmtpRelayClient(MoxTestBase):
         self.sock.sendall('From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
         result.set(True)
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._run()
+
+    def test_run_multiple(self):
+        result1 = self.mox.CreateMock(AsyncResult)
+        result2 = self.mox.CreateMock(AsyncResult)
+        env1 = Envelope('sender1@example.com', ['rcpt1@example.com'])
+        env1.parse('From: sender1@example.com\r\n\r\ntest test\r\n')
+        env2 = Envelope('sender2@example.com', ['rcpt2@example.com'])
+        env2.parse('From: sender2@example.com\r\n\r\ntest test\r\n')
+        queue = PriorityQueue()
+        queue.put((1, result1, env1))
+        queue.put((1, result2, env2))
+        self.sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
+        self.sock.sendall('EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
+        self.sock.sendall('MAIL FROM:<sender1@example.com>\r\nRCPT TO:<rcpt1@example.com>\r\nDATA\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n250 Ok\r\n354 Go ahead\r\n')
+        self.sock.sendall('From: sender1@example.com\r\n\r\ntest test\r\n.\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        result1.set(True)
+        self.sock.sendall('MAIL FROM:<sender2@example.com>\r\nRCPT TO:<rcpt2@example.com>\r\nDATA\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n250 Ok\r\n354 Go ahead\r\n')
+        self.sock.sendall('From: sender2@example.com\r\n\r\ntest test\r\n.\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        result2.set(True)
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test', idle_timeout=0.0)
+        client._run()
+
+    def test_run_random_exception(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        queue = PriorityQueue()
+        queue.put((1, result, env))
+        self.sock.recv(IsA(int)).AndRaise(ValueError('test error'))
+        result.set_exception(IsA(ValueError))
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
+        with self.assertRaises(ValueError):
+            client._run()
+
+    def test_run_banner_failure(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        queue = PriorityQueue()
+        queue.put((1, result, env))
+        self.sock.recv(IsA(int)).AndReturn('520 Not Welcome\r\n')
+        result.set_exception(IsA(PermanentRelayError))
         self.sock.sendall('QUIT\r\n')
         self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
         self.sock.close()
