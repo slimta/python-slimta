@@ -13,5 +13,6 @@ slimta.relay
 
 .. toctree::
 
+   slimta.relay.blackhole
    slimta.relay.smtp
 
