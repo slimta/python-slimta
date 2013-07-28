@@ -36,8 +36,10 @@ from ast import literal_eval
 from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger
+from .wsgi import WSGILogger
 
-__all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger']
+__all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
+           'getWSGILogger']
 
 
 def getSocketLogger(name):
@@ -77,6 +79,19 @@ def getQueueStorageLogger(name):
     """
     logger = logging.getLogger(name)
     return QueueStorageLogger(logger)
+
+
+def getWSGILogger(name):
+    """Wraps the result of :func:python:`logging.getLogger()` in a
+    :class:`WSGILogger` object to provide limited and consistent logging output
+    for WSGI-style requests and responses.
+
+    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :rtype: :class:`WSGILogger`
+
+    """
+    logger = logging.getLogger(name)
+    return WSGILogger(logger)
 
 
 def log_exception(name, **kwargs):
