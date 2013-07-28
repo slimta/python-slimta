@@ -25,6 +25,9 @@
 
 from __future__ import absolute_import
 
+import re
+from base64 import b64decode
+
 import gevent
 from gevent.pywsgi import WSGIServer
 from gevent import monkey; monkey.patch_all()
@@ -32,14 +35,18 @@ from dns import resolver, reversename
 from dns.exception import DNSException
 
 from slimta import logging
+from slimta.envelope import Envelope
+from slimta.queue import QueueError
+from slimta.relay import RelayError
 from . import Edge
 
-__all__ = ['EdgeHTTPServer']
+__all__ = ['HttpEdge']
 
-log = logging.getSocketLogger(__name__)
+log = logging.getWSGILogger(__name__)
 
 
-class EdgeHTTPServer(Edge, gevent.Greenlet):
+
+class HttpEdge(Edge, gevent.Greenlet):
     """This class implements a :class:`~gevent.pywsgi.WSGIServer` that receives
     messages over HTTP or HTTPS.
 
@@ -52,12 +59,79 @@ class EdgeHTTPServer(Edge, gevent.Greenlet):
                  use for new greenlets.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
+    :param tls: Optional dictionary of TLS settings passed directly as
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
 
     """
 
-    def __init__(self, listener, queue, pool=None, hostname=None):
-        super(EdgeHTTPServer, self).__init__(queue, hostname)
+    split_pattern = re.compile(r'\s*[,;]\s*')
+
+    def __init__(self, listener, queue, pool=None, hostname=None, tls=None):
+        super(HttpEdge, self).__init__(queue, hostname)
         spawn = pool or 'default'
+        self.tls = tls or {}
+        self.server = WSGIServer(listener, self._handle, **self.tls)
+
+    def _log_request(self, environ):
+        pass
+
+    def _handle(self, environ, start_response):
+        self._trigger_ptr_lookup(environ)
+        log.request(environ)
+        env = self._get_envelope(environ)
+        self._add_envelope_extras(environ, env)
+        status, headers, data = self._enqueue_envelope(env)
+        log.response(environ, status, headers)
+        start_response(status, headers)
+        return data
+
+    def _ptr_lookup(self, environ):
+        ip = environ.get('REMOTE_ADDR', '0.0.0.0')
+        ptraddr = reversename.from_address(ip)
+        try:
+            answers = resolver.query(ptraddr, 'PTR')
+        except DNSException:
+            answers = []
+        try:
+            environ['slimta.reverse_address'] = str(answers[0])
+        except IndexError:
+            pass
+
+    def _trigger_ptr_lookup(self, environ):
+        thread = gevent.spawn(self._ptr_lookup, environ)
+        environ['slimta.ptr_lookup_thread'] = thread
+
+    def _get_sender(self, environ):
+        return b64decode(environ.get('HTTP_X_ENVELOPE_SENDER', ''))
+
+    def _get_recipients(self, environ):
+        rcpts_raw = environ.get('HTTP_X_ENVELOPE_RECIPIENT', '')
+        rcpts_split = self.split_pattern.split(rcpts_raw)
+        return [b64decode(rcpt_b64) for rcpt_b64 in rcpts_split]
+
+    def _get_envelope(self, environ):
+        sender = self._get_sender(environ)
+        recipients = self._get_recipients(environ)
+        env = Envelope(sender, recipients)
+
+        content_length = int(environ.get('CONTENT_LENGTH', 0))
+        data = environ['wsgi.input'].read(content_length)
+        env.parse(data)
+        return env
+
+    def _add_envelope_extras(self, environ, env):
+        env.client['ip'] = environ.get('REMOTE_ADDR', '0.0.0.0')
+        env.client['host'] = environ.get('slimta.reverse_address', None)
+        env.client['name'] = environ['HTTP_X_EHLO']
+        env.client['protocol'] = 'HTTPS' if self.tls else 'HTTP'
+        environ['slimta.ptr_lookup_thread'].kill(block=False)
+
+    def _enqueue_envelope(self, env):
+        results = self.handoff(env)
+        return '200 OK', [], []
+
+    def _run(self):
+        return self.server.serve_forever()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
