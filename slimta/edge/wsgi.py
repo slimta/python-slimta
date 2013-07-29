@@ -68,12 +68,10 @@ def _build_http_response(smtp_reply):
                                 message=smtp_reply.message)
     if code.startswith('2'):
         return WSGIResponse('200 OK', headers)
+    elif code.startswith('4'):
+        return WSGIResponse('503 Service Unavailable', headers)
     elif code == '535':
         return WSGIResponse('401 Unauthorized', headers)
-    elif code.startswith('5'):
-        return WSGIResponse('400 Bad Request', headers)
-    elif code == '421' or code == '450':
-        return WSGIResponse('503 Service Unavailable', headers)
     else:
         return WSGIResponse('500 Internal Server Error', headers)
 
