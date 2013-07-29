@@ -131,7 +131,7 @@ class WsgiEdge(Edge):
         """
         spawn = pool or 'default'
         tls = tls or {}
-        return WSGIServer(listener, self, log=sys.stdout, **self.tls)
+        return WSGIServer(listener, self, log=sys.stdout, **tls)
 
     def __call__(self, environ, start_response):
         log.request(environ)
