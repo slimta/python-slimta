@@ -21,6 +21,33 @@
 
 """Implements an |Edge| that receives messages with the HTTP protocol.
 
+The resulting edge can be used by any HTTP client, like curl::
+
+    $ curl -v -X POST -H 'Content-Type: message/rfc822' \
+           --data-binary @test.eml \
+           -H 'X-Envelope-Sender: c2VuZGVyQGV4YW1wbGUuY29t' \
+           -H 'X-Envelope-Recipient: cmVjaXBpZW50QGV4YW1wbGUuY29t' \
+           http://localhost:8080/
+    * About to connect() to localhost port 8080 (#0)
+    *   Trying 127.0.0.1...
+    * Connected to localhost (127.0.0.1) port 8080 (#0)
+    > POST / HTTP/1.1
+    > User-Agent: curl/7.29.0
+    > Host: localhost:8080
+    > Accept: */*
+    > Content-Type: message/rfc822
+    > X-Envelope-Sender: c2VuZGVyQGV4YW1wbGUuY29t
+    > X-Envelope-Recipient: cmVjaXBpZW50QGV4YW1wbGUuY29t
+    > Content-Length: 99
+    >
+    * upload completely sent off: 99 out of 99 bytes
+    < HTTP/1.1 200 OK
+    < X-Smtp-Reply: 250; message="2.6.0 Message accepted for delivery"
+    < Date: Mon, 29 Jul 2013 20:11:55 GMT
+    < Content-Length: 0
+    <
+    * Connection #0 to host localhost left intact
+
 """
 
 from __future__ import absolute_import
