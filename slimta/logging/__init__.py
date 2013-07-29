@@ -48,7 +48,7 @@ def getSocketLogger(name):
     output for socket operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
-    :rtype: :class:`SocketLogger`
+    :rtype: :class:`~slimta.logging.socket.SocketLogger`
 
     """
     logger = logging.getLogger(name)
@@ -61,7 +61,7 @@ def getSubprocessLogger(name):
     logging output for subprocess operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
-    :rtype: :class:`SubprocessLogger`
+    :rtype: :class:`~slimta.logging.subprocess.SubprocessLogger`
 
     """
     logger = logging.getLogger(name)
@@ -74,7 +74,7 @@ def getQueueStorageLogger(name):
     output for |QueueStorage| operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
-    :rtype: :class:`QueueStorageLogger`
+    :rtype: :class:`~slimta.logging.queuestorage.QueueStorageLogger`
 
     """
     logger = logging.getLogger(name)
@@ -87,7 +87,7 @@ def getWSGILogger(name):
     for WSGI-style requests and responses.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
-    :rtype: :class:`WSGILogger`
+    :rtype: :class:`~slimta.logging.wsgi.WSGILogger`
 
     """
     logger = logging.getLogger(name)
