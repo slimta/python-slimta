@@ -5,13 +5,13 @@ import urllib2
 from mox import MoxTestBase, IsA
 import gevent
 
-from slimta.edge.http import HttpEdge
+from slimta.edge.wsgi import WsgiEdge
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
 
 
-class TestEdgeHttp(MoxTestBase):
+class TestEdgeWsgi(MoxTestBase):
     pass
 
 
