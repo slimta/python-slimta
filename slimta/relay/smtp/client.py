@@ -45,7 +45,7 @@ class SmtpRelayClient(Greenlet):
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
                        tls=None, tls_immediately=False,
                        tls_required=False, tls_wrapper=None,
-                       connect_timeout=None, command_timeout=None,
+                       connect_timeout=10.0, command_timeout=10.0,
                        data_timeout=None, idle_timeout=None,
                        credentials=None):
         super(SmtpRelayClient, self).__init__()
@@ -63,7 +63,7 @@ class SmtpRelayClient(Greenlet):
         self.tls_wrapper = tls_wrapper
         self.connect_timeout = connect_timeout
         self.command_timeout = command_timeout
-        self.data_timeout = data_timeout
+        self.data_timeout = data_timeout or command_timeout
         self.idle_timeout = idle_timeout
         self.credentials = credentials
 
