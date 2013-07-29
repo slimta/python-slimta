@@ -191,6 +191,10 @@ class Reply(object):
         else:
             self._esc = value
 
+    @property
+    def raw_message(self):
+        return self._message
+
 
 #: Reply sent when an unknown SMTP command is received by a server.
 unknown_command = Reply('500', '5.5.2 Syntax error, command unrecognized')
