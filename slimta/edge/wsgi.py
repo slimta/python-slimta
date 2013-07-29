@@ -19,7 +19,9 @@
 # THE SOFTWARE.
 #
 
-"""Implements an |Edge| that receives messages with the HTTP protocol.
+"""Implements an |Edge| that receives messages with the HTTP protocol. WSGI_ is
+a Python specification for defining communication between web servers and the
+application.
 
 The resulting edge can be used by any HTTP client, like curl::
 
@@ -47,6 +49,8 @@ The resulting edge can be used by any HTTP client, like curl::
     < Content-Length: 0
     <
     * Connection #0 to host localhost left intact
+
+.. _WSGI: http://wsgi.readthedocs.org/en/latest/
 
 """
 
