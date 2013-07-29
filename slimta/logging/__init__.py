@@ -39,7 +39,7 @@ from .queuestorage import QueueStorageLogger
 from .wsgi import WSGILogger
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
-           'getWSGILogger']
+           'getWSGILogger', 'log_exception']
 
 
 def getSocketLogger(name):
