@@ -25,6 +25,7 @@
 
 from __future__ import absolute_import
 
+import sys
 import re
 from base64 import b64decode
 from wsgiref.headers import Headers
@@ -42,7 +43,7 @@ from slimta.queue import QueueError
 from slimta.relay import RelayError
 from . import Edge
 
-__all__ = ['HttpEdge']
+__all__ = ['WsgiEdge']
 
 log = logging.getWSGILogger(__name__)
 
@@ -77,24 +78,20 @@ def _build_http_response(smtp_reply):
         return WSGIResponse('500 Internal Server Error', headers)
 
 
-class HttpEdge(Edge, gevent.Greenlet):
+class WsgiEdge(Edge):
     """This class implements a :class:`~gevent.pywsgi.WSGIServer` that receives
-    messages over HTTP or HTTPS.
+    messages over HTTP or HTTPS. This class is intended to be instantiated and
+    used as an app on top of a WSGI server engine such as
+    :class:`gevent.pywsgi.WSGIServer`.
 
     Only ``POST`` requests that provide a ``message/rfc822`` payload will be
     processed.
 
-    :param listener: Usually a ``(ip, port)`` tuple defining the interface and
-                     port upon which to listen for connections.
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge
                   service.
-    :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
-                 use for new greenlets.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
-    :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
     :type uri_pattern: :class:python:`~re.RegexObject` or string
@@ -110,19 +107,33 @@ class HttpEdge(Edge, gevent.Greenlet):
 
     split_pattern = re.compile(r'\s*[,;]\s*')
 
-    def __init__(self, listener, queue, pool=None, hostname=None, tls=None,
-                 uri_pattern=None, sender_header='X-Envelope-Sender',
+    def __init__(self, queue, hostname=None, uri_pattern=None,
+                 sender_header='X-Envelope-Sender',
                  rcpt_header='X-Envelope-Recipient', ehlo_header='X-Ehlo'):
-        super(HttpEdge, self).__init__(queue, hostname)
-        spawn = pool or 'default'
-        self.tls = tls or {}
-        self.server = WSGIServer(listener, self._handle, **self.tls)
+        super(WsgiEdge, self).__init__(queue, hostname)
         self.uri_pattern = uri_pattern
         self.sender_header = _header_name_to_cgi(sender_header)
         self.rcpt_header = _header_name_to_cgi(rcpt_header)
         self.ehlo_header = _header_name_to_cgi(ehlo_header)
 
-    def _handle(self, environ, start_response):
+    def build_server(self, listener, pool=None, tls=None):
+        """Constructs and returns a WSGI server engine, configured to use the
+        current object as its application.
+
+        :param listener: Usually a ``(ip, port)`` tuple defining the interface
+                         and port upon which to listen for connections.
+        :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
+                     use for new greenlets.
+        :param tls: Optional dictionary of TLS settings passed directly as
+                    keyword arguments to :class:`gevent.ssl.SSLSocket`.
+        :rtype: :class:`gevent.pywsgi.WSGIServer`
+
+        """
+        spawn = pool or 'default'
+        tls = tls or {}
+        return WSGIServer(listener, self, log=sys.stdout, **self.tls)
+
+    def __call__(self, environ, start_response):
         log.request(environ)
         self._trigger_ptr_lookup(environ)
         try:
@@ -201,7 +212,7 @@ class HttpEdge(Edge, gevent.Greenlet):
         env.client['ip'] = environ.get('REMOTE_ADDR', 'unknown')
         env.client['host'] = environ.get('slimta.reverse_address', None)
         env.client['name'] = self._get_ehlo(environ)
-        env.client['protocol'] = 'HTTPS' if self.tls else 'HTTP'
+        env.client['protocol'] = environ.get('wsgi.url_scheme', 'http').upper()
 
     def _enqueue_envelope(self, env):
         results = self.handoff(env)
@@ -213,9 +224,6 @@ class HttpEdge(Edge, gevent.Greenlet):
             raise _build_http_response(relay_reply)
         reply = Reply('250', '2.6.0 Message accepted for delivery')
         raise _build_http_response(reply)
-
-    def _run(self):
-        return self.server.serve_forever()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
