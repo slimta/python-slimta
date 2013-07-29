@@ -6,6 +6,7 @@ slimta.relay
 
 .. automodule:: slimta.relay
    :members:
+   :show-inheritance:
 
 -------------------
 

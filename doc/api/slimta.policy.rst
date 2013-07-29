@@ -6,6 +6,7 @@ slimta.policy
 
 .. automodule:: slimta.policy
    :members:
+   :show-inheritance:
 
 -------------------
 

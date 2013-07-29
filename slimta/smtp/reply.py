@@ -22,6 +22,8 @@
 """Package defining the class containing a standard SMTP reply made up of a code
 and a message, as well as a few pre-defined standard replies.
 
+.. _ENHANCEDSTATUSCODES: http://tools.ietf.org/html/rfc2034
+
 """
 
 from __future__ import absolute_import

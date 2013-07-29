@@ -6,6 +6,7 @@ slimta.relay.smtp
 
 .. automodule:: slimta.relay.smtp
    :members:
+   :show-inheritance:
 
 -------------------
 

@@ -6,6 +6,7 @@ slimta.util
 
 .. automodule:: slimta.util
    :members:
+   :show-inheritance:
 
 -------------------
 

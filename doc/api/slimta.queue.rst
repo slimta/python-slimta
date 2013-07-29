@@ -6,6 +6,7 @@ slimta.queue
 
 .. automodule:: slimta.queue
    :members:
+   :show-inheritance:
 
 -------------------
 

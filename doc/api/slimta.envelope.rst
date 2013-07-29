@@ -6,4 +6,5 @@ slimta.envelope
 
 .. automodule:: slimta.envelope
    :members:
+   :show-inheritance:
 

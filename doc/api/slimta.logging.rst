@@ -6,6 +6,7 @@ slimta.logging
 
 .. automodule:: slimta.logging
    :members:
+   :show-inheritance:
 
 -------------------
 

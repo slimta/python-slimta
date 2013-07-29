@@ -6,4 +6,5 @@ slimta.logging.wsgi
 
 .. automodule:: slimta.logging.wsgi
    :members:
+   :show-inheritance:
 

@@ -6,6 +6,7 @@ slimta.edge
 
 .. automodule:: slimta.edge
    :members:
+   :show-inheritance:
 
 -------------------
 

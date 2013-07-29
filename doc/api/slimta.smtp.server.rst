@@ -6,4 +6,5 @@ slimta.smtp.server
 
 .. automodule:: slimta.smtp.server
    :members:
+   :show-inheritance:
 

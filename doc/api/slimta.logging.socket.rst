@@ -6,4 +6,5 @@ slimta.logging.socket
 
 .. automodule:: slimta.logging.socket
    :members:
+   :show-inheritance:
 
