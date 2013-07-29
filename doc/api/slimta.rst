@@ -20,6 +20,7 @@ slimta
    slimta.envelope
    slimta.bounce
    slimta.policy
+   slimta.logging
    slimta.util
    slimta.system
 
