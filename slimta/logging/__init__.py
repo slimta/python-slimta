@@ -43,11 +43,11 @@ __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
 
 
 def getSocketLogger(name):
-    """Wraps the result of :func:python:`logging.getLogger()` in a
+    """Wraps the result of :py:func:`logging.getLogger()` in a
     :class:`SocketLogger` object to provide limited and consistent logging
     output for socket operations.
 
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`SocketLogger`
 
     """
@@ -56,11 +56,11 @@ def getSocketLogger(name):
 
 
 def getSubprocessLogger(name):
-    """Wraps the result of :func:python:`logging.getLogger()` in a
+    """Wraps the result of :py:func:`logging.getLogger()` in a
     :class:`SubprocessLogger` object to provide limited and consistent
     logging output for subprocess operations.
 
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`SubprocessLogger`
 
     """
@@ -69,11 +69,11 @@ def getSubprocessLogger(name):
 
 
 def getQueueStorageLogger(name):
-    """Wraps the result of :func:python:`logging.getLogger()` in a
+    """Wraps the result of :py:func:`logging.getLogger()` in a
     :class:`QueueStorageLogger` object to provide limited and consistent logging
     output for |QueueStorage| operations.
 
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`QueueStorageLogger`
 
     """
@@ -82,11 +82,11 @@ def getQueueStorageLogger(name):
 
 
 def getWSGILogger(name):
-    """Wraps the result of :func:python:`logging.getLogger()` in a
+    """Wraps the result of :py:func:`logging.getLogger()` in a
     :class:`WSGILogger` object to provide limited and consistent logging output
     for WSGI-style requests and responses.
 
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`WSGILogger`
 
     """
@@ -99,7 +99,7 @@ def log_exception(name, **kwargs):
     traceback, and anything provided pertinent to the situation. This function
     does nothing unless called while an exception is being handled.
 
-    :param name: ``name`` as passed in to :func:python:`logging.getLogger()`.
+    :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :param kwargs: Other keywords may be passed in and will be included in the
                    produced log line.
 

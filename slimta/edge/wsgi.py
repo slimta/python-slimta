@@ -77,13 +77,9 @@ def _build_http_response(smtp_reply):
 
 
 class WsgiEdge(Edge):
-    """This class implements a :class:`~gevent.pywsgi.WSGIServer` that receives
-    messages over HTTP or HTTPS. This class is intended to be instantiated and
-    used as an app on top of a WSGI server engine such as
-    :class:`gevent.pywsgi.WSGIServer`.
-
-    Only ``POST`` requests that provide a ``message/rfc822`` payload will be
-    processed.
+    """This class is intended to be instantiated and used as an app on top of a
+    WSGI server engine such as :class:`gevent.pywsgi.WSGIServer`. It will only
+    acccept ``POST`` requests that provide a ``message/rfc822`` payload.
 
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge
@@ -92,7 +88,7 @@ class WsgiEdge(Edge):
                      details.
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
-    :type uri_pattern: :class:python:`~re.RegexObject` or string
+    :type uri_pattern: :py:class:`~re.RegexObject` or string
     :param sender_header: The header name that clients will use to provide the
                           envelope sender address.
     :param rcpt_header: The header name that clients will use to provide the
