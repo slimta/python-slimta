@@ -27,6 +27,7 @@ from __future__ import absolute_import
 
 import re
 from base64 import b64decode
+from wsgiref.headers import Headers
 
 import gevent
 from gevent.pywsgi import WSGIServer
@@ -36,6 +37,7 @@ from dns.exception import DNSException
 
 from slimta import logging
 from slimta.envelope import Envelope
+from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from . import Edge
@@ -45,10 +47,42 @@ __all__ = ['HttpEdge']
 log = logging.getWSGILogger(__name__)
 
 
+class WSGIResponse(Exception):
+
+    def __init__(self, status, headers=None, data=None):
+        super(WSGIResponse, self).__init__(status)
+        self.status = status
+        self.headers = headers or []
+        self.data = data or []
+
+
+def _header_name_to_cgi(name):
+    return 'HTTP_{0}'.format(name.upper().replace('-', '_'))
+
+
+def _build_http_response(smtp_reply):
+    code = smtp_reply.code
+    headers = []
+    Headers(headers).add_header('X-Smtp-Reply', code,
+                                message=smtp_reply.message)
+    if code.startswith('2'):
+        return WSGIResponse('200 OK', headers)
+    elif code == '535':
+        return WSGIResponse('401 Unauthorized', headers)
+    elif code.startswith('5'):
+        return WSGIResponse('400 Bad Request', headers)
+    elif code == '421' or code == '450':
+        return WSGIResponse('503 Service Unavailable', headers)
+    else:
+        return WSGIResponse('500 Internal Server Error', headers)
+
 
 class HttpEdge(Edge, gevent.Greenlet):
     """This class implements a :class:`~gevent.pywsgi.WSGIServer` that receives
     messages over HTTP or HTTPS.
+
+    Only ``POST`` requests that provide a ``message/rfc822`` payload will be
+    processed.
 
     :param listener: Usually a ``(ip, port)`` tuple defining the interface and
                      port upon which to listen for connections.
@@ -61,29 +95,67 @@ class HttpEdge(Edge, gevent.Greenlet):
                      details.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param uri_pattern: If given, only URI paths that match the given pattern
+                        will be allowed.
+    :type uri_pattern: :class:python:`~re.RegexObject` or string
+    :param sender_header: The header name that clients will use to provide the
+                          envelope sender address.
+    :param rcpt_header: The header name that clients will use to provide the
+                        envelope recipient addresses. This header may be given
+                        multiple times, for each recipient.
+    :param ehlo_header: The header name that clients will use to provide the
+                        EHLO identifier string, as in an SMTP session.
 
     """
 
     split_pattern = re.compile(r'\s*[,;]\s*')
 
-    def __init__(self, listener, queue, pool=None, hostname=None, tls=None):
+    def __init__(self, listener, queue, pool=None, hostname=None, tls=None,
+                 uri_pattern=None, sender_header='X-Envelope-Sender',
+                 rcpt_header='X-Envelope-Recipient', ehlo_header='X-Ehlo'):
         super(HttpEdge, self).__init__(queue, hostname)
         spawn = pool or 'default'
         self.tls = tls or {}
         self.server = WSGIServer(listener, self._handle, **self.tls)
-
-    def _log_request(self, environ):
-        pass
+        self.uri_pattern = uri_pattern
+        self.sender_header = _header_name_to_cgi(sender_header)
+        self.rcpt_header = _header_name_to_cgi(rcpt_header)
+        self.ehlo_header = _header_name_to_cgi(ehlo_header)
 
     def _handle(self, environ, start_response):
-        self._trigger_ptr_lookup(environ)
         log.request(environ)
-        env = self._get_envelope(environ)
-        self._add_envelope_extras(environ, env)
-        status, headers, data = self._enqueue_envelope(env)
-        log.response(environ, status, headers)
-        start_response(status, headers)
-        return data
+        self._trigger_ptr_lookup(environ)
+        try:
+            self._validate_request(environ)
+            env = self._get_envelope(environ)
+            self._add_envelope_extras(environ, env)
+            self._enqueue_envelope(env)
+        except WSGIResponse as res:
+            start_response(res.status, res.headers)
+            log.response(environ, res.status, res.headers)
+            return res.data
+        except Exception as exc:
+            logging.log_exception(__name__)
+            msg = '{0!s}\n'.format(exc)
+            headers = [('Content-Length', len(msg)),
+                       ('Content-Type', 'text/plain')]
+            start_response('500 Internal Server Error', headers)
+            return [msg]
+        finally:
+            environ['slimta.ptr_lookup_thread'].kill(block=False)
+
+    def _validate_request(self, environ):
+        if self.uri_pattern:
+            path = environ.get('PATH_INFO', '')
+            if not re.match(self.uri_pattern, path):
+                raise WSGIResponse('404 Not Found')
+        method = environ['REQUEST_METHOD'].upper()
+        if method != 'POST':
+            headers = [('Allow', 'POST')]
+            raise WSGIResponse('405 Method Not Allowed', headers)
+        ctype = environ.get('CONTENT_TYPE', 'message/rfc822')
+        if ctype != 'message/rfc822':
+            raise WSGIResponse('415 Unsupported Media Type')
 
     def _ptr_lookup(self, environ):
         ip = environ.get('REMOTE_ADDR', '0.0.0.0')
@@ -102,12 +174,18 @@ class HttpEdge(Edge, gevent.Greenlet):
         environ['slimta.ptr_lookup_thread'] = thread
 
     def _get_sender(self, environ):
-        return b64decode(environ.get('HTTP_X_ENVELOPE_SENDER', ''))
+        return b64decode(environ.get(self.sender_header, ''))
 
     def _get_recipients(self, environ):
-        rcpts_raw = environ.get('HTTP_X_ENVELOPE_RECIPIENT', '')
+        rcpts_raw = environ.get(self.rcpt_header, None)
+        if not rcpts_raw:
+            return []
         rcpts_split = self.split_pattern.split(rcpts_raw)
         return [b64decode(rcpt_b64) for rcpt_b64 in rcpts_split]
+
+    def _get_ehlo(self, environ):
+        default = '[{0}]'.format(environ.get('REMOTE_ADDR', 'unknown'))
+        return environ.get(self.ehlo_header, default)
 
     def _get_envelope(self, environ):
         sender = self._get_sender(environ)
@@ -120,15 +198,21 @@ class HttpEdge(Edge, gevent.Greenlet):
         return env
 
     def _add_envelope_extras(self, environ, env):
-        env.client['ip'] = environ.get('REMOTE_ADDR', '0.0.0.0')
+        env.client['ip'] = environ.get('REMOTE_ADDR', 'unknown')
         env.client['host'] = environ.get('slimta.reverse_address', None)
-        env.client['name'] = environ['HTTP_X_EHLO']
+        env.client['name'] = self._get_ehlo(environ)
         env.client['protocol'] = 'HTTPS' if self.tls else 'HTTP'
-        environ['slimta.ptr_lookup_thread'].kill(block=False)
 
     def _enqueue_envelope(self, env):
         results = self.handoff(env)
-        return '200 OK', [], []
+        if isinstance(results[0][1], QueueError):
+            reply = Reply('550', '5.6.0 Error queuing message')
+            raise _build_http_response(reply)
+        elif isinstance(results[0][1], RelayError):
+            relay_reply = results[0][1].reply
+            raise _build_http_response(relay_reply)
+        reply = Reply('250', '2.6.0 Message accepted for delivery')
+        raise _build_http_response(reply)
 
     def _run(self):
         return self.server.serve_forever()
