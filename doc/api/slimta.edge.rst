@@ -14,4 +14,5 @@ slimta.edge
 .. toctree::
 
    slimta.edge.smtp
+   slimta.edge.wsgi
 
