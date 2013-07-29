@@ -37,7 +37,7 @@ class QueueStorageLogger(object):
     use. This prevents free-form logs from mixing in with standard, machine-
     parseable logs.
 
-    :param log: :class:python:`logging.Logger` object to log through.
+    :param log: :py:class:`logging.Logger` object to log through.
 
     """
 
