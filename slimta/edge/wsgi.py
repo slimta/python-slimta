@@ -23,10 +23,10 @@
 
 The resulting edge can be used by any HTTP client, like curl::
 
-    $ curl -v -X POST -H 'Content-Type: message/rfc822' \
-           --data-binary @test.eml \
-           -H 'X-Envelope-Sender: c2VuZGVyQGV4YW1wbGUuY29t' \
-           -H 'X-Envelope-Recipient: cmVjaXBpZW50QGV4YW1wbGUuY29t' \
+    $ curl -v -X POST -H 'Content-Type: message/rfc822' \\
+           --data-binary @test.eml \\
+           -H 'X-Envelope-Sender: c2VuZGVyQGV4YW1wbGUuY29t' \\
+           -H 'X-Envelope-Recipient: cmVjaXBpZW50QGV4YW1wbGUuY29t' \\
            http://localhost:8080/
     * About to connect() to localhost port 8080 (#0)
     *   Trying 127.0.0.1...
