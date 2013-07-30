@@ -76,13 +76,13 @@ from . import Edge
 
 __all__ = ['WsgiEdge']
 
-log = logging.getWSGILogger(__name__)
+log = logging.getWsgiLogger(__name__)
 
 
-class WSGIResponse(Exception):
+class WsgiResponse(Exception):
 
     def __init__(self, status, headers=None, data=None):
-        super(WSGIResponse, self).__init__(status)
+        super(WsgiResponse, self).__init__(status)
         self.status = status
         self.headers = headers or []
         self.data = data or []
@@ -98,13 +98,13 @@ def _build_http_response(smtp_reply):
     Headers(headers).add_header('X-Smtp-Reply', code,
                                 message=smtp_reply.message)
     if code.startswith('2'):
-        return WSGIResponse('200 OK', headers)
+        return WsgiResponse('200 OK', headers)
     elif code.startswith('4'):
-        return WSGIResponse('503 Service Unavailable', headers)
+        return WsgiResponse('503 Service Unavailable', headers)
     elif code == '535':
-        return WSGIResponse('401 Unauthorized', headers)
+        return WsgiResponse('401 Unauthorized', headers)
     else:
-        return WSGIResponse('500 Internal Server Error', headers)
+        return WsgiResponse('500 Internal Server Error', headers)
 
 
 class WsgiEdge(Edge):
@@ -169,7 +169,7 @@ class WsgiEdge(Edge):
             env = self._get_envelope(environ)
             self._add_envelope_extras(environ, env)
             self._enqueue_envelope(env)
-        except WSGIResponse as res:
+        except WsgiResponse as res:
             start_response(res.status, res.headers)
             log.response(environ, res.status, res.headers)
             return res.data
@@ -187,14 +187,14 @@ class WsgiEdge(Edge):
         if self.uri_pattern:
             path = environ.get('PATH_INFO', '')
             if not re.match(self.uri_pattern, path):
-                raise WSGIResponse('404 Not Found')
+                raise WsgiResponse('404 Not Found')
         method = environ['REQUEST_METHOD'].upper()
         if method != 'POST':
             headers = [('Allow', 'POST')]
-            raise WSGIResponse('405 Method Not Allowed', headers)
+            raise WsgiResponse('405 Method Not Allowed', headers)
         ctype = environ.get('CONTENT_TYPE', 'message/rfc822')
         if ctype != 'message/rfc822':
-            raise WSGIResponse('415 Unsupported Media Type')
+            raise WsgiResponse('415 Unsupported Media Type')
 
     def _ptr_lookup(self, environ):
         ip = environ.get('REMOTE_ADDR', '0.0.0.0')

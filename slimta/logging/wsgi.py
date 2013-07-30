@@ -29,10 +29,10 @@ from __future__ import absolute_import
 from functools import partial
 from pprint import pformat
 
-__all__ = ['WSGILogger']
+__all__ = ['WsgiLogger']
 
 
-class WSGILogger(object):
+class WsgiLogger(object):
     """Provides a limited set of log methods that :mod:`slimta` packages may
     use. This prevents free-form logs from mixing in with standard, machine-
     parseable logs.
