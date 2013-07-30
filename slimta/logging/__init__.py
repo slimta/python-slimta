@@ -36,7 +36,7 @@ from ast import literal_eval
 from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger
-from .wsgi import WSGILogger
+from .wsgi import WsgiLogger
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
            'getWSGILogger', 'log_exception']
@@ -81,17 +81,17 @@ def getQueueStorageLogger(name):
     return QueueStorageLogger(logger)
 
 
-def getWSGILogger(name):
+def getWsgiLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`WSGILogger` object to provide limited and consistent logging output
+    :class:`WsgiLogger` object to provide limited and consistent logging output
     for WSGI-style requests and responses.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
-    :rtype: :class:`~slimta.logging.wsgi.WSGILogger`
+    :rtype: :class:`~slimta.logging.wsgi.WsgiLogger`
 
     """
     logger = logging.getLogger(name)
-    return WSGILogger(logger)
+    return WsgiLogger(logger)
 
 
 def log_exception(name, **kwargs):
