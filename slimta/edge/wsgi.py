@@ -136,7 +136,10 @@ class WsgiEdge(Edge):
                  sender_header='X-Envelope-Sender',
                  rcpt_header='X-Envelope-Recipient', ehlo_header='X-Ehlo'):
         super(WsgiEdge, self).__init__(queue, hostname)
-        self.uri_pattern = uri_pattern
+        if isinstance(uri_pattern, basestring):
+            self.uri_pattern = re.compile(uri_pattern)
+        else:
+            self.uri_pattern = uri_pattern
         self.sender_header = _header_name_to_cgi(sender_header)
         self.rcpt_header = _header_name_to_cgi(rcpt_header)
         self.ehlo_header = _header_name_to_cgi(ehlo_header)
