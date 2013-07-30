@@ -165,6 +165,7 @@ class SmtpRelayClient(Greenlet):
             rcpttos = [self._rcptto(rcpt) for rcpt in envelope.recipients]
             with Timeout(self.command_timeout):
                 data = self.client.data()
+            gevent.sleep(0.0)
             self._check_replies(mailfrom, rcpttos, data)
         except SmtpRelayError as e:
             if data and not data.is_error():
