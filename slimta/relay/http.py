@@ -85,7 +85,8 @@ class GeventHTTPSConnection(HTTPConnection):
 
 class HttpWorker(gevent.Greenlet):
 
-    reply_pattern = re.compile(r'^\s*(\d\d\d)\s*;\s*message\s*=\s*"(.*?)"\s*$')
+    reply_code_pattern = re.compile(r'^\s*(\d\d\d)\s*;')
+    reply_param_pattern = re.compile(r'\s(\w+)\s*=\s*"(.*?)"')
 
     def __init__(self, manager):
         super(HttpWorker, self).__init__()
@@ -127,10 +128,18 @@ class HttpWorker(gevent.Greenlet):
 
     def _parse_smtp_reply_header(self, http_res):
         raw_reply = http_res.getheader('X-Smtp-Reply', '')
-        match = self.reply_pattern.match(raw_reply)
+        match = re.match(self.reply_code_pattern, raw_reply)
         if not match:
             return None
-        return Reply(match.group(1), match.group(2))
+        code = match.group(1)
+        message = ''
+        command = '[unknown command]'
+        for match in re.finditer(self.reply_param_pattern, raw_reply):
+            if match.group(1).lower() == 'message':
+                message = match.group(2)
+            elif match.group(1).lower() == 'command':
+                command = match.group(2)
+        return Reply(code, message, command)
 
     def _process_response(self, http_res, result):
         code = str(http_res.status)
