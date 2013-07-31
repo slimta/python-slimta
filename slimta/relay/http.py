@@ -133,7 +133,7 @@ class HttpWorker(gevent.Greenlet):
             return None
         code = match.group(1)
         message = ''
-        command = '[unknown command]'
+        command = None
         for match in re.finditer(self.reply_param_pattern, raw_reply):
             if match.group(1).lower() == 'message':
                 message = match.group(2)
