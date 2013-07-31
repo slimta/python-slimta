@@ -88,20 +88,19 @@ class HttpWorker(gevent.Greenlet):
     reply_code_pattern = re.compile(r'^\s*(\d\d\d)\s*;')
     reply_param_pattern = re.compile(r'\s(\w+)\s*=\s*"(.*?)"')
 
-    def __init__(self, manager):
+    def __init__(self, relay):
         super(HttpWorker, self).__init__()
         self.idle = True
         self.conn = None
-        self.queue = manager.queue
-        self.url = urlparse.urlsplit(manager.url, 'http')
-        self.tls = manager.tls
-        self.timeout = manager.timeout
-        self.idle_timeout = manager.idle_timeout
+        self.url = urlparse.urlsplit(relay.url, 'http')
+        self.relay = relay
 
     def _wait_for_request(self):
+        queue = self.relay.queue
+        idle_timeout = self.relay.idle_timeout
         self.idle = True
         try:
-            n, result, envelope = self.queue.get(timeout=self.idle_timeout)
+            n, result, envelope = queue.get(timeout=idle_timeout)
         except Empty:
             if self.conn:
                 self.conn.close()
@@ -113,15 +112,18 @@ class HttpWorker(gevent.Greenlet):
     def _handle_request(self, result, envelope):
         if not self.conn:
             self._make_connection()
-        with gevent.Timeout(self.timeout):
+        with gevent.Timeout(self.relay.timeout):
             message_headers, message_body = envelope.flatten()
             content_length = len(message_headers) + len(message_body)
             self.conn.putrequest('POST', self.url.path)
             self.conn.putheader('Content-Length', content_length)
             self.conn.putheader('Content-Type', 'message/rfc822')
-            self.conn.putheader('X-Envelope-Sender', b64encode(envelope.sender))
+            self.conn.putheader(self.relay.ehlo_header, self.relay.ehlo_as)
+            self.conn.putheader(self.relay.sender_header,
+                                b64encode(envelope.sender))
             for rcpt in envelope.recipients:
-                self.conn.putheader('X-Envelope-Recipient', b64encode(rcpt))
+                self.conn.putheader(self.relay.recipient_header,
+                                    b64encode(rcpt))
             self.conn.endheaders(message_headers)
             self.conn.send(message_body)
             self._process_response(self.conn.getresponse(), result)
@@ -157,21 +159,20 @@ class HttpWorker(gevent.Greenlet):
 
     def _make_connection(self):
         host = self.url.netloc or 'localhost'
-        host, extra = host.rsplit(':', 1)
+        host = host.rsplit(':', 1)[0]
         port = self.url.port
-        if self.tls:
-            keyfile = self.tls['keyfile']
-            certfile = self.tls['certfile']
+        if self.relay.tls:
             self.conn = GeventHTTPSConnection(host, port, strict=True,
-                                              **self.tls)
+                                              **self.relay.tls)
         else:
             self.conn = GeventHTTPConnection(host, port, strict=True)
+        self.conn.set_debuglevel(1)
 
     def _run(self):
         try:
             while True:
                 self._wait_for_request()
-                if not self.idle_timeout:
+                if not self.relay.idle_timeout:
                     break
         except gevent.Timeout:
             pass
@@ -205,6 +206,8 @@ class HttpRelay(Relay):
     :param tls: Dictionary of TLS settings passed directly as keyword arguments
                 to :class:`gevent.ssl.SSLSocket`. This parameter is optional
                 unless ``https:`` is given in ``url``.
+    :param ehlo_as: The string to send as the EHLO string in a header. Defaults
+                    to the FQDN of the system.
     :param timeout: This is the maximum time in seconds to wait for the entire
                     session: connection, request, and response. If ``None``,
                     there is no timeout.
@@ -215,7 +218,16 @@ class HttpRelay(Relay):
 
     """
 
-    def __init__(self, url, pool_size=None, tls=None,
+    #: The header name used to send the base64-encoded sender address.
+    sender_header = 'X-Envelope-Sender'
+
+    #: The header name used to send each base64-encoded recipient address.
+    recipient_header = 'X-Envelope-Recipient'
+
+    #: The header name used to send the EHLO string.
+    ehlo_header = 'X-Ehlo'
+
+    def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__()
         self.url = url
@@ -223,6 +235,7 @@ class HttpRelay(Relay):
         self.pool = set()
         self.pool_size = pool_size
         self.tls = tls
+        self.ehlo_as = ehlo_as or socket.getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout
 
