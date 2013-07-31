@@ -138,7 +138,7 @@ class CeleryQueue(object):
         try:
             return attempt.apply_async().id
         except Exception as exc:
-            raise QueueError(exc)
+            return QueueError(exc)
 
     def attempt_delivery(self, envelope, attempts):
         try:
