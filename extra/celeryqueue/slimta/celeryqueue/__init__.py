@@ -135,7 +135,10 @@ class CeleryQueue(object):
         attempt = self.attempt_task.s(envelope, attempts)
         if wait:
             attempt.set(countdown=wait)
-        return attempt.apply_async().id
+        try:
+            return attempt.apply_async().id
+        except Exception as exc:
+            raise QueueError(exc)
 
     def attempt_delivery(self, envelope, attempts):
         try:
