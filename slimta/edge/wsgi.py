@@ -95,8 +95,10 @@ def _header_name_to_cgi(name):
 def _build_http_response(smtp_reply):
     code = smtp_reply.code
     headers = []
-    Headers(headers).add_header('X-Smtp-Reply', code,
-                                message=smtp_reply.message)
+    info = {'message': smtp_reply.message}
+    if smtp_reply.command:
+        info['command'] = smtp_reply.command
+    Headers(headers).add_header('X-Smtp-Reply', code, **info)
     if code.startswith('2'):
         return WsgiResponse('200 OK', headers)
     elif code.startswith('4'):
