@@ -16,9 +16,9 @@ class FakeClient(Greenlet):
         self.idle = True
 
     def _run(self):
-        ret = self.queue.get(timeout=1)
+        ret = self.queue.popleft()
         if isinstance(ret, tuple):
-            priority, result, envelope = ret
+            result, envelope = ret
             result.set('test')
 
 
@@ -26,7 +26,7 @@ class TestStaticSmtpRelay(unittest.TestCase):
 
     def test_add_remove_client(self):
         static = StaticSmtpRelay(None, client_class=FakeClient)
-        static.queue.put(True)
+        static.queue.append(True)
         static._add_client()
         for client in static.pool:
             client.join()
@@ -35,8 +35,8 @@ class TestStaticSmtpRelay(unittest.TestCase):
 
     def test_add_remove_client_morequeued(self):
         static = StaticSmtpRelay(None, client_class=FakeClient)
-        static.queue.put(True)
-        static.queue.put(True)
+        static.queue.append(True)
+        static.queue.append(True)
         static._add_client()
         for client in static.pool:
             client.join()
