@@ -181,7 +181,7 @@ class Auth(object):
                 mech_obj = mechanism(self.verify_secret, self.get_secret)
                 if mechanism_arg == '*':
                     raise AuthenticationCanceled()
-                return mech_obj.server_attempt(io, mechanism_arg) or True
+                return mech_obj.server_attempt(io, mechanism_arg)
         raise InvalidMechanismError(arg)
 
 
