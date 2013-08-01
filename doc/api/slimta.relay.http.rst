@@ -7,4 +7,5 @@ slimta.relay.http
 .. automodule:: slimta.relay.http
    :members:
    :show-inheritance:
+   :private-members:
 
