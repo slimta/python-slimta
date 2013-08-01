@@ -34,14 +34,14 @@ from httplib import HTTPConnection
 from base64 import b64encode
 
 import gevent
-from gevent import socket
-from gevent.ssl import SSLSocket
+from gevent import socket, ssl
 from gevent.queue import PriorityQueue, Empty
 from gevent.event import AsyncResult
 
 from slimta import logging
 from slimta.smtp.reply import Reply
-from . import Relay, PermanentRelayError, TransientRelayError
+from . import PermanentRelayError, TransientRelayError
+from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
 
 __all__ = ['HttpRelay']
@@ -66,12 +66,12 @@ class GeventHTTPSConnection(HTTPConnection):
 
     def __init__(self, *args, **kwargs):
         self.tls = kwargs.pop('tls', None)
-        super(GeventHTTPSConnection, self).__init__(*args, **kwargs)
+        HTTPConnection.__init__(self, *args, **kwargs)
 
     def connect(self):
         sock = socket.create_connection((self.host,self.port),
                                         self.timeout, self.source_address)
-        self.sock = SSLSocket(sock, **self.tls)
+        self.sock = ssl.SSLSocket(sock, **self.tls)
         self.sock.do_handshake()
         if self._tunnel_host:
             self._tunnel()
@@ -83,34 +83,28 @@ class GeventHTTPSConnection(HTTPConnection):
             except socket.error as (errno, message):
                 if errno != 0:
                     raise
-        super(GeventHTTPSConnection, self).close()
+        HTTPConnection.close(self)
 
 
-class HttpWorker(gevent.Greenlet):
+class HttpRelayClient(RelayPoolClient):
 
     reply_code_pattern = re.compile(r'^\s*(\d\d\d)\s*;')
     reply_param_pattern = re.compile(r'\s(\w+)\s*=\s*"(.*?)"')
 
     def __init__(self, relay):
-        super(HttpWorker, self).__init__()
-        self.idle = True
+        super(HttpRelayClient, self).__init__(relay.queue, relay.idle_timeout)
         self.conn = None
         self.url = urlparse.urlsplit(relay.url, 'http')
         self.relay = relay
 
     def _wait_for_request(self):
-        queue = self.relay.queue
-        idle_timeout = self.relay.idle_timeout
-        self.idle = True
-        try:
-            n, result, envelope = queue.get(timeout=idle_timeout)
-        except Empty:
-            if self.conn:
-                self.conn.close()
-            return
+        result, envelope = self.poll()
         if result and envelope:
             self.idle = False
             self._handle_request(result, envelope)
+        else:
+            if self.conn:
+                self.conn.close()
 
     def _build_headers(self, envelope, msg_headers, msg_body):
         content_length = len(msg_headers) + len(msg_body)
@@ -124,7 +118,7 @@ class HttpWorker(gevent.Greenlet):
 
     def _handle_request(self, result, envelope):
         if not self.conn:
-            self._make_connection()
+            self.conn = self._get_connection()
         with gevent.Timeout(self.relay.timeout):
             msg_headers, msg_body = envelope.flatten()
             headers = self._build_headers(envelope, msg_headers, msg_body)
@@ -166,16 +160,16 @@ class HttpWorker(gevent.Greenlet):
             exc = TransientRelayError(http_res.reason)
         result.set_exception(exc)
 
-    def _make_connection(self):
+    def _get_connection(self):
         host = self.url.netloc or 'localhost'
         host = host.rsplit(':', 1)[0]
         port = self.url.port
         if self.relay.tls:
-            self.conn = GeventHTTPSConnection(host, port, strict=True,
-                                              **self.relay.tls)
+            conn = GeventHTTPSConnection(host, port, strict=True,
+                                         **self.relay.tls)
         else:
-            self.conn = GeventHTTPConnection(host, port, strict=True)
-        self.conn.set_debuglevel(1)
+            conn = GeventHTTPConnection(host, port, strict=True)
+        return conn
 
     def _run(self):
         try:
@@ -190,7 +184,7 @@ class HttpWorker(gevent.Greenlet):
                 self.conn.close()
 
 
-class HttpRelay(Relay):
+class HttpRelay(RelayPool):
     """Implements a |Relay| that attempts to deliver mail with an HTTP or HTTPS
     request. This request contains all the information that would usually go
     through an SMTP session as headers: the EHLO string, envelope sender and
@@ -238,39 +232,15 @@ class HttpRelay(Relay):
 
     def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
-        super(HttpRelay, self).__init__()
+        super(HttpRelay, self).__init__(pool_size)
         self.url = url
-        self.queue = PriorityQueue()
-        self.pool = set()
-        self.pool_size = pool_size
         self.tls = tls
         self.ehlo_as = ehlo_as or socket.getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout
 
-    def _remove_client(self, client):
-        self.pool.remove(client)
-        if not self.queue.empty() and not self.pool:
-            self._add_client()
-
-    def _add_client(self):
-        client = HttpWorker(self)
-        client.start()
-        client.link(self._remove_client)
-        self.pool.add(client)
-
-    def _check_idle(self):
-        for client in self.pool:
-            if client.idle:
-                return
-        if not self.pool_size or len(self.pool) < self.pool_size:
-            self._add_client()
-
-    def attempt(self, envelope, attempts):
-        self._check_idle()
-        result = AsyncResult()
-        self.queue.put((1, result, envelope))
-        return result.get()
+    def add_client(self):
+        return HttpRelayClient(self)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
