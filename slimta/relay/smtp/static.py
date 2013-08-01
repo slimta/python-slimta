@@ -30,12 +30,13 @@ from __future__ import absolute_import
 from gevent.event import AsyncResult
 
 from slimta.util.deque import BlockingDeque
-from .. import Relay
+from .client import SmtpRelayClient
+from ..pool import RelayPool
 
 __all__ = ['StaticSmtpRelay']
 
 
-class StaticSmtpRelay(Relay):
+class StaticSmtpRelay(RelayPool):
     """Manages the relaying of messages to a specific ``host:port``. Connections
     may be recycled when possible, to send multiple messages over a single
     channel.
@@ -72,43 +73,18 @@ class StaticSmtpRelay(Relay):
 
     def __init__(self, host, port=25, pool_size=None, client_class=None,
                        **client_kwargs):
-        super(StaticSmtpRelay, self).__init__()
+        super(StaticSmtpRelay, self).__init__(pool_size)
         if client_class:
             self.client_class = client_class
         else:
-            from slimta.relay.smtp.client import SmtpRelayClient
             self.client_class = SmtpRelayClient
         self.host = host
         self.port = port
-        self.queue = BlockingDeque()
-        self.pool = set()
-        self.pool_size = pool_size
         self.client_kwargs = client_kwargs
 
-    def _remove_client(self, client):
-        self.pool.remove(client)
-        if len(self.queue) > 0 and not self.pool:
-            self._add_client()
-
-    def _add_client(self):
-        client = self.client_class((self.host, self.port), self.queue,
-                                   **self.client_kwargs)
-        client.start()
-        client.link(self._remove_client)
-        self.pool.add(client)
-
-    def _check_idle(self):
-        for client in self.pool:
-            if client.idle:
-                return
-        if not self.pool_size or len(self.pool) < self.pool_size:
-            self._add_client()
-
-    def attempt(self, envelope, attempts):
-        self._check_idle()
-        result = AsyncResult()
-        self.queue.append((result, envelope))
-        return result.get()
+    def add_client(self):
+        return self.client_class((self.host, self.port), self.queue,
+                                 **self.client_kwargs)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

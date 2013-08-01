@@ -4,19 +4,18 @@ import unittest
 import gevent
 from gevent import Greenlet
 
+from slimta.relay.pool import RelayPoolClient
 from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.envelope import Envelope
 
 
-class FakeClient(Greenlet):
+class FakeClient(RelayPoolClient):
 
     def __init__(self, address, queue, **kwargs):
-        super(FakeClient, self).__init__()
-        self.queue = queue
-        self.idle = True
+        super(FakeClient, self).__init__(queue)
 
     def _run(self):
-        ret = self.queue.popleft()
+        ret = self.poll()
         if isinstance(ret, tuple):
             result, envelope = ret
             result.set('test')
