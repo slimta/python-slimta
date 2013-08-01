@@ -75,13 +75,10 @@ class BlockingDeque(deque):
         return super(BlockingDeque, self).popleft(*args, **kwargs)
 
     def remove(self, *args, **kwargs):
-        if self.sema.locked():
-            self.sema.acquire()
-        try:
-            return super(BlockingDeque, self).popleft(*args, **kwargs)
-        except ValueError:
-            self.sema.release()
-            raise
+        ret = super(BlockingDeque, self).remove(*args, **kwargs)
+        self.sema.acquire()
+        return ret
+        
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
