@@ -37,7 +37,8 @@ __all__ = ['SmtpRelayError']
 class SmtpRelayError(RelayError):
 
     def __init__(self, type, reply):
-        msg = '{0} failure on {1}: {2}'.format(type, reply.command, str(reply))
+        command = reply.command or '[unknown command]'
+        msg = '{0} failure on {1}: {2}'.format(type, command, str(reply))
         super(SmtpRelayError, self).__init__(msg, reply)
 
     @staticmethod
