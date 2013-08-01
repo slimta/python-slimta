@@ -93,14 +93,14 @@ class HttpLogger(object):
         :param conn: The same object should be passed in this parameter to both
                      this method and to its corresponding :meth:`.response`.
                      There are no constraints on its type or value.
-        :type conn: :py:func:`object`
+        :type conn: :py:class:`object`
         :param method: The request method string.
         :param path: The path string.
         :param headers: A list of ``(name, value)`` header tuples given in the
                         request.
         :param is_client: Whether or not the log line should be identified as a
                           client- or server-side request.
-        :type is_client: :py:func:`bool`
+        :type is_client: :py:class:`bool`
 
         """
         type = 'client_request' if is_client else 'server_request'
@@ -112,13 +112,13 @@ class HttpLogger(object):
         :param conn: The same object should be passed in this parameter to both
                      this method and to its corresponding :meth:`.request`.
                      There are no constraints on its type or value.
-        :type conn: :py:func:`object`
+        :type conn: :py:class:`object`
         :param status: The status string of the response, e.g. ``200 OK``.
         :param headers: A list of ``(name, value)`` header tuples given in the
                         response.
         :param is_client: Whether or not the log line should be identified as a
                           client- or server-side request.
-        :type is_client: :py:func:`bool`
+        :type is_client: :py:class:`bool`
 
         """
         type = 'client_response' if is_client else 'server_response'
