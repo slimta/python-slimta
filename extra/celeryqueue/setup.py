@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='python-slimta-celeryqueue',
-      version='0.2.2',
+      version='0.2.3',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Adds a celery-based queue extension to python-slimta.',

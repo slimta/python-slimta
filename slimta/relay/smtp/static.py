@@ -27,9 +27,9 @@ out.
 
 from __future__ import absolute_import
 
-from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
+from slimta.util.deque import BlockingDeque
 from .. import Relay
 
 __all__ = ['StaticSmtpRelay']
@@ -80,14 +80,14 @@ class StaticSmtpRelay(Relay):
             self.client_class = SmtpRelayClient
         self.host = host
         self.port = port
-        self.queue = PriorityQueue()
+        self.queue = BlockingDeque()
         self.pool = set()
         self.pool_size = pool_size
         self.client_kwargs = client_kwargs
 
     def _remove_client(self, client):
         self.pool.remove(client)
-        if not self.queue.empty() and not self.pool:
+        if len(self.queue) > 0 and not self.pool:
             self._add_client()
 
     def _add_client(self):
@@ -107,7 +107,7 @@ class StaticSmtpRelay(Relay):
     def attempt(self, envelope, attempts):
         self._check_idle()
         result = AsyncResult()
-        self.queue.put((1, result, envelope))
+        self.queue.append((result, envelope))
         return result.get()
 
 

@@ -3,9 +3,9 @@ import unittest
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket, error as socket_error
-from gevent.queue import PriorityQueue
 from gevent.event import AsyncResult
 
+from slimta.util.deque import BlockingDeque
 from slimta.smtp import ConnectionLost
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.client import SmtpRelayClient
@@ -18,7 +18,7 @@ class TestSmtpRelayClient(MoxTestBase):
         super(TestSmtpRelayClient, self).setUp()
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
-        self.queue = self.mox.CreateMock(PriorityQueue)
+        self.queue = self.mox.CreateMock(BlockingDeque)
         self.tls_args = {'test': 'test'}
 
     def _socket_creator(self, address):
@@ -313,8 +313,8 @@ class TestSmtpRelayClient(MoxTestBase):
         result = self.mox.CreateMock(AsyncResult)
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
-        queue = PriorityQueue()
-        queue.put((1, result, env))
+        queue = BlockingDeque()
+        queue.append((result, env))
         self.sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
         self.sock.sendall('EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
@@ -337,9 +337,9 @@ class TestSmtpRelayClient(MoxTestBase):
         env1.parse('From: sender1@example.com\r\n\r\ntest test\r\n')
         env2 = Envelope('sender2@example.com', ['rcpt2@example.com'])
         env2.parse('From: sender2@example.com\r\n\r\ntest test\r\n')
-        queue = PriorityQueue()
-        queue.put((1, result1, env1))
-        queue.put((1, result2, env2))
+        queue = BlockingDeque()
+        queue.append((result1, env1))
+        queue.append((result2, env2))
         self.sock.recv(IsA(int)).AndReturn('220 Welcome\r\n')
         self.sock.sendall('EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn('250-Hello\r\n250 PIPELINING\r\n')
@@ -364,8 +364,8 @@ class TestSmtpRelayClient(MoxTestBase):
         result = self.mox.CreateMock(AsyncResult)
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
-        queue = PriorityQueue()
-        queue.put((1, result, env))
+        queue = BlockingDeque()
+        queue.append((result, env))
         self.sock.recv(IsA(int)).AndRaise(ValueError('test error'))
         result.set_exception(IsA(ValueError))
         self.sock.sendall('QUIT\r\n')
@@ -380,8 +380,8 @@ class TestSmtpRelayClient(MoxTestBase):
         result = self.mox.CreateMock(AsyncResult)
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
-        queue = PriorityQueue()
-        queue.put((1, result, env))
+        queue = BlockingDeque()
+        queue.append((result, env))
         self.sock.recv(IsA(int)).AndReturn('520 Not Welcome\r\n')
         result.set_exception(IsA(PermanentRelayError))
         self.sock.sendall('QUIT\r\n')
@@ -392,7 +392,7 @@ class TestSmtpRelayClient(MoxTestBase):
         client._run()
 
     def test_run_nomessages(self):
-        queue = PriorityQueue()
+        queue = BlockingDeque()
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, queue, idle_timeout=0)
         client._run()

@@ -95,8 +95,10 @@ def _header_name_to_cgi(name):
 def _build_http_response(smtp_reply):
     code = smtp_reply.code
     headers = []
-    Headers(headers).add_header('X-Smtp-Reply', code,
-                                message=smtp_reply.message)
+    info = {'message': smtp_reply.message}
+    if smtp_reply.command:
+        info['command'] = smtp_reply.command
+    Headers(headers).add_header('X-Smtp-Reply', code, **info)
     if code.startswith('2'):
         return WsgiResponse('200 OK', headers)
     elif code.startswith('4'):
@@ -120,29 +122,29 @@ class WsgiEdge(Edge):
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
     :type uri_pattern: :py:class:`~re.RegexObject` or string
-    :param sender_header: The header name that clients will use to provide the
-                          envelope sender address.
-    :param rcpt_header: The header name that clients will use to provide the
-                        envelope recipient addresses. This header may be given
-                        multiple times, for each recipient.
-    :param ehlo_header: The header name that clients will use to provide the
-                        EHLO identifier string, as in an SMTP session.
 
     """
 
     split_pattern = re.compile(r'\s*[,;]\s*')
 
-    def __init__(self, queue, hostname=None, uri_pattern=None,
-                 sender_header='X-Envelope-Sender',
-                 rcpt_header='X-Envelope-Recipient', ehlo_header='X-Ehlo'):
+    #: The header name that clients will use to provide the envelope sender
+    #: address.
+    sender_header = 'X-Envelope-Sender'
+
+    #: The header name that clients will use to provide the envelope recipient
+    #: addresses. This header may be given multiple times, for each recipient.
+    rcpt_header = 'X-Envelope-Recipient'
+
+    #: The header name that clients will use to provide the EHLO identifier
+    #: string, as in an SMTP session.
+    ehlo_header = 'X-Ehlo'
+
+    def __init__(self, queue, hostname=None, uri_pattern=None):
         super(WsgiEdge, self).__init__(queue, hostname)
         if isinstance(uri_pattern, basestring):
             self.uri_pattern = re.compile(uri_pattern)
         else:
             self.uri_pattern = uri_pattern
-        self.sender_header = _header_name_to_cgi(sender_header)
-        self.rcpt_header = _header_name_to_cgi(rcpt_header)
-        self.ehlo_header = _header_name_to_cgi(ehlo_header)
 
     def build_server(self, listener, pool=None, tls=None):
         """Constructs and returns a WSGI server engine, configured to use the
@@ -213,18 +215,21 @@ class WsgiEdge(Edge):
         environ['slimta.ptr_lookup_thread'] = thread
 
     def _get_sender(self, environ):
-        return b64decode(environ.get(self.sender_header, ''))
+        sender_header = _header_name_to_cgi(self.sender_header)
+        return b64decode(environ.get(sender_header, ''))
 
     def _get_recipients(self, environ):
-        rcpts_raw = environ.get(self.rcpt_header, None)
+        rcpt_header = _header_name_to_cgi(self.rcpt_header)
+        rcpts_raw = environ.get(rcpt_header, None)
         if not rcpts_raw:
             return []
         rcpts_split = self.split_pattern.split(rcpts_raw)
         return [b64decode(rcpt_b64) for rcpt_b64 in rcpts_split]
 
     def _get_ehlo(self, environ):
+        ehlo_header = _header_name_to_cgi(self.ehlo_header)
         default = '[{0}]'.format(environ.get('REMOTE_ADDR', 'unknown'))
-        return environ.get(self.ehlo_header, default)
+        return environ.get(ehlo_header, default)
 
     def _get_envelope(self, environ):
         sender = self._get_sender(environ)
