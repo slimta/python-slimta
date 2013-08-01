@@ -164,7 +164,7 @@ class WsgiEdge(Edge):
         return WSGIServer(listener, self, log=sys.stdout, **tls)
 
     def __call__(self, environ, start_response):
-        log.request(environ)
+        log.wsgi_request(environ)
         self._trigger_ptr_lookup(environ)
         try:
             self._validate_request(environ)
@@ -173,7 +173,7 @@ class WsgiEdge(Edge):
             self._enqueue_envelope(env)
         except WsgiResponse as res:
             start_response(res.status, res.headers)
-            log.response(environ, res.status, res.headers)
+            log.wsgi_response(environ, res.status, res.headers)
             return res.data
         except Exception as exc:
             logging.log_exception(__name__)

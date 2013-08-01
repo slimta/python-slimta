@@ -44,16 +44,40 @@ class HttpLogger(object):
         from slimta.logging import logline
         self.log = partial(logline, log.debug, 'http')
 
-    def request(self, environ):
-        """Logs a WSGI-style request.
+    def _get_method_from_environ(self, environ):
+        return environ['REQUEST_METHOD'].upper()
+
+    def _get_path_from_environ(self, environ):
+        return environ.get('PATH_INFO', None)
+
+    def _get_headers_from_environ(self, environ):
+        ret = []
+        for key, value in environ.iteritems():
+            if key == 'CONTENT_TYPE':
+                ret.append(('Content-Type', value))
+            elif key == 'CONTENT_LENGTH':
+                ret.append(('Content-Length', value))
+            elif key.startswith('HTTP_'):
+                parts = key.split('_')
+                name = '-'.join([part.capitalize() for part in parts[1:]])
+                ret.append((name, value))
+        return ret
+
+    def wsgi_request(self, environ):
+        """Logs a WSGI-style request. This method pulls the appropriate info
+        from ``environ`` and passes it to :meth:`.request`.
 
         :param environ: The environment data.
 
         """
-        self.log(id(environ), 'request', environ=environ)
+        method = self._get_method_from_environ(environ)
+        path = self._get_path_from_environ(environ)
+        headers = self._get_headers_from_environ(environ)
+        self.request(environ, method, path, headers, is_client=False)
 
-    def response(self, environ, status, headers):
-        """Logs a WSGI-style response.
+    def wsgi_response(self, environ, status, headers):
+        """Logs a WSGI-style response. This method passes its given info along
+        to :meth:`.response`.
 
         :param environ: The environment data.
         :param status: The status line given to the client, e.g.
@@ -61,7 +85,44 @@ class HttpLogger(object):
         :param headers: The headers returned in the response.
 
         """
-        self.log(id(environ), 'response', status=status, headers=headers)
+        self.response(environ, status, headers, is_client=False)
+
+    def request(self, conn, method, path, headers, is_client=True):
+        """Logs an HTTP request.
+
+        :param conn: The same object should be passed in this parameter to both
+                     this method and to its corresponding :meth:`.response`.
+                     There are no constraints on its type or value.
+        :type conn: :py:func:`object`
+        :param method: The request method string.
+        :param path: The path string.
+        :param headers: A list of ``(name, value)`` header tuples given in the
+                        request.
+        :param is_client: Whether or not the log line should be identified as a
+                          client- or server-side request.
+        :type is_client: :py:func:`bool`
+
+        """
+        type = 'client_request' if is_client else 'server_request'
+        self.log(id(conn), type, method=method, path=path, headers=headers)
+
+    def response(self, conn, status, headers, is_client=True):
+        """Logs an HTTP response.
+
+        :param conn: The same object should be passed in this parameter to both
+                     this method and to its corresponding :meth:`.request`.
+                     There are no constraints on its type or value.
+        :type conn: :py:func:`object`
+        :param status: The status string of the response, e.g. ``200 OK``.
+        :param headers: A list of ``(name, value)`` header tuples given in the
+                        response.
+        :param is_client: Whether or not the log line should be identified as a
+                          client- or server-side request.
+        :type is_client: :py:func:`bool`
+
+        """
+        type = 'client_response' if is_client else 'server_response'
+        self.log(id(conn), type, status=status, headers=headers)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

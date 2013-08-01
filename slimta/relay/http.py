@@ -39,11 +39,14 @@ from gevent.ssl import SSLSocket
 from gevent.queue import PriorityQueue, Empty
 from gevent.event import AsyncResult
 
+from slimta import logging
 from slimta.smtp.reply import Reply
 from . import Relay, PermanentRelayError, TransientRelayError
 from .smtp import SmtpRelayError
 
 __all__ = ['HttpRelay']
+
+log = logging.getHttpLogger(__name__)
 
 
 class GeventHTTPConnection(HTTPConnection):
@@ -109,23 +112,28 @@ class HttpWorker(gevent.Greenlet):
             self.idle = False
             self._handle_request(result, envelope)
 
+    def _build_headers(self, envelope, msg_headers, msg_body):
+        content_length = len(msg_headers) + len(msg_body)
+        headers = [('Content-Length', content_length),
+                   ('Content-Type', 'message/rfc822'),
+                   (self.relay.ehlo_header, self.relay.ehlo_as),
+                   (self.relay.sender_header, b64encode(envelope.sender))]
+        for rcpt in envelope.recipients:
+            headers.append((self.relay.rcpt_header, b64encode(rcpt)))
+        return headers
+
     def _handle_request(self, result, envelope):
         if not self.conn:
             self._make_connection()
         with gevent.Timeout(self.relay.timeout):
-            message_headers, message_body = envelope.flatten()
-            content_length = len(message_headers) + len(message_body)
+            msg_headers, msg_body = envelope.flatten()
+            headers = self._build_headers(envelope, msg_headers, msg_body)
+            log.request(self.conn, 'POST', self.url.path, headers)
             self.conn.putrequest('POST', self.url.path)
-            self.conn.putheader('Content-Length', content_length)
-            self.conn.putheader('Content-Type', 'message/rfc822')
-            self.conn.putheader(self.relay.ehlo_header, self.relay.ehlo_as)
-            self.conn.putheader(self.relay.sender_header,
-                                b64encode(envelope.sender))
-            for rcpt in envelope.recipients:
-                self.conn.putheader(self.relay.recipient_header,
-                                    b64encode(rcpt))
-            self.conn.endheaders(message_headers)
-            self.conn.send(message_body)
+            for name, value in headers:
+                self.conn.putheader(name, value)
+            self.conn.endheaders(msg_headers)
+            self.conn.send(msg_body)
             self._process_response(self.conn.getresponse(), result)
 
     def _parse_smtp_reply_header(self, http_res):
@@ -144,14 +152,15 @@ class HttpWorker(gevent.Greenlet):
         return Reply(code, message, command)
 
     def _process_response(self, http_res, result):
-        code = str(http_res.status)
-        if code.startswith('2'):
+        status = '{0!s} {1}'.format(http_res.status, http_res.reason)
+        smtp_reply = self._parse_smtp_reply_header(http_res)
+        log.response(self.conn, status, http_res.getheaders())
+        if status.startswith('2'):
             result.set(True)
             return
-        smtp_reply = self._parse_smtp_reply_header(http_res)
         if smtp_reply:
             exc = SmtpRelayError.factory(smtp_reply)
-        elif code.startswith('4'):
+        elif status.startswith('4'):
             exc = PermanentRelayError(http_res.reason)
         else:
             exc = TransientRelayError(http_res.reason)
