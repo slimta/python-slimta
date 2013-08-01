@@ -31,6 +31,7 @@ from gevent.socket import error as socket_error
 from slimta.smtp.reply import Reply
 from slimta.smtp.client import Client
 from slimta import logging
+from ..pool import RelayPoolClient
 from . import SmtpRelayError
 
 __all__ = ['SmtpRelayClient']
@@ -39,7 +40,7 @@ log = logging.getSocketLogger(__name__)
 hostname = getfqdn()
 
 
-class SmtpRelayClient(Greenlet):
+class SmtpRelayClient(RelayPoolClient):
 
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
                        tls=None, tls_immediately=False,
@@ -47,10 +48,8 @@ class SmtpRelayClient(Greenlet):
                        connect_timeout=10.0, command_timeout=10.0,
                        data_timeout=None, idle_timeout=None,
                        credentials=None):
-        super(SmtpRelayClient, self).__init__()
+        super(SmtpRelayClient, self).__init__(queue, idle_timeout)
         self.address = address
-        self.queue = queue
-        self.idle = False
         if socket_creator:
             self._socket_creator = socket_creator
         self.socket = None
@@ -63,7 +62,6 @@ class SmtpRelayClient(Greenlet):
         self.connect_timeout = connect_timeout
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
-        self.idle_timeout = idle_timeout
         self.credentials = credentials
 
     def _socket_creator(self, address):
@@ -196,17 +194,8 @@ class SmtpRelayClient(Greenlet):
             if self.client:
                 self.client.io.close()
 
-    def _pop_message(self):
-        self.idle = True
-        try:
-            with Timeout(self.idle_timeout, False):
-                return self.queue.popleft()
-            return None, None
-        finally:
-            self.idle = False
-
     def _run(self):
-        result, envelope = self._pop_message()
+        result, envelope = self.poll()
         if not result:
             return
         try:
@@ -220,7 +209,7 @@ class SmtpRelayClient(Greenlet):
                     result.set(True)
                 if self.idle_timeout is None:
                     break
-                result, envelope = self._pop_message()
+                result, envelope = self.poll()
         except SmtpRelayError as e:
             result.set_exception(e)
         except Exception as e:

@@ -1,56 +1,25 @@
 
 import unittest
 
-import gevent
-from gevent import Greenlet
+from mox import MoxTestBase, IsA
 
 from slimta.relay.smtp.static import StaticSmtpRelay
-from slimta.envelope import Envelope
+from slimta.relay.smtp.client import SmtpRelayClient
 
 
-class FakeClient(Greenlet):
+class TestStaticSmtpRelay(MoxTestBase):
 
-    def __init__(self, address, queue, **kwargs):
-        super(FakeClient, self).__init__()
-        self.queue = queue
-        self.idle = True
+    def test_add_client(self):
+        static = StaticSmtpRelay('testhost')
+        ret = static.add_client()
+        self.assertIsInstance(ret, SmtpRelayClient)
 
-    def _run(self):
-        ret = self.queue.popleft()
-        if isinstance(ret, tuple):
-            result, envelope = ret
-            result.set('test')
-
-
-class TestStaticSmtpRelay(unittest.TestCase):
-
-    def test_add_remove_client(self):
-        static = StaticSmtpRelay(None, client_class=FakeClient)
-        static.queue.append(True)
-        static._add_client()
-        for client in static.pool:
-            client.join()
-        gevent.sleep(0)
-        self.assertFalse(static.pool)
-
-    def test_add_remove_client_morequeued(self):
-        static = StaticSmtpRelay(None, client_class=FakeClient)
-        static.queue.append(True)
-        static.queue.append(True)
-        static._add_client()
-        for client in static.pool:
-            client.join()
-        self.assertTrue(static.pool)
-        for client in static.pool:
-            client.join()
-        gevent.sleep(0)
-        self.assertFalse(static.pool)
-
-    def test_attempt(self):
-        env = Envelope()
-        static = StaticSmtpRelay(None, client_class=FakeClient)
-        ret = static.attempt(env, 0)
-        self.assertEqual('test', ret)
+    def test_add_client_custom(self):
+        def fake_class(addr, queue, **kwargs):
+            self.assertEqual(('testhost', 25), addr)
+            return 'success'
+        static = StaticSmtpRelay('testhost', client_class=fake_class)
+        self.assertEqual('success', static.add_client())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
