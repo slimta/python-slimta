@@ -47,9 +47,12 @@ class RelayPool(Relay):
 
     def __init__(self, pool_size=None):
         super(RelayPool, self).__init__()
-        self.queue = BlockingDeque()
         self.pool = set()
         self.pool_size = pool_size
+
+        #: This attribute holds the queue object for providing delivery requests
+        #: to idle clients in the pool.
+        self.queue = BlockingDeque()
 
     def _remove_client(self, client):
         self.pool.remove(client)
@@ -100,9 +103,6 @@ class RelayPoolClient(Greenlet):
     def __init__(self, queue, idle_timeout=None):
         super(RelayPoolClient, self).__init__()
         self.idle = False
-
-        #: This attribute holds the queue object for receiving delivery requests
-        #: on the client.
         self.queue = queue
 
         #: This attribute holds the idle timeout for handling multiple delivery
