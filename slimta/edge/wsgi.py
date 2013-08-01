@@ -76,7 +76,7 @@ from . import Edge
 
 __all__ = ['WsgiEdge']
 
-log = logging.getWsgiLogger(__name__)
+log = logging.getHttpLogger(__name__)
 
 
 class WsgiResponse(Exception):

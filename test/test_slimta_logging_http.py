@@ -3,13 +3,13 @@ import unittest
 
 from testfixtures import log_capture
 
-from slimta.logging import getWsgiLogger
+from slimta.logging import getHttpLogger
 
 
-class TestWsgiLogger(unittest.TestCase):
+class TestHttpLogger(unittest.TestCase):
 
     def setUp(self):
-        self.log = getWsgiLogger('test')
+        self.log = getHttpLogger('test')
         self.environ = {'var': 'val'}
 
     @log_capture()
