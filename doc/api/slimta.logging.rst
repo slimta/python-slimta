@@ -15,7 +15,7 @@ slimta.logging
 .. toctree::
 
    slimta.logging.socket
-   slimta.logging.wsgi
+   slimta.logging.http
    slimta.logging.subprocess
    slimta.logging.queuestorage
 

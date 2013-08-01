@@ -1,10 +1,10 @@
 
 .. include:: /global.rst
 
-slimta.logging.wsgi
+slimta.logging.http
 ===================
 
-.. automodule:: slimta.logging.wsgi
+.. automodule:: slimta.logging.http
    :members:
    :show-inheritance:
 
