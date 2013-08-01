@@ -15,6 +15,6 @@ slimta: Mail Transfer Library
 :doc:`Usage Manual <manual>`
 ============================
 
-.. |br| raw:: html
+.. raw:: html
 
    <br/><br/>
