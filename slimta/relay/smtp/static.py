@@ -27,9 +27,6 @@ out.
 
 from __future__ import absolute_import
 
-from gevent.event import AsyncResult
-
-from slimta.util.deque import BlockingDeque
 from .client import SmtpRelayClient
 from ..pool import RelayPool
 
