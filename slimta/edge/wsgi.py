@@ -212,7 +212,7 @@ class WsgiEdge(Edge):
         if ctype != 'message/rfc822':
             raise WsgiResponse('415 Unsupported Media Type')
         if self.validator_class:
-            self._run_validators()
+            self._run_validators(environ)
 
     def _run_validators(self, environ):
         validators = self.validator_class(environ)
