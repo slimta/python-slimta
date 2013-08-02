@@ -5,10 +5,11 @@ from base64 import b64encode
 
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
+from gevent.pywsgi import WSGIServer
 from dns import resolver
 from dns.exception import DNSException
 
-from slimta.edge.wsgi import WsgiEdge
+from slimta.edge.wsgi import WsgiEdge, WsgiValidators
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
@@ -21,8 +22,10 @@ class TestEdgeWsgi(MoxTestBase):
         self.start_response = self.mox.CreateMockAnything()
         self.queue = self.mox.CreateMockAnything()
         self.environ = {'REQUEST_METHOD': 'POST',
+                        'HTTP_X_EHLO': 'test',
                         'HTTP_X_ENVELOPE_SENDER': b64encode('sender@example.com'),
                         'HTTP_X_ENVELOPE_RECIPIENT': '{0}, {1}'.format(b64encode('rcpt1@example.com'), b64encode('rcpt2@example.com')),
+                        'HTTP_X_CUSTOM_HEADER': 'custom test',
                         'wsgi.input': StringIO('')}
         self.mox.StubOutWithMock(resolver, 'query')
 
@@ -94,6 +97,36 @@ class TestEdgeWsgi(MoxTestBase):
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
         self.assertEqual([], w(self.environ, self.start_response))
+
+    def test_run_validators(self):
+        self.validated = 0
+        class Validators(WsgiValidators):
+            custom_headers = ['X-Custom-Header']
+            def validate_ehlo(self2, ehlo):
+                self.assertEquals('test', ehlo)
+                self.validated += 1
+            def validate_sender(self2, sender):
+                self.assertEquals('sender@example.com', sender)
+                self.validated += 2
+            def validate_recipient(self2, recipient):
+                if recipient == 'rcpt1@example.com':
+                    self.validated += 4
+                elif recipient == 'rcpt2@example.com':
+                    self.validated += 8
+                else:
+                    raise AssertionError('bad recipient: '+recipient)
+            def validate_custom(self2, name, value):
+                self.assertEquals('X-Custom-Header', name)
+                self.assertEquals('custom test', value)
+                self.validated += 16
+        w = WsgiEdge(None, validator_class=Validators)
+        w._run_validators(self.environ)
+        self.assertEquals(31, self.validated)
+
+    def test_build_server(self):
+        w = WsgiEdge(None)
+        server = w.build_server(('0.0.0.0', 0))
+        self.assertIsInstance(server, WSGIServer)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

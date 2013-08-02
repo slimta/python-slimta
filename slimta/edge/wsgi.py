@@ -51,6 +51,7 @@ The resulting edge can be used by any HTTP client, like curl::
     * Connection #0 to host localhost left intact
 
 .. _WSGI: http://wsgi.readthedocs.org/en/latest/
+.. _variables: http://www.python.org/dev/peps/pep-0333/#environ-variables
 
 """
 
@@ -74,12 +75,20 @@ from slimta.queue import QueueError
 from slimta.relay import RelayError
 from . import Edge
 
-__all__ = ['WsgiEdge']
+__all__ = ['WsgiEdge', 'WsgiValidators']
 
 log = logging.getHttpLogger(__name__)
 
 
 class WsgiResponse(Exception):
+    """This exception can be explicitly raised to end the WSGI request and
+    return the given response.
+
+    :param status: The HTTP status string to return, e.g. ``200 OK``.
+    :param headers: List of ``(name, value)`` header tuples to return.
+    :param data: Optional raw data string to return.
+
+    """
 
     def __init__(self, status, headers=None, data=None):
         super(WsgiResponse, self).__init__(status)
@@ -119,6 +128,9 @@ class WsgiEdge(Edge):
                   service.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
+    :param validator_class: A class inherited from :class:`WsgiValidators` whose
+                            methods will be executed on various request headers
+                            to validate the request.
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
     :type uri_pattern: :py:class:`~re.RegexObject` or string
@@ -139,8 +151,10 @@ class WsgiEdge(Edge):
     #: string, as in an SMTP session.
     ehlo_header = 'X-Ehlo'
 
-    def __init__(self, queue, hostname=None, uri_pattern=None):
+    def __init__(self, queue, hostname=None, validator_class=None,
+                       uri_pattern=None):
         super(WsgiEdge, self).__init__(queue, hostname)
+        self.validator_class = validator_class
         if isinstance(uri_pattern, basestring):
             self.uri_pattern = re.compile(uri_pattern)
         else:
@@ -197,6 +211,19 @@ class WsgiEdge(Edge):
         ctype = environ.get('CONTENT_TYPE', 'message/rfc822')
         if ctype != 'message/rfc822':
             raise WsgiResponse('415 Unsupported Media Type')
+        if self.validator_class:
+            self._run_validators()
+
+    def _run_validators(self, environ):
+        validators = self.validator_class(environ)
+        validators.validate_ehlo(self._get_ehlo(environ))
+        validators.validate_sender(self._get_sender(environ))
+        recipients = self._get_recipients(environ)
+        for rcpt in recipients:
+            validators.validate_recipient(rcpt)
+        for name in validators.custom_headers:
+            cgi_name = _header_name_to_cgi(name)
+            validators.validate_custom(name, environ.get(cgi_name))
 
     def _ptr_lookup(self, environ):
         ip = environ.get('REMOTE_ADDR', '0.0.0.0')
@@ -257,6 +284,66 @@ class WsgiEdge(Edge):
             raise _build_http_response(relay_reply)
         reply = Reply('250', '2.6.0 Message accepted for delivery')
         raise _build_http_response(reply)
+
+
+class WsgiValidators(object):
+    """Base class for implementing WSGI request validation. Instances will be
+    created for each WSGI request.
+
+    To terminate the current WSGI request with a response, raise the
+    :exc:`WsgiResponse` exception from with the validator methods.
+
+    :param environ: The environment variables_ for the current session.
+
+    """
+
+    #: A static list of headers that should be passed in to
+    #: :meth:`validate_custom()`.
+    custom_headers = []
+
+    def __init__(self, environ):
+        #: Stores the environment variables_ for the current session.
+        self.environ = environ
+
+    def validate_ehlo(self, ehlo):
+        """Override this method to validate the EHLO string passed in by the
+        client in the ``X-Ehlo`` (or equivalent) header.
+
+        :param ehlo: The value of the EHLO header.
+
+        """
+        pass
+
+    def validate_sender(self, sender):
+        """Override this method to validate the sender address passed in by the
+        client in the ``X-Envelope-Sender`` (or equivalent) header.
+
+        :param sender: The decoded value of the sender header.
+
+        """
+        pass
+
+    def validate_recipient(self, recipient):
+        """Override this method to validate each recipient address passed in by
+        the client in the ``X-Envelope-Recipient`` (or equivalent) headers. This
+        method will be called for each occurence of the header.
+
+        :param recipient: The decoded value of one recipient header.
+
+        """
+        pass
+
+    def validate_custom(self, name, value):
+        """Override this method to validate custom headers sent in by the
+        client. This method will be called exactly once for each header listed
+        in the :attr:`custom_headers` class attribute.
+
+        :param name: The name of the header.
+        :param value: The raw value of the header, or ``None`` if the client did
+                      not provide the header.
+
+        """
+        pass
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
