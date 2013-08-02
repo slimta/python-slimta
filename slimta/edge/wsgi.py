@@ -75,7 +75,7 @@ from slimta.queue import QueueError
 from slimta.relay import RelayError
 from . import Edge
 
-__all__ = ['WsgiEdge', 'WsgiValidators']
+__all__ = ['WsgiEdge', 'WsgiResponse', 'WsgiValidators']
 
 log = logging.getHttpLogger(__name__)
 
