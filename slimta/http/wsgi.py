@@ -22,41 +22,31 @@
 """
 
 .. _WSGI: http://wsgi.readthedocs.org/en/latest/
+.. _file object: http://docs.python.org/2/library/stdtypes.html#file-objects
 
 """
 
 from __future__ import absolute_import
 
 import sys
-import re
-from base64 import b64decode
-from wsgiref.headers import Headers
 
-import gevent
 from gevent.pywsgi import WSGIServer
-from gevent import monkey; monkey.patch_all()
-from dns import resolver, reversename
-from dns.exception import DNSException
 
 from slimta import logging
-from slimta.envelope import Envelope
-from slimta.smtp.reply import Reply
-from slimta.queue import QueueError
-from slimta.relay import RelayError
 from . import HttpError
 
-__all__ = []
+__all__ = ['WsgiResponse', 'WsgiServer']
 
 log = logging.getHttpLogger(__name__)
 
 
-class WsgiResponse(HttpError):
+class WsgiResponse(HttpEror):
     """This exception can be explicitly raised to end the WSGI request and
     return the given response.
 
     :param status: The HTTP status string to return, e.g. ``200 OK``.
     :param headers: List of ``(name, value)`` header tuples to return.
-    :param data: Optional raw data string to return.
+    :param data: Optional iterable of raw data parts to return.
 
     """
 
@@ -71,33 +61,56 @@ def _header_name_to_cgi(name):
     return 'HTTP_{0}'.format(name.upper().replace('-', '_'))
 
 
-def _build_http_response(smtp_reply):
-    code = smtp_reply.code
-    headers = []
-    info = {'message': smtp_reply.message}
-    if smtp_reply.command:
-        info['command'] = smtp_reply.command
-    Headers(headers).add_header('X-Smtp-Reply', code, **info)
-    if code.startswith('2'):
-        return WsgiResponse('200 OK', headers)
-    elif code.startswith('4'):
-        return WsgiResponse('503 Service Unavailable', headers)
-    elif code == '535':
-        return WsgiResponse('401 Unauthorized', headers)
-    else:
-        return WsgiResponse('500 Internal Server Error', headers)
+def _cgi_to_header_name(name):
+    parts = name.split('_')
+    return '-'.join([part.capitalize() for part in parts[1:]])
 
 
 class WsgiServer(object):
     """Implements the base class for a WSGI server that logs its requests and
     responses and can easily be deployed as a functioning HTTP server.
 
+    Instances of this class can be used as applications in WSGI server engines,
+    or :meth:`.build_server` can be used.
+
     """
 
     split_pattern = re.compile(r'\s*[,;]\s*')
 
+    #: List of header names that should be expected in client requests. If this
+    #: list is left empty, all headers passed in by the client are passed in to
+    #: :meth:`.handle`.
+    expected_headers = []
+
     def __init__(self):
         super(WsgiServer, self).__init__()
+
+    def handle(self, method, path, headers, data_fp):
+        """Override in sub-classes to handle a request and provide a response.
+        These requests and responses are automatically logged by
+        :class:`slimta.logging.http`.
+
+        This function should raise :exc:`WsgiResponse` to return a response to
+        the request. If the exception is not raised, ``200 OK`` is returned by
+        default.
+
+        :param method: This is the HTTP verb given in the request.
+        :param path: This is the selector path given in the request.
+        :param headers: This is a dictionary of headers given in the request,
+                        using standard header hyphens and capitalization (e.g.
+                        ``X-Example-Header``. The values are flattened into a
+                        single string, CGI-style.
+                        
+                        If :attr:`.expected_headers` is set, the keys in this
+                        dictionary will be the headers given in that list, with
+                        ``None`` as the value if the header was not provided in
+                        the request.
+        :param data_fp: This is a `file object`_ that will read the raw request
+                        data, if desired.
+        :raises: :exc:`WsgiResponse`
+
+        """
+        raise NotImplementedError()
 
     def build_server(self, listener, pool=None, tls=None):
         """Constructs and returns a WSGI server engine, configured to use the
@@ -114,160 +127,39 @@ class WsgiServer(object):
         """
         spawn = pool or 'default'
         tls = tls or {}
-        return WSGIServer(listener, self, log=sys.stdout, **tls)
+        return WSGIServer(listener, self, log=sys.stdout, spawn=spawn, **tls)
 
     def __call__(self, environ, start_response):
         log.wsgi_request(environ)
-        def logged_start_response(status, headers, *args, **kwargs):
-            log.wsgi_response(environ, status, headers)
-            return start_resonse(status, headers, *args, **kwargs)
-        pass
-
-    def _validate_request(self, environ):
-        if self.uri_pattern:
-            path = environ.get('PATH_INFO', '')
-            if not re.match(self.uri_pattern, path):
-                raise WsgiResponse('404 Not Found')
         method = environ['REQUEST_METHOD'].upper()
-        if method != 'POST':
-            headers = [('Allow', 'POST')]
-            raise WsgiResponse('405 Method Not Allowed', headers)
-        ctype = environ.get('CONTENT_TYPE', 'message/rfc822')
-        if ctype != 'message/rfc822':
-            raise WsgiResponse('415 Unsupported Media Type')
-        if self.validator_class:
-            self._run_validators(environ)
-
-    def _run_validators(self, environ):
-        validators = self.validator_class(environ)
-        validators.validate_ehlo(self._get_ehlo(environ))
-        validators.validate_sender(self._get_sender(environ))
-        recipients = self._get_recipients(environ)
-        for rcpt in recipients:
-            validators.validate_recipient(rcpt)
-        for name in validators.custom_headers:
-            cgi_name = _header_name_to_cgi(name)
-            validators.validate_custom(name, environ.get(cgi_name))
-
-    def _ptr_lookup(self, environ):
-        ip = environ.get('REMOTE_ADDR', '0.0.0.0')
-        ptraddr = reversename.from_address(ip)
+        path = environ.get('PATH_INFO', '')
+        headers = self._load_headers(environ)
+        data_fp = environ.get('wsgi.input')
         try:
-            answers = resolver.query(ptraddr, 'PTR')
-        except DNSException:
-            answers = []
-        try:
-            environ['slimta.reverse_address'] = str(answers[0])
-        except IndexError:
-            pass
+            self.handle(method, path, headers, data_fp)
+            status = '200 OK'
+            headers = []
+            data = []
+        except WsgiResponse as res:
+            status = res.status
+            headers = res.headers
+            data = res.data
+        log.wsgi_response(environ, status, headers)
+        return data
 
-    def _trigger_ptr_lookup(self, environ):
-        thread = gevent.spawn(self._ptr_lookup, environ)
-        environ['slimta.ptr_lookup_thread'] = thread
-
-    def _get_sender(self, environ):
-        sender_header = _header_name_to_cgi(self.sender_header)
-        return b64decode(environ.get(sender_header, ''))
-
-    def _get_recipients(self, environ):
-        rcpt_header = _header_name_to_cgi(self.rcpt_header)
-        rcpts_raw = environ.get(rcpt_header, None)
-        if not rcpts_raw:
-            return []
-        rcpts_split = self.split_pattern.split(rcpts_raw)
-        return [b64decode(rcpt_b64) for rcpt_b64 in rcpts_split]
-
-    def _get_ehlo(self, environ):
-        ehlo_header = _header_name_to_cgi(self.ehlo_header)
-        default = '[{0}]'.format(environ.get('REMOTE_ADDR', 'unknown'))
-        return environ.get(ehlo_header, default)
-
-    def _get_envelope(self, environ):
-        sender = self._get_sender(environ)
-        recipients = self._get_recipients(environ)
-        env = Envelope(sender, recipients)
-
-        content_length = int(environ.get('CONTENT_LENGTH', 0))
-        data = environ['wsgi.input'].read(content_length)
-        env.parse(data)
-        return env
-
-    def _add_envelope_extras(self, environ, env):
-        env.client['ip'] = environ.get('REMOTE_ADDR', 'unknown')
-        env.client['host'] = environ.get('slimta.reverse_address', None)
-        env.client['name'] = self._get_ehlo(environ)
-        env.client['protocol'] = environ.get('wsgi.url_scheme', 'http').upper()
-
-    def _enqueue_envelope(self, env):
-        results = self.handoff(env)
-        if isinstance(results[0][1], QueueError):
-            reply = Reply('550', '5.6.0 Error queuing message')
-            raise _build_http_response(reply)
-        elif isinstance(results[0][1], RelayError):
-            relay_reply = results[0][1].reply
-            raise _build_http_response(relay_reply)
-        reply = Reply('250', '2.6.0 Message accepted for delivery')
-        raise _build_http_response(reply)
-
-
-class WsgiValidators(object):
-    """Base class for implementing WSGI request validation. Instances will be
-    created for each WSGI request.
-
-    To terminate the current WSGI request with a response, raise the
-    :exc:`WsgiResponse` exception from with the validator methods.
-
-    :param environ: The environment variables_ for the current session.
-
-    """
-
-    #: A static list of headers that should be passed in to
-    #: :meth:`validate_custom()`.
-    custom_headers = []
-
-    def __init__(self, environ):
-        #: Stores the environment variables_ for the current session.
-        self.environ = environ
-
-    def validate_ehlo(self, ehlo):
-        """Override this method to validate the EHLO string passed in by the
-        client in the ``X-Ehlo`` (or equivalent) header.
-
-        :param ehlo: The value of the EHLO header.
-
-        """
-        pass
-
-    def validate_sender(self, sender):
-        """Override this method to validate the sender address passed in by the
-        client in the ``X-Envelope-Sender`` (or equivalent) header.
-
-        :param sender: The decoded value of the sender header.
-
-        """
-        pass
-
-    def validate_recipient(self, recipient):
-        """Override this method to validate each recipient address passed in by
-        the client in the ``X-Envelope-Recipient`` (or equivalent) headers. This
-        method will be called for each occurence of the header.
-
-        :param recipient: The decoded value of one recipient header.
-
-        """
-        pass
-
-    def validate_custom(self, name, value):
-        """Override this method to validate custom headers sent in by the
-        client. This method will be called exactly once for each header listed
-        in the :attr:`custom_headers` class attribute.
-
-        :param name: The name of the header.
-        :param value: The raw value of the header, or ``None`` if the client did
-                      not provide the header.
-
-        """
-        pass
+    def _load_headers(self, environ):
+        ret = {'Content-Length': environ.get('CONTENT_LENGTH'),
+               'Content-Type': environ.get('CONTENT_TYPE')}
+        if self.expected_headers:
+            for name in self.expected_headers:
+                cgi_name = _header_name_to_cgi(name)
+                ret[name] = environ.get(cgi_name)
+        else:
+            for key, value in environ.iteritems():
+                if key.startswith('HTTP_'):
+                    name = _cgi_to_header_name(key)
+                    ret[name] = value
+        return ret
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
