@@ -52,11 +52,12 @@ def build_auth_from_dict(dict, lower_case=False, only_verify=True):
                 assert dict[username] == secret
             except (KeyError, AssertionError):
                 raise CredentialsInvalidError()
+            return username
 
         def get_secret(self, authcid, authzid):
             username = authcid.lower() if lower_case else authcid
             try:
-                return dict[username]
+                return dict[username], username
             except KeyError:
                 raise CredentialsInvalidError()
 
