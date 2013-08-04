@@ -68,16 +68,15 @@ from gevent import monkey; monkey.patch_all()
 from dns import resolver, reversename
 from dns.exception import DNSException
 
-from slimta import logging
+from slimta.logging import log_exception
+from slimta.http.wsgi import WsgiServer
 from slimta.envelope import Envelope
 from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from . import Edge
 
-__all__ = ['WsgiEdge', 'WsgiValidators']
-
-log = logging.getHttpLogger(__name__)
+__all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
 
 
 class WsgiResponse(Exception):
@@ -118,7 +117,7 @@ def _build_http_response(smtp_reply):
         return WsgiResponse('500 Internal Server Error', headers)
 
 
-class WsgiEdge(Edge):
+class WsgiEdge(Edge, WsgiServer):
     """This class is intended to be instantiated and used as an app on top of a
     WSGI server engine such as :class:`gevent.pywsgi.WSGIServer`. It will only
     acccept ``POST`` requests that provide a ``message/rfc822`` payload.
@@ -160,25 +159,7 @@ class WsgiEdge(Edge):
         else:
             self.uri_pattern = uri_pattern
 
-    def build_server(self, listener, pool=None, tls=None):
-        """Constructs and returns a WSGI server engine, configured to use the
-        current object as its application.
-
-        :param listener: Usually a ``(ip, port)`` tuple defining the interface
-                         and port upon which to listen for connections.
-        :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
-                     use for new greenlets.
-        :param tls: Optional dictionary of TLS settings passed directly as
-                    keyword arguments to :class:`gevent.ssl.SSLSocket`.
-        :rtype: :class:`gevent.pywsgi.WSGIServer`
-
-        """
-        spawn = pool or 'default'
-        tls = tls or {}
-        return WSGIServer(listener, self, log=sys.stdout, **tls)
-
     def __call__(self, environ, start_response):
-        log.wsgi_request(environ)
         self._trigger_ptr_lookup(environ)
         try:
             self._validate_request(environ)
@@ -187,10 +168,9 @@ class WsgiEdge(Edge):
             self._enqueue_envelope(env)
         except WsgiResponse as res:
             start_response(res.status, res.headers)
-            log.wsgi_response(environ, res.status, res.headers)
             return res.data
         except Exception as exc:
-            logging.log_exception(__name__)
+            log_exception(__name__)
             msg = '{0!s}\n'.format(exc)
             headers = [('Content-Length', len(msg)),
                        ('Content-Type', 'text/plain')]

@@ -5,7 +5,6 @@ from base64 import b64encode
 
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
-from gevent.pywsgi import WSGIServer
 from dns import resolver
 from dns.exception import DNSException
 
@@ -122,11 +121,6 @@ class TestEdgeWsgi(MoxTestBase):
         w = WsgiEdge(None, validator_class=Validators)
         w._run_validators(self.environ)
         self.assertEquals(31, self.validated)
-
-    def test_build_server(self):
-        w = WsgiEdge(None)
-        server = w.build_server(('0.0.0.0', 0))
-        self.assertIsInstance(server, WSGIServer)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
