@@ -59,7 +59,7 @@ test test\r
         self.assertEqual('sender@example.com', env.headers['from'])
         self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
                          env.headers.get_all('To'))
-        self.assertEquals('test test\r\n', env.message)
+        self.assertEqual('test test\r\n', env.message)
 
     def test_parse_onlyheaders(self):
         env = Envelope()

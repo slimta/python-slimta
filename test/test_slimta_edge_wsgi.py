@@ -102,10 +102,10 @@ class TestEdgeWsgi(MoxTestBase):
         class Validators(WsgiValidators):
             custom_headers = ['X-Custom-Header']
             def validate_ehlo(self2, ehlo):
-                self.assertEquals('test', ehlo)
+                self.assertEqual('test', ehlo)
                 self.validated += 1
             def validate_sender(self2, sender):
-                self.assertEquals('sender@example.com', sender)
+                self.assertEqual('sender@example.com', sender)
                 self.validated += 2
             def validate_recipient(self2, recipient):
                 if recipient == 'rcpt1@example.com':
@@ -115,12 +115,12 @@ class TestEdgeWsgi(MoxTestBase):
                 else:
                     raise AssertionError('bad recipient: '+recipient)
             def validate_custom(self2, name, value):
-                self.assertEquals('X-Custom-Header', name)
-                self.assertEquals('custom test', value)
+                self.assertEqual('X-Custom-Header', name)
+                self.assertEqual('custom test', value)
                 self.validated += 16
         w = WsgiEdge(None, validator_class=Validators)
         w._run_validators(self.environ)
-        self.assertEquals(31, self.validated)
+        self.assertEqual(31, self.validated)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

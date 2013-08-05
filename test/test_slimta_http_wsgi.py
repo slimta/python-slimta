@@ -34,7 +34,7 @@ class TestWsgiServer(MoxTestBase):
         start_response('200 Test', 13)
         log.wsgi_response(environ, '200 Test', 13)
         self.mox.ReplayAll()
-        self.assertEquals(['test'], w(environ, start_response))
+        self.assertEqual(['test'], w(environ, start_response))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
