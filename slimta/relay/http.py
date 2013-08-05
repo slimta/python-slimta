@@ -30,16 +30,16 @@ from __future__ import absolute_import
 
 import re
 import urlparse
-from httplib import HTTPConnection
 from base64 import b64encode
 
 import gevent
-from gevent import socket, ssl
+from gevent import socket
 from gevent.queue import PriorityQueue, Empty
 from gevent.event import AsyncResult
 
 from slimta import logging
 from slimta.smtp.reply import Reply
+from slimta.http import HTTPConnection, HTTPSConnection
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
@@ -47,43 +47,6 @@ from .smtp import SmtpRelayError
 __all__ = ['HttpRelay']
 
 log = logging.getHttpLogger(__name__)
-
-
-class GeventHTTPConnection(HTTPConnection):
-    # This class attempts to avoid the complete re-implementation of httplib
-    # that comes included with gevent.
-
-    def connect(self):
-        self.sock = socket.create_connection((self.host,self.port),
-                                             self.timeout, self.source_address)
-        if self._tunnel_host:
-            self._tunnel()
-
-
-class GeventHTTPSConnection(HTTPConnection):
-    # This class makes HTTPS connections more robust and capable of certificate
-    # verification that the standard httplib library is incapable of doing.
-
-    def __init__(self, *args, **kwargs):
-        self.tls = kwargs.pop('tls', None)
-        HTTPConnection.__init__(self, *args, **kwargs)
-
-    def connect(self):
-        sock = socket.create_connection((self.host,self.port),
-                                        self.timeout, self.source_address)
-        self.sock = ssl.SSLSocket(sock, **self.tls)
-        self.sock.do_handshake()
-        if self._tunnel_host:
-            self._tunnel()
-
-    def close(self):
-        if self.sock:
-            try:
-                self.sock.unwrap()
-            except socket.error as (errno, message):
-                if errno != 0:
-                    raise
-        HTTPConnection.close(self)
 
 
 class HttpRelayClient(RelayPoolClient):
@@ -165,10 +128,10 @@ class HttpRelayClient(RelayPoolClient):
         host = host.rsplit(':', 1)[0]
         port = self.url.port
         if self.relay.tls:
-            conn = GeventHTTPSConnection(host, port, strict=True,
+            conn = HTTPSConnection(host, port, strict=True,
                                          **self.relay.tls)
         else:
-            conn = GeventHTTPConnection(host, port, strict=True)
+            conn = HTTPConnection(host, port, strict=True)
         return conn
 
     def _run(self):

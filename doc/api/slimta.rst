@@ -18,6 +18,7 @@ slimta
    slimta.queue
    slimta.relay
    slimta.smtp
+   slimta.http
    slimta.envelope
    slimta.bounce
    slimta.policy

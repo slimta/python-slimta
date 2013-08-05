@@ -3,13 +3,13 @@ import unittest
 
 from mox import MoxTestBase, IsA, IgnoreArg
 from gevent.event import AsyncResult
-from gevent import socket, ssl, Timeout
+from gevent import Timeout
 
 from slimta.envelope import Envelope
 from slimta.util.deque import BlockingDeque
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.relay.http import HttpRelay, HttpRelayClient
-from slimta.relay.http import GeventHTTPConnection, GeventHTTPSConnection
+from slimta.http import HTTPConnection
 
 
 class TestHttpRelay(MoxTestBase):
@@ -134,7 +134,7 @@ class TestHttpRelayClient(MoxTestBase):
 
     def test_get_connection(self):
         conn = self.client._get_connection()
-        self.assertIsInstance(conn, GeventHTTPConnection)
+        self.assertIsInstance(conn, HTTPConnection)
 
     def test_run(self):
         self.mox.StubOutWithMock(self.client, '_wait_for_request')
@@ -144,40 +144,6 @@ class TestHttpRelayClient(MoxTestBase):
         self.client.conn.close()
         self.mox.ReplayAll()
         self.client._run()
-
-
-class TestGeventHTTPConnection(MoxTestBase):
-
-    def test_connect(self):
-        self.mox.StubOutWithMock(socket, 'create_connection')
-        socket.create_connection(('testhost', 8025), 7, 8).AndReturn(9)
-        self.mox.ReplayAll()
-        conn = GeventHTTPConnection('testhost', 8025, True, 7, 8)
-        conn.connect()
-        self.assertEqual(9, conn.sock)
-
-
-class TestGeventHTTPSConnection(MoxTestBase):
-
-    def test_connect(self):
-        self.mox.StubOutWithMock(socket, 'create_connection')
-        self.mox.StubOutWithMock(ssl, 'SSLSocket')
-        sslsock = self.mox.CreateMockAnything()
-        socket.create_connection(('testhost', 8025), 7, 8).AndReturn(9)
-        ssl.SSLSocket(9, var='val').AndReturn(sslsock)
-        sslsock.do_handshake()
-        self.mox.ReplayAll()
-        conn = GeventHTTPSConnection('testhost', 8025, True, 7, 8, tls={'var': 'val'})
-        conn.connect()
-        self.assertEqual(sslsock, conn.sock)
-
-    def test_close(self):
-        conn = GeventHTTPSConnection('testhost', 8025, True, 7, 8, tls={'var': 'val'})
-        conn.sock = self.mox.CreateMockAnything()
-        conn.sock.unwrap()
-        conn.sock.close()
-        self.mox.ReplayAll()
-        conn.close()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
