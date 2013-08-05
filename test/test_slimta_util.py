@@ -20,7 +20,7 @@ class TestUtil(MoxTestBase):
         auth1 = Auth1(None)
         auth2 = Auth2(None)
         auth3 = Auth3(None)
-        auth1.verify_secret('user@example.com', 'asdftest', None)
+        self.assertEqual('user@example.com', auth1.verify_secret('user@example.com', 'asdftest', None))
         with self.assertRaises(CredentialsInvalidError):
             auth1.verify_secret('user@example.com', 'derp', None)
         with self.assertRaises(CredentialsInvalidError):
@@ -28,7 +28,7 @@ class TestUtil(MoxTestBase):
         with self.assertRaises(CredentialsInvalidError):
             auth1.get_secret('user@example.com', None)
         auth2.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        self.assertEqual('asdftest', auth3.get_secret('user@example.com', None))
+        self.assertEqual(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))
         with self.assertRaises(CredentialsInvalidError):
             auth3.get_secret('bad@example.com', None)
 
