@@ -23,14 +23,66 @@
 
 from __future__ import absolute_import
 
+from httplib import HTTPConnection
+
+from gevent import socket, ssl
+
 from slimta.core import SlimtaError
 
-__all__ = ['HttpError']
+__all__ = ['HttpError', 'HTTPConnection', 'HTTPSConnection']
 
 
 class HttpError(SlimtaError):
     """Base exception for all custom HTTP exceptions."""
     pass
+
+
+class HTTPConnection(HTTPConnection):
+    """Modified version of the :py:class:`httplib.HTTPConnection` class that
+    uses gevent sockets. This attempts to avoid the complete re-implementation
+    that ships in :mod:`gevent.httplib`.
+
+    """
+
+    def connect(self):
+        self.sock = socket.create_connection((self.host,self.port),
+                                             self.timeout, self.source_address)
+        if self._tunnel_host:
+            self._tunnel()
+
+
+class HTTPSConnection(HTTPConnection):
+    """Modified version of the :py:class:`httplib.HTTPSConnection` class that
+    uses gevent sockets. This attempts to avoid the complete re-implementation
+    that ships in :mod:`gevent.httplib`.
+
+    :param args: Positional arguments passed directly into the
+                 :py:class:`~httplib.HTTPSConnection`.
+    :param tls: This keyword argument contains the keyword arguments passed into
+                :class:`~gevent.ssl.SSLSocket` when the connection is encrypted.
+    :param kwargs: Additional keyword arguments passed directly into
+                   :py:class:`~httplib.HTTPSConnection`. 
+
+    """
+
+
+    def __init__(self, *args, **kwargs):
+        self.tls = kwargs.pop('tls', None)
+        HTTPConnection.__init__(self, *args, **kwargs)
+
+    def connect(self):
+        HTTPConnection.connect(self)
+        self.sock = ssl.SSLSocket(self.sock, **self.tls)
+        self.sock.do_handshake()
+
+    def close(self):
+        if self.sock:
+            try:
+                self.sock.unwrap()
+            except socket.error as (errno, message):
+                if errno != 0:
+                    raise
+        HTTPConnection.close(self)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
