@@ -14,6 +14,5 @@ slimta.http
 
 .. toctree::
 
-   slimta.http.client
    slimta.http.wsgi
 
