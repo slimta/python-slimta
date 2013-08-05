@@ -27,6 +27,7 @@ Usage Manual
 * :doc:`manual/edge`
 
   * :ref:`SMTP <edge-smtp>`
+  * :ref:`HTTP <edge-http>`
 
 * :doc:`manual/queue`
 * :doc:`manual/relay`
