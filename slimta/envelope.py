@@ -68,12 +68,12 @@ class Envelope(object):
         #: Dictionary of information about the client that sent the message.
         #: Utilized keys include:
         #:
-        #: * ``ip``: The IP of the client.
-        #: * ``host``: The reverse-lookup of the client IP.
-        #: * ``name``: The client name, as given by its ``EHLO`` or alternative.
-        #: * ``protocol``: The protocol used by the client, generally a variant
+        #: - ``ip``: The IP of the client.
+        #: - ``host``: The reverse-lookup of the client IP.
+        #: - ``name``: The client name, as given by its ``EHLO`` or alternative.
+        #: - ``protocol``: The protocol used by the client, generally a variant
         #:                 of ``"SMTP"``.
-        #: * ``auth``: The name the client successfully authenticated with, or
+        #: - ``auth``: The name the client successfully authenticated with, or
         #:             ``None``.
         self.client = {}
 

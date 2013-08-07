@@ -50,15 +50,15 @@ class SmtpValidators(object):
     the `reply` argument untouched will return the default, successful reply
     from the command.
 
-    * ``handle_banner(reply, address)``: Validate connecting address before
+    - ``handle_banner(reply, address)``: Validate connecting address before
       sending the SMTP banner.
-    * ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
-    * ``handle_helo(reply, helo_as)``: Validate the HELO string.
-    * ``handle_mail(reply, sender)``: Validate the sender address.
-    * ``handle_rcpt(reply, recipient)``: Validate one recipient address.
-    * ``handle_data(reply)``: Any remaining validation before accepting data.
-    * ``handle_rset(reply)``: Called before replying to an RSET command.
-    * ``handle_tls()``: Called after a successful TLS handshake. This may be at
+    - ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
+    - ``handle_helo(reply, helo_as)``: Validate the HELO string.
+    - ``handle_mail(reply, sender)``: Validate the sender address.
+    - ``handle_rcpt(reply, recipient)``: Validate one recipient address.
+    - ``handle_data(reply)``: Any remaining validation before accepting data.
+    - ``handle_rset(reply)``: Called before replying to an RSET command.
+    - ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
 
     :param session: When sub-classes are instantiated, instances are passed this
@@ -71,14 +71,14 @@ class SmtpValidators(object):
         #: This instance attribute is an object that has its own set of
         #: attributes which may be useful in validation:
         #: 
-        #:  * ``address``: The address tuple of the connecting client.
-        #:  * ``extended_smtp``: The client used EHLO instead of HELO.
-        #:  * ``security``: Security of connection, ``None`` or ``'TLS'``.
-        #:  * ``ehlo_as``: The EHLO or HELO string given by the client.
-        #:  * ``auth_result``: The authentication result returned by |Auth|
+        #:  - ``address``: The address tuple of the connecting client.
+        #:  - ``extended_smtp``: The client used EHLO instead of HELO.
+        #:  - ``security``: Security of connection, ``None`` or ``'TLS'``.
+        #:  - ``ehlo_as``: The EHLO or HELO string given by the client.
+        #:  - ``auth_result``: The authentication result returned by |Auth|
         #:                     after successful authentication, or ``None`` if
         #:                     the client has not authenticated.
-        #:  * ``envelope``: The |Envelope| being pieced together to send by the
+        #:  - ``envelope``: The |Envelope| being pieced together to send by the
         #:                  connecting client.
         self.session = session
 
