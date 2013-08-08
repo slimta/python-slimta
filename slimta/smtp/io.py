@@ -23,7 +23,7 @@ from __future__ import absolute_import
 
 import re
 import cStringIO
-from errno import ECONNRESET
+from errno import ECONNRESET, EPIPE
 
 from gevent.ssl import SSLSocket, SSLError
 from gevent import socket
@@ -58,7 +58,7 @@ class IO(object):
             try:
                 self.socket.unwrap()
             except socket.error as (errno, message):
-                if errno != 0:
+                if errno not in (0, EPIPE, ECONNRESET):
                     raise
         self.socket.close()
 
