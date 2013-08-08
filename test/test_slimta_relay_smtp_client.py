@@ -6,7 +6,7 @@ from gevent.socket import socket, error as socket_error
 from gevent.event import AsyncResult
 
 from slimta.util.deque import BlockingDeque
-from slimta.smtp import ConnectionLost
+from slimta.smtp import ConnectionLost, SmtpError
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
@@ -375,6 +375,21 @@ class TestSmtpRelayClient(MoxTestBase):
         client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
         with self.assertRaises(ValueError):
             client._run()
+
+    def test_run_smtperror(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        queue = BlockingDeque()
+        queue.append((result, env))
+        self.sock.recv(IsA(int)).AndRaise(SmtpError('test error'))
+        result.set_exception(IsA(TransientRelayError))
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._run()
 
     def test_run_banner_failure(self):
         result = self.mox.CreateMock(AsyncResult)

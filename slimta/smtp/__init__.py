@@ -38,7 +38,10 @@ class SmtpError(SlimtaError):
 
 class ConnectionLost(SmtpError):
     """Thrown when the socket is closed prematurely."""
-    pass
+    
+    def __init__(self):
+        msg = 'Connection was closed prematurely'
+        super(ConnectionLost, self).__init__(msg)
 
 
 class MessageTooBig(SmtpError):
@@ -46,7 +49,10 @@ class MessageTooBig(SmtpError):
     extension, if supported.
 
     """
-    pass
+
+    def __init__(self):
+        msg = 'Message exceeded maximum allowed size'
+        super(MessageTooBig, self).__init__(msg)
 
 
 class BadReply(SmtpError):
