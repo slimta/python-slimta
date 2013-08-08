@@ -214,11 +214,13 @@ class SmtpRelayClient(RelayPoolClient):
         except SmtpRelayError as e:
             result.set_exception(e)
         except SmtpError as e:
-            reply = Reply('421', '4.3.0 {0!s}'.format(e))
-            relay_error = SmtpRelayError.factory(reply)
-            result.set_exception(relay_error)
+            if not result.ready():
+                reply = Reply('421', '4.3.0 {0!s}'.format(e))
+                relay_error = SmtpRelayError.factory(reply)
+                result.set_exception(relay_error)
         except Exception as e:
-            result.set_exception(e)
+            if not result.ready():
+                result.set_exception(e)
             raise
         finally:
             self._disconnect()
