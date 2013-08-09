@@ -1,26 +1,26 @@
-### [Project Homepage][5]
-### [API Documentation and Manual][6]
+#### [Project Homepage][5]
+#### [API Documentation and Manual][6]
 
 --------------------
 
 About
 =====
 
-The `slimta` project is a Python library offering the building blocks necessary
-to create a full-featured [MTA][1]. Most MTAs must be configured, but an MTA
-built with `slimta` is coded. An MTA built with `slimta` can incorporate any
-protocol or policy, custom or built-in. An MTA built with `slimta` can
-integrate with other Python libraries and take advantage of Python's great
-community.
+The `python-slimta` project is a Python library offering the building blocks
+necessary to create a full-featured [MTA][1]. Most MTAs must be configured, but
+an MTA built with `python-slimta` is coded. An MTA built with `python-slimta`
+can incorporate any protocol or policy, custom or built-in. An MTA built with
+`python-slimta` can integrate with other Python libraries and take advantage of
+Python's great community.
 
-The `slimta` project is released under the [MIT License][4].
+The `python-slimta` project is released under the [MIT License][4].
 
 [![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
 
 Getting Started
 ===============
 
-Use a [virtualenv][2] to get started developing against `slimta`:
+Use a [virtualenv][2] to get started developing against `python-slimta`:
 
     $ cd python-slimta/
     $ virtualenv .venv
