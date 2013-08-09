@@ -25,7 +25,7 @@ organized with keys (mappings) and lists, similar to JSON, with extra features
 like key references and file inclusion. The included sample configs use some of
 these features, as a reference.
 
-* `Getting Started <https://github.com/icgood/slimta#getting-started>`_
+* `Getting Started <https://github.com/slimta/slimta#getting-started>`_
 * :doc:`slimta.processes`
 * :doc:`slimta.edges`
 * :doc:`slimta.queues`

@@ -62,7 +62,7 @@ Logging Configuration
 """""""""""""""""""""
 
 .. _dictionary schema: http://docs.python.org/2/library/logging.config.html#configuration-dictionary-schema
-.. _logging.conf: https://github.com/icgood/slimta/blob/master/etc/logging.conf.sample
+.. _logging.conf: https://github.com/slimta/slimta/blob/master/etc/logging.conf.sample
 
 Because the ``logging`` sub-section is parsed into a dictionary-like object, it
 is compatible with the :func:`logging.config.dictConfig` function. The
