@@ -1,4 +1,4 @@
-python-slimta-celeryqueue
-python-slimta-diskstorage
-python-slimta-piperelay
-python-slimta-spf
+-e git+git@github.com:slimta/python-slimta-celeryqueue.git@HEAD
+-e git+git@github.com:slimta/python-slimta-diskstorage.git@HEAD
+-e git+git@github.com:slimta/python-slimta-piperelay.git@HEAD
+-e git+git@github.com:slimta/python-slimta-spf.git@HEAD
