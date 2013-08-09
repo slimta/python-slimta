@@ -101,7 +101,7 @@ following configuration keys:
 * ``args``: List
 
   These are the arguments for the subprocess, similar to the ``args`` parameter
-  to the :py:class:`~subprocess.Popen`` constructor. This list may contain
+  to the :py:class:`~subprocess.Popen` constructor. This list may contain
   several macros, see the :class:`~slimta.piperelay.PipeRelay` class constructor
   for more information.
 
