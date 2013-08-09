@@ -88,6 +88,28 @@ follows:
   The port number to connect to on the destination server for outbound mail
   delivery on the ``"static"`` relay type.
 
+``pipe`` Relays
+"""""""""""""""
+
+.. _pipe: http://www.postfix.org/pipe.8.html
+
+The ``"pipe"`` relay type mimcs the postfix pipe_ daemon, which is a useful
+delivery mechanism for handing off a message to an external process by piping
+the message data to the process's *stdin* stream. This relay type has the
+following configuration keys:
+
+* ``args``: List
+
+  These are the arguments for the subprocess, similar to the ``args`` parameter
+  to the :py:class:`~subprocess.Popen`` constructor. This list may contain
+  several macros, see the :class:`~slimta.piperelay.PipeRelay` class constructor
+  for more information.
+
+* ``error_pattern``: String
+
+  This string defines a regular expression that parses an error message from the
+  subprocess's *stdout* or *stderr*, whichever matches.
+
 ``maildrop`` Relays
 """""""""""""""""""
 
@@ -98,9 +120,25 @@ using the `courier maildrop`_ application. The behavior of this relay is mostly
 configured externally using ``.mailfilter`` files, though it allows for one
 configuration key:
 
-* ``executable``: String
+* ``path``: String
 
   The path to the ``maildrop`` executable. By default, the ``$PATH`` environment
+  variable is searched.
+
+``dovecot`` Relays
+""""""""""""""""""
+
+.. _deliver: http://wiki.dovecot.org/LDA
+.. _dovecot: http://www.dovecot.org/
+
+The ``"dovecot"`` relay type enables message delivery to the local machine,
+using the deliver_ agent included with dovecot_. The behavior of this relay is
+mostly configured within dovecot using Sieve or similar, though it allows for
+one configuration key:
+
+* ``path``: String
+
+  The path to the ``deliver`` executable. By default, the ``$PATH`` environment
   variable is searched.
 
 ``custom`` Relays

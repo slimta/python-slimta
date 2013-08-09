@@ -12,7 +12,7 @@ own set of additional dependencies. These modules can be installed alongside
 
 .. toctree::
 
-   extra.maildrop
+   extra.piperelay
    extra.diskstorage
    extra.celeryqueue
    extra.spf

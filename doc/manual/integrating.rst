@@ -31,7 +31,7 @@ of a |slimta| MTA, you can pretty much handle any of these configurations.
    :doc:`msa` page.
 
  * **MDA**: An MDA takes messages from the Internet and delivers them localy to
-   something like `maildrop`_. Check out the :doc:`mda` page.
+   something like `maildrop`_ or `dovecot`_. Check out the :doc:`mda` page.
 
  * **Smart Host**: A smart host takes messages and delivers them to a specific
    destination, rather then dynamically looking up the recipient's destination.
@@ -55,4 +55,5 @@ of a |slimta| MTA, you can pretty much handle any of these configurations.
 .. _SMTP proxies: http://en.wikipedia.org/wiki/SMTP_proxy
 .. _Mail hubs: http://en.wikipedia.org/wiki/E-mail_hub
 .. _maildrop: http://www.courier-mta.org/maildrop/
+.. _dovecot: http://wiki.dovecot.org/LDA
 

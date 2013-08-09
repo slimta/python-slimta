@@ -1,4 +1,4 @@
-extra/diskstorage/
-extra/maildrop/
-extra/celeryqueue/
-extra/spf/
+python-slimta-celeryqueue
+python-slimta-diskstorage
+python-slimta-piperelay
+python-slimta-spf

@@ -18,27 +18,28 @@ In an effort to keep a small number of dependencies and avoid a reputation for
 separately. These extensions, and where and how to use them, are discussed
 here.
 
-.. _maildrop-relay:
+.. _pipe-relay:
 
-Maildrop Delivery
-"""""""""""""""""
+External Process Delivery
+"""""""""""""""""""""""""
 
 This simple extension uses the `gevent_subprocess`_ library to initiate local
-delivery using `courier-maildrop`_. It could easily be adapted to use another
-command-based LDA such as `dovecot-deliver`_.
+delivery an external process. This simple mechanism is then used to support
+delivery to applications such as `courier-maildrop`_ and `dovecot-deliver`_.
 
 Installation of this extension is as simple as::
 
-    $ pip install python-slimta-maildrop
+    $ pip install python-slimta-piperelay
 
-With a normal system configuration, the following should be plenty to create a
-:class:`~slimta.maildroprelay.MaildropRelay` instance::
+Take `courier-maildrop`_ as an example. With a normal system configuration, the
+following should be plenty to create a :class:`~slimta.piperelay.MaildropRelay`
+instance::
 
-    from slimta.maildroprelay import MaildropRelay
+    from slimta.piperelay import MaildropRelay
 
     relay = MaildropRelay()
 
-For more information, the :doc:`mda` tutorial and :mod:`~slimta.maildroprelay`
+For more information, the :doc:`mda` tutorial and :mod:`~slimta.piperelay`
 module documentation may be useful.
 
 .. _disk-storage:

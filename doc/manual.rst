@@ -51,7 +51,7 @@ Usage Manual
 
 * :doc:`manual/extensions`
 
-  * :ref:`Maildrop Delivery <maildrop-relay>`
+  * :ref:`External Process Delivery <pipe-relay>`
   * :ref:`Disk Storage <disk-storage>`
   * :ref:`Celery Queuing <celery-queue>`
   * :ref:`Sender Policy Framework (SPF) <enforce-spf>`

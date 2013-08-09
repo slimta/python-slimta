@@ -4,15 +4,17 @@
 Mail Delivery Agent
 ===================
 
-*Note:* This example requires the ``python-slimta-maildrop`` package.
+*Note:* This example requires the ``python-slimta-piperelay`` package.
 
 Step 1: Create the Relay
 ------------------------
 
 To get started, we create a |Relay| object. This is first because |Edge| depends
-on |Queue| and |Queue| depends on |Relay|::
+on |Queue| and |Queue| depends on |Relay|. For this example, we'll be using
+:class:`~slimta.piperelay.MaildropRelay`, though you could just as easily
+substitute one of the other classes in :mod:`slimta.piperelay`::
 
-    from slimta.relay.maildrop import MaildropRelay
+    from slimta.piperelay import MaildropRelay
 
     relay = MaildropRelay(timeout=10.0)
 
