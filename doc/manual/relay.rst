@@ -2,7 +2,7 @@
 .. include:: /global.rst
 
 .. _courier-maildrop: http://www.courier-mta.org/maildrop/
-.. _dovecot-deliver: http://wiki.dovecot.org/LDA
+.. _dovecot-lda: http://wiki.dovecot.org/LDA
 .. _pipe daemon: http://www.postfix.org/pipe.8.html
 .. _Smart-Hosting: http://en.wikipedia.org/wiki/Smart_host
 
@@ -71,9 +71,9 @@ External Process Relaying
 
 When |slimta| is configured to be the final destination for the email message,
 it can stream a message to an external process to locally deliver the message.
-This is how applications like `courier-maildrop`_ and `dovecot-deliver`_ are
-given messages. This method is modelled of the `pipe daemon`_ from postfix.
-This type of relay is provided in the :mod:`slimta.piperelay` module. Here's an
+This is how applications like `courier-maildrop`_ and `dovecot-lda`_ are given
+messages. This method is modeled off the `pipe daemon`_ from postfix.  This
+type of relay is provided in the :mod:`slimta.piperelay` module. Here's an
 example of delivery to the ``maildrop`` command::
 
     from slimta.relay.maildrop import MaildropRelay

@@ -128,18 +128,18 @@ configuration key:
 ``dovecot`` Relays
 """"""""""""""""""
 
-.. _deliver: http://wiki.dovecot.org/LDA
+.. _LDA: http://wiki.dovecot.org/LDA
 .. _dovecot: http://www.dovecot.org/
 
 The ``"dovecot"`` relay type enables message delivery to the local machine,
-using the deliver_ agent included with dovecot_. The behavior of this relay is
+using the LDA_ agent included with dovecot_. The behavior of this relay is
 mostly configured within dovecot using Sieve or similar, though it allows for
 one configuration key:
 
 * ``path``: String
 
-  The path to the ``deliver`` executable. By default, the ``$PATH`` environment
-  variable is searched.
+  The path to the ``dovecot-lda`` executable. By default, the ``$PATH``
+  environment variable is searched.
 
 ``custom`` Relays
 """""""""""""""""
