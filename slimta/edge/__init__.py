@@ -122,7 +122,7 @@ class EdgeServer(Edge, gevent.Greenlet):
         :param socket: The socket for the connected client.
         :param address: The address of the connected client.
 
-        :raises: :class:`NotImplementedError`
+        :raises: :py:exc:`NotImplementedError`
 
         """
         raise NotImplementedError()
