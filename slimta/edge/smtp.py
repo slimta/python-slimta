@@ -179,6 +179,7 @@ class SmtpSession(object):
         self.envelope.client['host'] = self.reverse_address
         self.envelope.client['name'] = self.ehlo_as
         self.envelope.client['protocol'] = self.protocol
+        self.envelope.client['auth'] = self.auth_result
         if hasattr(self, '_ptr_lookup_thread'):
             self._ptr_lookup_thread.kill(block=False)
 
