@@ -21,11 +21,9 @@
 
 from setuptools import setup, find_packages
 
-from slimta.core import __version__ as VERSION
-
 
 setup(name='python-slimta',
-      version=VERSION,
+      version='0.3.8',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries.',

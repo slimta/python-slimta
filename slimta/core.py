@@ -26,11 +26,13 @@ defines the package's version number in ``__version__``.
 
 from __future__ import absolute_import
 
+import pkg_resources
+
 __all__ = ['SlimtaError']
 
 
 #: The |slimta| version string.
-__version__ = '0.3.8'
+__version__ = pkg_resources.require("python-slimta")[0].version
 
 
 class SlimtaError(Exception):
