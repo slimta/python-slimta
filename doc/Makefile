@@ -5,5 +5,5 @@ all:
 	sphinx-build -b html . $(DOC_OUTPUT)
 
 clean:
-	rm -rf $(DOC_OUTPUT)/*
+	rm -rf $(DOC_OUTPUT)/
 
