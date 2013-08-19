@@ -72,6 +72,16 @@ class Reply(object):
         #: which is useful for asynchronous replies such as timeouts.
         self.newline_first = False
 
+    def __repr__(self):
+        """Converts the reply into a string that shows appropriate internals of
+        the object. 
+
+        :rtype: str
+
+        """
+        return '<Reply code={0!r} message={1!r}>'.format(self.code,
+                                                         self.message)
+
     def __str__(self):
         """Converts the reply into a single string.
 
@@ -80,7 +90,7 @@ class Reply(object):
         :rtype: string
 
         """
-        return ' '.join((self.code, self.message))
+        return '{0} {1}'.format(self.code, self.message)
 
     def __nonzero__(self):
         """Defines the truth-testing operation for |Reply| objects. This will
