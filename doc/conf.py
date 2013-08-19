@@ -96,7 +96,7 @@ pygments_style = 'sphinx'
 #html_theme = "agogo"
 #html_theme = "basic"
 #html_theme = "default"
-html_theme = 'vlinux-theme'
+html_theme = 'armstrong'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
