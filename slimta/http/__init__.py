@@ -46,7 +46,7 @@ class HttpError(SlimtaError):
 
 class HTTPConnection(HTTPConnection):
     """slimta.http.HTTPConnection(...)
-    
+
     Modified version of the :py:class:`httplib.HTTPConnection` class that
     uses gevent sockets. This attempts to avoid the complete re-implementation
     that ships in :mod:`gevent.httplib`.
@@ -64,7 +64,7 @@ class HTTPConnection(HTTPConnection):
 
 class HTTPSConnection(HTTPConnection):
     """slimta.http.HTTPSConnection(...[, tls])
-    
+
     Modified version of the :py:class:`httplib.HTTPSConnection` class that
     uses gevent sockets. This attempts to avoid the complete re-implementation
     that ships in :mod:`gevent.httplib`.
