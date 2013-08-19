@@ -45,9 +45,7 @@ class HttpError(SlimtaError):
 
 
 class HTTPConnection(HTTPConnection):
-    """HTTPConnection(...)
-
-    Modified version of the :py:class:`httplib.HTTPConnection` class that
+    """Modified version of the :py:class:`httplib.HTTPConnection` class that
     uses gevent sockets. This attempts to avoid the complete re-implementation
     that ships in :mod:`gevent.httplib`.
 
@@ -63,11 +61,8 @@ class HTTPConnection(HTTPConnection):
 
 
 class HTTPSConnection(HTTPConnection):
-    """HTTPSConnection(...[, tls])
-
-    Modified version of the :py:class:`httplib.HTTPSConnection` class that
-    uses gevent sockets. This attempts to avoid the complete re-implementation
-    that ships in :mod:`gevent.httplib`.
+    """Modified version of the :py:class:`httplib.HTTPSConnection` class that
+    uses gevent sockets and the more functional ``tls`` parameter.
 
     :param ...: Arguments as passed in to :py:class:`~httplib.HTTPConnection`.
     :param tls: This keyword argument contains the keyword arguments passed into
