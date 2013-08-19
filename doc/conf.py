@@ -257,4 +257,5 @@ intersphinx_mapping = {'http://docs.python.org/': None,
                        'http://docs.celeryproject.org/en/latest/': 'http://docs.celeryproject.org/en/latest/objects.inv'}
 
 autodoc_member_order = 'bysource'
+autodoc_docstring_signature = True
 
