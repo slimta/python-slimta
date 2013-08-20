@@ -33,7 +33,7 @@ def build_auth_from_dict(dict, lower_case=False, only_verify=True):
     """Helper function that constructs an |Auth| class that authenticates a
     user by checking a dictionary with the username as the key and their
     password is the associated value.
-    
+
     :param dict: A dictionary or object that implements ``__getitem__()`` that
                  contains usernames mapping to passwords.
     :param lower_case: If ``True``, the username string will be lower-cased

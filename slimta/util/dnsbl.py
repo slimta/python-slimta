@@ -55,7 +55,7 @@ class DnsBlocklist(object):
     :param address: The DNSBL domain name.
 
     """
-    
+
     def __init__(self, address):
         self.address = address
 
@@ -90,9 +90,9 @@ class DnsBlocklist(object):
         return False
 
     def get_reason(self, ip, timeout=None):
-        """Gets the TXT record for the IP address on this DNSBL. This is usually
-        a reason for why the IP address matched. As such, this function should
-        only be called after :meth:`.get()` returns ``True``.
+        """Gets the TXT record for the IP address on this DNSBL. This is
+        usually a reason for why the IP address matched. As such, this function
+        should only be called after :meth:`.get()` returns ``True``.
 
         :param ip: The IP address to get a match reason for.
         :param timeout: A timeout in seconds before giving up.

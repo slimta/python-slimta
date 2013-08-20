@@ -78,7 +78,6 @@ class BlockingDeque(deque):
         ret = super(BlockingDeque, self).remove(*args, **kwargs)
         self.sema.acquire()
         return ret
-        
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
