@@ -37,12 +37,14 @@ __all__ = ['monkeypatch_all', 'build_auth_from_dict']
 
 
 @contextmanager
-def monkeypatch_all(**kwargs):
+def monkeypatch_all(*args, **kwds):
     """Returns a context manager that monkey-patches before execution and
     reverts after execution.
 
-    :param **kwargs: Keyword arguments fed directly into
-                     :func:`gevent.monkey.patch_all`.
+    :param *args: Positional arguments fed directly into
+                  :func:`gevent.monkey.patch_all`
+    :param **kwds: Keyword arguments fed directly into
+                   :func:`gevent.monkey.patch_all`.
 
     """
     modules = ['socket', 'ssl', 'os', 'time', 'select', 'thread', 'threading',
