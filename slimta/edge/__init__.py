@@ -45,8 +45,9 @@ class Edge(object):
     directly inherit :class:`EdgeServer` and thus indirectly inherit
     :class:`Edge`.
 
-    :param queue: |Queue| (Or |Queue|-like) object that will take responsibility
-                  for delivery of messages received by the :class:`Edge`.
+    :param queue: |Queue| (Or |Queue|-like) object that will take
+                  responsibility for delivery of messages received by the
+                  :class:`Edge`.
     :param hostname: String identifying the local machine, stamped to each
                      received message in its
                      :attr:`~slimta.envelope.Envelope.receiver` attribute for
@@ -88,7 +89,8 @@ class EdgeServer(Edge, gevent.Greenlet):
     """This class implements a :class:`~gevent.Greenlet` serving a
     :class:`~gevent.server.StreamServer` until killed. Connections are accepted
     on the socket and passed to :meth:`.handle()`, which should be overriden
-    by implementers of this base class. The socket will be closed automatically.
+    by implementers of this base class. The socket will be closed
+    automatically.
 
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge

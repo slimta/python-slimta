@@ -28,7 +28,7 @@ from __future__ import absolute_import
 
 import gevent
 from gevent.server import StreamServer
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey
 from dns import resolver, reversename
 from dns.exception import DNSException
 
@@ -41,6 +41,8 @@ from slimta.relay import RelayError
 from . import EdgeServer
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
+
+monkey.patch_all()
 
 
 class SmtpValidators(object):
@@ -61,16 +63,16 @@ class SmtpValidators(object):
     - ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
 
-    :param session: When sub-classes are instantiated, instances are passed this
-                    object, stored and described in :attr:`session` below, that
-                    have useful information about the current session.
+    :param session: When sub-classes are instantiated, instances are passed
+                    this object, stored and described in :attr:`session` below,
+                    that have useful information about the current session.
 
     """
 
     def __init__(self, session):
         #: This instance attribute is an object that has its own set of
         #: attributes which may be useful in validation:
-        #: 
+        #:
         #:  - ``address``: The address tuple of the connecting client.
         #:  - ``extended_smtp``: The client used EHLO instead of HELO.
         #:  - ``security``: Security of connection, ``None`` or ``'TLS'``.
@@ -226,10 +228,10 @@ class SmtpEdge(EdgeServer):
     """
 
     def __init__(self, listener, queue, pool=None, max_size=None,
-                       validator_class=None, auth_class=None,
-                       tls=None, tls_immediately=False,
-                       command_timeout=None, data_timeout=None,
-                       hostname=None):
+                 validator_class=None, auth_class=None,
+                 tls=None, tls_immediately=False,
+                 command_timeout=None, data_timeout=None,
+                 hostname=None):
         super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
         self.max_size = max_size
         self.command_timeout = command_timeout

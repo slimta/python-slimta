@@ -64,7 +64,7 @@ from wsgiref.headers import Headers
 
 import gevent
 from gevent.pywsgi import WSGIServer
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey
 from dns import resolver, reversename
 from dns.exception import DNSException
 
@@ -77,6 +77,8 @@ from slimta.relay import RelayError
 from . import Edge
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
+
+monkey.patch_all()
 
 
 class WsgiResponse(Exception):
@@ -127,9 +129,9 @@ class WsgiEdge(Edge, WsgiServer):
                   service.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
-    :param validator_class: A class inherited from :class:`WsgiValidators` whose
-                            methods will be executed on various request headers
-                            to validate the request.
+    :param validator_class: A class inherited from :class:`WsgiValidators`
+                            whose methods will be executed on various request
+                            headers to validate the request.
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
     :type uri_pattern: :py:class:`~re.RegexObject` or string
@@ -151,7 +153,7 @@ class WsgiEdge(Edge, WsgiServer):
     ehlo_header = 'X-Ehlo'
 
     def __init__(self, queue, hostname=None, validator_class=None,
-                       uri_pattern=None):
+                 uri_pattern=None):
         super(WsgiEdge, self).__init__(queue, hostname)
         self.validator_class = validator_class
         if isinstance(uri_pattern, basestring):
@@ -305,8 +307,8 @@ class WsgiValidators(object):
 
     def validate_recipient(self, recipient):
         """Override this method to validate each recipient address passed in by
-        the client in the ``X-Envelope-Recipient`` (or equivalent) headers. This
-        method will be called for each occurence of the header.
+        the client in the ``X-Envelope-Recipient`` (or equivalent) headers.
+        This method will be called for each occurence of the header.
 
         :param recipient: The decoded value of one recipient header.
 
@@ -319,8 +321,8 @@ class WsgiValidators(object):
         in the :attr:`custom_headers` class attribute.
 
         :param name: The name of the header.
-        :param value: The raw value of the header, or ``None`` if the client did
-                      not provide the header.
+        :param value: The raw value of the header, or ``None`` if the client
+                      did not provide the header.
 
         """
         pass
