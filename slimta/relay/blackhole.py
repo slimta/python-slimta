@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 #
 
-"""This module contains a simple |Relay| class that blackholes messages, usually
-most useful for testing.
+"""This module contains a simple |Relay| class that blackholes messages,
+usually most useful for testing.
 
 """
 
@@ -36,9 +36,9 @@ __all__ = ['BlackholeRelay']
 
 class BlackholeRelay(Relay):
     """Implements a |Relay| that simply blackholes messages. Relay policies may
-    be added with :meth:`~slimta.relay.Relay.add_policy`, but they will never be
-    executed or applied for messages handled by this class.
-    
+    be added with :meth:`~slimta.relay.Relay.add_policy`, but they will never
+    be executed or applied for messages handled by this class.
+
     """
 
     def __init__(self):
@@ -49,8 +49,8 @@ class BlackholeRelay(Relay):
 
     def attempt(self, envelope, attempts):
         """Overrides the |Relay| :meth:`~slimta.relay.Relay.attempt` method to
-        silently discard attempted messages. The |Queue| will see the attempt as
-        a successful delivery.
+        silently discard attempted messages. The |Queue| will see the attempt
+        as a successful delivery.
 
         :param envelope: |Envelope| to attempt delivery for.
         :param attempts: Number of times the envelope has attempted delivery.

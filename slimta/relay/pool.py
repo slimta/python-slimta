@@ -39,9 +39,9 @@ class RelayPool(Relay):
     cached pools of outbound clients. It maintains a queue of messages to be
     delivered such that idle clients in the pool pick them up.
 
-    :param pool_size: At most this many simultaneous connections will be open to
-                      a destination. If this limit is reached and no connections
-                      are idle, new attempts will block.
+    :param pool_size: At most this many simultaneous connections will be open
+                      to a destination. If this limit is reached and no
+                      connections are idle, new attempts will block.
 
     """
 
@@ -50,8 +50,8 @@ class RelayPool(Relay):
         self.pool = set()
         self.pool_size = pool_size
 
-        #: This attribute holds the queue object for providing delivery requests
-        #: to idle clients in the pool.
+        #: This attribute holds the queue object for providing delivery
+        #: requests to idle clients in the pool.
         self.queue = BlockingDeque()
 
     def _remove_client(self, client):
@@ -111,13 +111,14 @@ class RelayPoolClient(Greenlet):
 
     def poll(self):
         """This method can be used by clients to receive new delivery requests
-        from the client pool. This method will block until a delivery request is
-        received.
+        from the client pool. This method will block until a delivery request
+        is received.
 
         :returns: A tuple containing the :class:`~gevent.event.AsyncResult` and
-                  the :class:`~slimta.envelope.Envelope` that make up a delivery
-                  request. If no delivery requests are received before the
-                  :attr:`idle_timeout` timeout, ``(None, None)`` is returned.
+                  the :class:`~slimta.envelope.Envelope` that make up a
+                  delivery request. If no delivery requests are received before
+                  the :attr:`idle_timeout` timeout, ``(None, None)`` is
+                  returned.
 
         """
         self.idle = True

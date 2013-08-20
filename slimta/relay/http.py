@@ -129,7 +129,7 @@ class HttpRelayClient(RelayPoolClient):
         port = self.url.port
         if self.relay.tls:
             conn = HTTPSConnection(host, port, strict=True,
-                                         **self.relay.tls)
+                                   **self.relay.tls)
         else:
             conn = HTTPConnection(host, port, strict=True)
         return conn
@@ -154,8 +154,8 @@ class HttpRelay(RelayPool):
     recipients.
 
     A ``200 OK`` (or similar) response from the server will inform the caller
-    that the message was successfully delivered. In other cases, the class makes
-    its best guess about whether to raise a
+    that the message was successfully delivered. In other cases, the class
+    makes its best guess about whether to raise a
     :class:`~slimta.relay.PermanentRelayError` or
     :class:`~slimta.relay.TransientRelayError`. If the server's response
     includes a ``X-Smtp-Reply`` header, it will be used. This header looks
@@ -166,8 +166,8 @@ class HttpRelay(RelayPool):
     :param url: URL string to make requests against. This string is parsed with
                 :py:func:`urlparse.urlsplit` with ``'http'`` as the default
                 scheme.
-    :param pool_size: At most this many simultaneous connections will be open to
-                      the destination. If this limit is reached and no
+    :param pool_size: At most this many simultaneous connections will be open
+                      to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
     :param tls: Dictionary of TLS settings passed directly as keyword arguments
                 to :class:`gevent.ssl.SSLSocket`. This parameter is optional
