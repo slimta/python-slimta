@@ -64,12 +64,6 @@ from wsgiref.headers import Headers
 
 import gevent
 from gevent.pywsgi import WSGIServer
-from gevent import monkey
-
-monkey.patch_all()
-
-from dns import resolver, reversename
-from dns.exception import DNSException
 
 from slimta.logging import log_exception
 from slimta.http.wsgi import WsgiServer
@@ -77,7 +71,12 @@ from slimta.envelope import Envelope
 from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
+from slimta.util import monkeypatch_all
 from . import Edge
+
+with monkeypatch_all():
+    from dns import resolver, reversename
+    from dns.exception import DNSException
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
 

@@ -31,15 +31,13 @@ from __future__ import absolute_import
 
 import time
 
-from gevent import monkey
-
-monkey.patch_all()
-
-import dns.resolver
-
 from slimta.smtp.reply import Reply
+from slimta.util import monkeypatch_all
 from .. import PermanentRelayError, Relay
 from .static import StaticSmtpRelay
+
+with monkeypatch_all():
+    import dns.resolver
 
 __all__ = ['MxSmtpRelay']
 

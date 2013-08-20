@@ -28,12 +28,6 @@ from __future__ import absolute_import
 
 import gevent
 from gevent.server import StreamServer
-from gevent import monkey
-
-monkey.patch_all()
-
-from dns import resolver, reversename
-from dns.exception import DNSException
 
 from slimta.envelope import Envelope
 from slimta.smtp.server import Server
@@ -41,7 +35,12 @@ from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
+from slimta.util import monkeypatch_all
 from . import EdgeServer
+
+with monkeypatch_all():
+    from dns import resolver, reversename
+    from dns.exception import DNSException
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
 

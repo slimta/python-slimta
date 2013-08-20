@@ -26,7 +26,38 @@ belong under any other module.
 
 from __future__ import absolute_import
 
+from copy import copy
+from contextlib import contextmanager
+
+from gevent import monkey
+
 from slimta.smtp.auth import Auth, CredentialsInvalidError
+
+__all__ = ['monkeypatch_all', 'build_auth_from_dict']
+
+
+@contextmanager
+def monkeypatch_all(**kwargs):
+    """Returns a context manager that monkey-patches before execution and
+    reverts after execution.
+
+    :param **kwargs: Keyword arguments fed directly into
+                     :func:`gevent.monkey.patch_all`.
+
+    """
+    modules = ['socket', 'ssl', 'os', 'time', 'select', 'thread', 'threading',
+               'httplib']
+    before = {}
+    for mod in modules:
+        mod_obj = __import__(mod)
+        before[mod] = (mod_obj, vars(mod_obj).copy())
+    monkey.patch_all(**kwargs)
+    try:
+        yield
+    finally:
+        for mod in modules:
+            for k, v in before[mod][1].items():
+                setattr(before[mod][0], k, v)
 
 
 def build_auth_from_dict(dict, lower_case=False, only_verify=True):
