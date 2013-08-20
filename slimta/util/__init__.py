@@ -53,7 +53,7 @@ def monkeypatch_all(*args, **kwds):
     for mod in modules:
         mod_obj = __import__(mod)
         before[mod] = (mod_obj, vars(mod_obj).copy())
-    monkey.patch_all(**kwargs)
+    monkey.patch_all(*args, **kwds)
     try:
         yield
     finally:
