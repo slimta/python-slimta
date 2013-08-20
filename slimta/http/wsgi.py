@@ -73,7 +73,8 @@ class WsgiServer(object):
         function.
 
         :param environ: The WSGI environment variables_.
-        :param start_response: Call this function to initiate the WSGI response.
+        :param start_response: Call this function to initiate the WSGI
+                               response.
         :returns: An iterable of raw data parts to return with the response.
 
         """
@@ -86,6 +87,7 @@ class WsgiServer(object):
 
         """
         log.wsgi_request(environ)
+
         def logged_start_response(status, headers, *args, **kwargs):
             log.wsgi_response(environ, status, headers)
             return start_response(status, headers, *args, **kwargs)

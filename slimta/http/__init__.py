@@ -22,9 +22,9 @@
 """Root package for |slimta| HTTP client and server libraries.
 
 This package contains implementations of HTTP classes from :py:mod:`httplib`
-using gevent sockets. These are provided to avoid the complete re-implementation
-that ships in :mod:`gevent.httplib`, and to provide a more similar interface to
-other slimta libraries that use SSL/TLS.
+using gevent sockets. These are provided to avoid the complete
+re-implementation that ships in :mod:`gevent.httplib`, and to provide a more
+similar interface to other slimta libraries that use SSL/TLS.
 
 """
 
@@ -54,7 +54,7 @@ class HTTPConnection(HTTPConnection):
     """
 
     def connect(self):
-        self.sock = socket.create_connection((self.host,self.port),
+        self.sock = socket.create_connection((self.host, self.port),
                                              self.timeout, self.source_address)
         if self._tunnel_host:
             self._tunnel()
@@ -65,11 +65,11 @@ class HTTPSConnection(HTTPConnection):
     uses gevent sockets and the more functional ``tls`` parameter.
 
     :param ...: Arguments as passed in to :py:class:`~httplib.HTTPConnection`.
-    :param tls: This keyword argument contains the keyword arguments passed into
-                :class:`~gevent.ssl.SSLSocket` when the connection is encrypted.
+    :param tls: This keyword argument contains the keyword arguments passed
+                into :class:`~gevent.ssl.SSLSocket` when the connection is
+                encrypted.
 
     """
-
 
     def __init__(self, *args, **kwargs):
         self.tls = kwargs.pop('tls', None)
