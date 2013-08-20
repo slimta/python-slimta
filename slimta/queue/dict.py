@@ -34,7 +34,7 @@ from gevent import Greenlet
 from gevent.pool import Pool
 
 from slimta import logging
-from . import QueueStorage 
+from . import QueueStorage
 
 __all__ = ['DictStorage']
 
@@ -60,7 +60,7 @@ class DictStorage(QueueStorage):
     def write(self, envelope, timestamp):
         while True:
             id = uuid.uuid4().hex
-            if not self.env_db.has_key(id):
+            if id not in self.env_db:
                 self.env_db[id] = envelope
                 self.meta_db[id] = {'timestamp': timestamp, 'attempts': 0}
                 log.write(id, envelope)

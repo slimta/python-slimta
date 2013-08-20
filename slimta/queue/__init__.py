@@ -61,9 +61,9 @@ class QueueStorage(object):
         pass
 
     def write(self, envelope, timestamp):
-        """Writes the given envelope to storage, along with the timestamp of its
-        next delivery attempt. The number of delivery attempts asociated with
-        the message should start at zero.
+        """Writes the given envelope to storage, along with the timestamp of
+        its next delivery attempt. The number of delivery attempts asociated
+        with the message should start at zero.
 
         :param envelope: |Envelope| object to write.
         :param timestamp: Timestamp of message's next delivery attempt.
@@ -129,9 +129,9 @@ class QueueStorage(object):
 
 
 class Queue(Greenlet):
-    """Manages the queue of |Envelope| objects waiting for delivery. This is not
-    a standard FIFO queue, a message's place in the queue depends entirely on
-    the timestamp of its next delivery attempt.
+    """Manages the queue of |Envelope| objects waiting for delivery. This is
+    not a standard FIFO queue, a message's place in the queue depends entirely
+    on the timestamp of its next delivery attempt.
 
     :param store: Object implementing :class:`QueueStorage`.
     :param relay: |Relay| object used to attempt message deliveries.
@@ -142,17 +142,17 @@ class Queue(Greenlet):
                     returns ``None`` and messages are never retried.
     :param bounce_factory: Function that produces a |Bounce| object given the
                            same parameters as the |Bounce| constructor. If the
-                           function returns ``None``, no bounce is delivered. By
-                           default, a new |Bounce| is created in every case.
-    :param store_pool: Number of simultaneous operations performable against the
-                       ``store`` object. Default is unlimited.
-    :param relay_pool: Number of simultaneous operations performable against the
-                       ``relay`` object. Default is unlimited.
+                           function returns ``None``, no bounce is delivered.
+                           By default, a new |Bounce| is created in every case.
+    :param store_pool: Number of simultaneous operations performable against
+                       the ``store`` object. Default is unlimited.
+    :param relay_pool: Number of simultaneous operations performable against
+                       the ``relay`` object. Default is unlimited.
 
     """
 
     def __init__(self, store, relay, backoff=None, bounce_factory=None,
-                       store_pool=None, relay_pool=None):
+                 store_pool=None, relay_pool=None):
         super(Queue, self).__init__()
         self.store = store
         self.relay = relay
@@ -183,6 +183,7 @@ class Queue(Greenlet):
 
     def _run_policies(self, envelope):
         results = [envelope]
+
         def recurse(current, i):
             try:
                 policy = self.queue_policies[i]
@@ -230,7 +231,7 @@ class Queue(Greenlet):
 
     def _add_queued(self, entry):
         for i, info in enumerate(self.queued):
-            if info[0] > entry[0]: # [0] is the timestamp.
+            if info[0] > entry[0]:  # [0] is the timestamp.
                 self.queued.insert(i, entry)
                 break
         else:
@@ -239,9 +240,9 @@ class Queue(Greenlet):
 
     def enqueue(self, envelope):
         """Drops a new message in the queue for delivery. The first delivery
-        attempt is made immediately (depending on relay pool availability). This
-        method is not typically called directly, |Edge| objects use it when they
-        receive new messages.
+        attempt is made immediately (depending on relay pool availability).
+        This method is not typically called directly, |Edge| objects use it
+        when they receive new messages.
 
         :param envelope: |Envelope| object to enqueue.
         :returns: Zipped list of envelopes and their respective queue IDs (or
@@ -250,13 +251,14 @@ class Queue(Greenlet):
         """
         now = time.time()
         envelopes = self._run_policies(envelope)
-        ids = self._pool_imap('store', self.store.write, envelopes, repeat(now))
+        ids = self._pool_imap('store', self.store.write, envelopes,
+                              repeat(now))
         results = zip(envelopes, ids)
         for env, id in results:
             if not isinstance(id, BaseException):
                 self._pool_spawn('relay', self._attempt, id, env, 0)
             elif not isinstance(id, QueueError):
-                raise id # Re-raise exceptions that are not QueueError.
+                raise id  # Re-raise exceptions that are not QueueError.
         return results
 
     def _load_all(self):
@@ -270,7 +272,7 @@ class Queue(Greenlet):
 
     def _perm_fail(self, id, envelope, reply):
         self._pool_spawn('store', self.store.remove, id)
-        if envelope.sender: # Can't bounce to null-sender.
+        if envelope.sender:  # Can't bounce to null-sender.
             self._pool_spawn('bounce', self._bounce, envelope, reply)
 
     def _retry_later(self, id, envelope, reply):
