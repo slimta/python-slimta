@@ -37,7 +37,7 @@ To: {sender}
 Subject: Undelivered Mail Returned to Sender
 Auto-Submitted: auto-replied
 MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status; 
+Content-Type: multipart/report; report-type=delivery-status;
     boundary="{boundary}"
 Content-Transfer-Encoding: 7bit
 
@@ -70,6 +70,7 @@ default_footer_template = re.sub(r'\r?\n', r'\r\n', """\
 """)
 # }}}
 
+
 class Bounce(Envelope):
     """Class that inherits |Envelope| to implement a bounce message, which is
     then delivered back to the original sender to say the message failed to
@@ -87,14 +88,16 @@ class Bounce(Envelope):
     #: this should usually be an empty string.
     sender = ''
 
-    #: Template to use for the bounce message data, inserted directly before the
-    #: original message data. The template is processed with :meth:`str.format`
-    #: with the following keys:
+    #: Template to use for the bounce message data, inserted directly before
+    #: the original message data. The template is processed with
+    #: :meth:`str.format` with the following keys:
     #:
     #: * ``boundary`` -- A randomly generated MIME boundary string.
     #: * ``sender`` -- The sender of the original message.
-    #: * ``client_name`` -- The hostname of the original message sending client.
-    #: * ``client_ip`` -- The IP address of the original message sending client.
+    #: * ``client_name`` -- The hostname of the original message sending
+    #:                      client.
+    #: * ``client_ip`` -- The IP address of the original message sending
+    #:                    client.
     #: * ``protocol`` -- The protocol used to deliver the original message.
     #: * ``code`` -- The SMTP reply code that caused the message failure.
     #: * ``message`` -- The SMTP reply message that caused the message failure.
@@ -104,8 +107,9 @@ class Bounce(Envelope):
     #: is processed the same way as ``header_template``.
     footer_template = default_footer_template
 
-    #: The client information used when sending bounce messages. Injected as the
-    #: :attr:`~slimta.envelope.Envelope.client` attribute of bounce messages.
+    #: The client information used when sending bounce messages. Injected as
+    #: the :attr:`~slimta.envelope.Envelope.client` attribute of bounce
+    #: messages.
     client = {'name': 'postmaster',
               'ip': '127.0.0.1',
               'host': 'localhost'}

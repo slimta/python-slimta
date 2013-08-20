@@ -76,7 +76,7 @@ def redirect_stdio(stdout=None, stderr=None, stdin=None):
     :param stdout: filename to append the standard output stream into.
     :param stderr: filename to append the standard error stream into.
     :param stdin: filename to read from as the standard input stream.
-    
+
     """
 
     # Find the OS /dev/null equivalent.

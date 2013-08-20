@@ -51,7 +51,7 @@ class Envelope(object):
     """
 
     def __init__(self, sender=None, recipients=None,
-                       headers=None, message=None):
+                 headers=None, message=None):
         #: Sending address of the message.
         self.sender = sender
 
@@ -70,14 +70,15 @@ class Envelope(object):
         #:
         #: - ``ip``: The IP of the client.
         #: - ``host``: The reverse-lookup of the client IP.
-        #: - ``name``: The client name, as given by its ``EHLO`` or alternative.
+        #: - ``name``: The client name, as given by its ``EHLO`` or
+        #:             alternative.
         #: - ``protocol``: The protocol used by the client, generally a variant
         #:                 of ``"SMTP"``.
         #: - ``auth``: The name the client successfully authenticated with, or
         #:             ``None``.
         self.client = {}
 
-        #: Hostname of the :mod:`slimta` server that received the message. 
+        #: Hostname of the :mod:`slimta` server that received the message.
         self.receiver = None
 
         #: Timestamp when the message was received.
