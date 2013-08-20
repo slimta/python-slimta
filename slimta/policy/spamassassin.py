@@ -68,7 +68,7 @@ class SpamAssassin(QueuePolicy):
     """
 
     SPAMC_USER = 'slimta'
-    SPAMC_PROTOCOL_VERSION = '1.1'
+    SPAMC_PROTOCOL_VER = '1.1'
 
     def __init__(self, address=None, timeout=None, socket_creator=None):
         self.address = address or ('127.0.0.1', 783)
@@ -84,7 +84,7 @@ class SpamAssassin(QueuePolicy):
     def _build_request_str(self, header_data, message_data):
         reqfp = cStringIO.StringIO()
         data_len = len(header_data) + len(message_data)
-        reqfp.write('SYMBOLS SPAMC/{0}\r\n'.format(self.SPAMC_PROTOCOL_VERSION))
+        reqfp.write('SYMBOLS SPAMC/{0}\r\n'.format(self.SPAMC_PROTOCOL_VER))
         reqfp.write('Content-Length: {0!s}\r\n'.format(data_len))
         reqfp.write('User: {0}\r\n\r\n'.format(self.SPAMC_USER))
         reqfp.write(header_data)

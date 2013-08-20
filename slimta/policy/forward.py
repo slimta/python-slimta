@@ -19,7 +19,10 @@
 # THE SOFTWARE.
 #
 
-"""Implements a simple forwarding policy, to transform or replace recipients."""
+"""Implements a simple forwarding policy, to transform or replace
+recipients.
+
+"""
 
 from __future__ import absolute_import
 

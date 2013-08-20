@@ -51,15 +51,15 @@ class QueuePolicy(object):
     """Base class for queue policies. These are run before a message is
     persistently queued and may overwrite the original |Envelope| with one or
     many new |Envelope| objects.
-    
+
     """
 
     def apply(self, envelope):
         """:class:`QueuePolicy` sub-classes must override this method, which
         will be called by the |Queue| before storage.
 
-        :param envelope: The |Envelope| object the policy execution should apply
-                         any changes to. This envelope object *may* be
+        :param envelope: The |Envelope| object the policy execution should
+                         apply any changes to. This envelope object *may* be
                          modified, though if new envelopes are returned this
                          object is discarded.
         :returns: Optionally return or generate an iterable of |Envelope|
@@ -81,8 +81,8 @@ class RelayPolicy(object):
         """:class:`RelayPolicy` sub-classes must override this method, which
         will be called by the |Relay| before delivery.
 
-        :param envelope: The |Envelope| object the policy execution should apply
-                         any changes to.
+        :param envelope: The |Envelope| object the policy execution should
+                         apply any changes to.
 
         """
         raise NotImplementedError()
