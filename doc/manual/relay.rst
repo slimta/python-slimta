@@ -76,11 +76,9 @@ messages. This method is modeled off the `pipe daemon`_ from postfix.  This
 type of relay is provided in the :mod:`slimta.piperelay` module. Here's an
 example of delivery to the ``maildrop`` command::
 
-    from slimta.relay.maildrop import MaildropRelay
+    from slimta.piperelay import MaildropRelay
     relay = MaildropRelay(timeout=10.0)
 
-The :mod:`slimta.piperelay` module is packaged separately as an extension and
-can be installed with::
-
-    pip install python-slimta-piperelay
+The :mod:`slimta.piperelay` module is packaged separately as an extension as
+described in :ref:`External Process Delivery <pipe-relay>`. 
 
