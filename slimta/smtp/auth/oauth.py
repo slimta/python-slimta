@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 #
 
-"""Module containing the definition of the SASL `XOAUTH2`_, used by `OAuth 2.0`_
-systems to authenticate using access tokens.
+"""Module containing the definition of the SASL `XOAUTH2`_, used by `OAuth
+2.0`_ systems to authenticate using access tokens.
 
 .. _XOAUTH2: https://developers.google.com/gmail/xoauth2_protocol
 .. _OAuth 2.0: http://tools.ietf.org/html/draft-ietf-oauth-v2-22
@@ -39,8 +39,9 @@ __all__ = ['OAuth2']
 class OAuth2(ClientMechanism):
     """``XOAUTH2`` authentication mechanism. Used by email servers that provide
     OAuth 2.0 authentication, such as Gmail. Using their credentials, clients
-    will receive a temporary access token string from the identity service. This
-    token string is then used by ``XOAUTH2`` to authenticate the SMTP session.
+    will receive a temporary access token string from the identity service.
+    This token string is then used by ``XOAUTH2`` to authenticate the SMTP
+    session.
 
     This mechanism is only available for client-side authentication.
 

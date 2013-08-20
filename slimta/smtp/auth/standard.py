@@ -39,7 +39,7 @@ from gevent.socket import gethostname
 
 from ..reply import Reply
 from . import ServerAuthError, CredentialsInvalidError, \
-              ServerMechanism, ClientMechanism
+    ServerMechanism, ClientMechanism
 
 __all__ = ['Plain', 'Login', 'CramMd5']
 
@@ -47,7 +47,7 @@ __all__ = ['Plain', 'Login', 'CramMd5']
 class Plain(ServerMechanism, ClientMechanism):
     """``PLAIN`` authentication mechanism. This is the primary mechanism to use
     on encrypted channels.
-    
+
     See `RFC 4616`_ for details.
 
     """
@@ -123,7 +123,8 @@ class CramMd5(ServerMechanism, ClientMechanism):
     presents an arbitrary challenge string and the client must MD5 hash that
     string using their password as a key. This means the password is not ever
     communicated in a reversible form. However, it also means the server must
-    have access to un-hashed passwords, which is not always possible or desired.
+    have access to un-hashed passwords, which is not always possible or
+    desired.
 
     See `RFC 2195`_ for details.
 

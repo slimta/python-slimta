@@ -50,7 +50,7 @@ class AuthError(SmtpError):
 
 
 class ServerAuthError(AuthError):
-    
+
     def __init__(self, msg, reply):
         super(ServerAuthError, self).__init__(msg)
         self.reply = reply
@@ -105,8 +105,8 @@ class Auth(object):
         :class:`CredentialsInvalidError` should be thrown.
 
         :param authcid: The authentication identity, usually the username.
-        :param secret: The secret (i.e. password) string to verify for the given
-                       authentication and authorization identities.
+        :param secret: The secret (i.e. password) string to verify for the
+                       given authentication and authorization identities.
         :param authzid: The authorization identity, if applicable.
         :returns: A representation of the identity that was successfully
                   authenticated. This may be ``authcid``, ``authzid``, a tuple
@@ -205,9 +205,9 @@ class ServerMechanism(object):
     #: unsafe mechanisms will not be advertised until TLS is negotiated.
     secure = False
 
-    #: This static string should be overriden by sub-classes to specify the SASL
-    #: name that identifies this mechanism. This string will be used in the SMTP
-    #: session. Custom mechanisms should be prefixed with ``X``.
+    #: This static string should be overriden by sub-classes to specify the
+    #: SASL name that identifies this mechanism. This string will be used in
+    #: the SMTP session. Custom mechanisms should be prefixed with ``X``.
     name = None
 
     #: This static flag should be overridden by sub-classes if use of the
@@ -269,9 +269,9 @@ class ClientMechanism(object):
 
     """
 
-    #: This static string should be overriden by sub-classes to specify the SASL
-    #: name that identifies this mechanism. This string will be used in the SMTP
-    #: session. Custom mechanisms should be prefixed with ``X``.
+    #: This static string should be overriden by sub-classes to specify the
+    #: SASL name that identifies this mechanism. This string will be used in
+    #: the SMTP session. Custom mechanisms should be prefixed with ``X``.
     name = None
 
     @classmethod
@@ -308,8 +308,9 @@ class ClientMechanism(object):
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):
         """Communicates back-and-forth with a server to negotiate
-        authentication, based on the desired credentials. This class method must
-        be overidden by sub-classes to be used by client-side SMTP sessions.
+        authentication, based on the desired credentials. This class method
+        must be overidden by sub-classes to be used by client-side SMTP
+        sessions.
 
         :param io: The underlying IO object.
         :type io: :class:`~slimta.smtp.io.IO`
