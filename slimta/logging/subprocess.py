@@ -49,8 +49,10 @@ class SubprocessLogger(object):
         self.log(process.pid, 'popen', args=args)
 
     def stdio(self, process, stdin, stdout, stderr):
-        self.log(process.pid, 'stdio', stdin=stdin, stdout=stdout,
-                                       stderr=stderr)
+        self.log(process.pid, 'stdio',
+                 stdin=stdin,
+                 stdout=stdout,
+                 stderr=stderr)
 
     def exit(self, process):
         self.log(process.pid, 'exit', returncode=process.returncode)

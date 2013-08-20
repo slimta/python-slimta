@@ -52,8 +52,9 @@ class QueueStorageLogger(object):
         :param envelope: The |Envelope| being written to storage.
 
         """
-        self.log(id, 'write', sender=envelope.sender,
-                              recipients=envelope.recipients)
+        self.log(id, 'write',
+                 sender=envelope.sender,
+                 recipients=envelope.recipients)
 
     def update_meta(self, id, **what):
         """Logs operations that modify the metadata associated with an

@@ -70,8 +70,8 @@ def getSubprocessLogger(name):
 
 def getQueueStorageLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`QueueStorageLogger` object to provide limited and consistent logging
-    output for |QueueStorage| operations.
+    :class:`QueueStorageLogger` object to provide limited and consistent
+    logging output for |QueueStorage| operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`~slimta.logging.queuestorage.QueueStorageLogger`
@@ -135,6 +135,7 @@ def logline(log, type, typeid, operation, **data):
 parseline_pattern = re.compile(r'^([^:]+):([^:]+):(\S+) ?(.*)$')
 data_item_pattern = re.compile('^([^=]+)=')
 
+
 def _parseline_data(remaining, data):
     match = data_item_pattern.match(remaining)
     if not match:
@@ -156,6 +157,7 @@ def _parseline_data(remaining, data):
                 pass
             else:
                 return _parseline_data(remaining[space_i+1:], data)
+
 
 def parseline(line):
     match = parseline_pattern.match(line)
