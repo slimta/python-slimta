@@ -34,21 +34,22 @@ __all__ = ['StaticSmtpRelay']
 
 
 class StaticSmtpRelay(RelayPool):
-    """Manages the relaying of messages to a specific ``host:port``. Connections
-    may be recycled when possible, to send multiple messages over a single
-    channel.
+    """Manages the relaying of messages to a specific ``host:port``.
+    Connections may be recycled when possible, to send multiple messages over a
+    single channel.
 
     :param host: Host string to connect to.
     :param port: Port to connect to.
-    :param pool_size: At most this many simultaneous connections will be open to
-                      the destination. If this limit is reached and no
+    :param pool_size: At most this many simultaneous connections will be open
+                      to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_required: If given and True, it should be considered a delivery
                          failure if TLS cannot be negotiated by the client.
     :param connect_timeout: Timeout in seconds to wait for a client connection
-                            to be successful before issuing a transient failure.
+                            to be successful before issuing a transient
+                            failure.
     :param command_timeout: Timeout in seconds to wait for a reply to each SMTP
                             command before issuing a transient failure.
     :param data_timeout: Timeout in seconds to wait for a reply to message data
@@ -69,7 +70,7 @@ class StaticSmtpRelay(RelayPool):
     """
 
     def __init__(self, host, port=25, pool_size=None, client_class=None,
-                       **client_kwargs):
+                 **client_kwargs):
         super(StaticSmtpRelay, self).__init__(pool_size)
         if client_class:
             self.client_class = client_class

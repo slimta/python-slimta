@@ -44,11 +44,11 @@ hostname = getfqdn()
 class SmtpRelayClient(RelayPoolClient):
 
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
-                       tls=None, tls_immediately=False,
-                       tls_required=False, tls_wrapper=None,
-                       connect_timeout=10.0, command_timeout=10.0,
-                       data_timeout=None, idle_timeout=None,
-                       credentials=None):
+                 tls=None, tls_immediately=False,
+                 tls_required=False, tls_wrapper=None,
+                 connect_timeout=10.0, command_timeout=10.0,
+                 data_timeout=None, idle_timeout=None,
+                 credentials=None):
         super(SmtpRelayClient, self).__init__(queue, idle_timeout)
         self.address = address
         if socket_creator:

@@ -19,11 +19,11 @@
 # THE SOFTWARE.
 #
 
-"""Implements an algorithm to query and pick an MX record to delivery a message.
-The MX record is calculated by pulling the domain-name from the recipient's
-email address (or first recipient, if multiple) and querying DNS for the domain
-MX email routing records. If multiple records exist, the pick is made by using
-the number of delivery attempts to cycle through the options.
+"""Implements an algorithm to query and pick an MX record to delivery a
+message.  The MX record is calculated by pulling the domain-name from the
+recipient's email address (or first recipient, if multiple) and querying DNS
+for the domain MX email routing records. If multiple records exist, the pick is
+made by using the number of delivery attempts to cycle through the options.
 
 """
 
@@ -31,7 +31,7 @@ from __future__ import absolute_import
 
 import time
 
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey
 import dns.resolver
 
 from slimta.smtp.reply import Reply
@@ -39,6 +39,8 @@ from .. import PermanentRelayError, Relay
 from .static import StaticSmtpRelay
 
 __all__ = ['MxSmtpRelay']
+
+monkey.patch_all()
 
 
 class NoDomainError(PermanentRelayError):
@@ -120,7 +122,8 @@ class MxSmtpRelay(Relay):
     :param tls_required: If given and True, it should be considered a delivery
                          failure if TLS cannot be negotiated by the client.
     :param connect_timeout: Timeout in seconds to wait for a client connection
-                            to be successful before issuing a transient failure.
+                            to be successful before issuing a transient
+                            failure.
     :param command_timeout: Timeout in seconds to wait for a reply to each SMTP
                             command before issuing a transient failure.
     :param data_timeout: Timeout in seconds to wait for a reply to message data
