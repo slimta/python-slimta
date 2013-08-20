@@ -32,6 +32,9 @@ from __future__ import absolute_import
 import time
 
 from gevent import monkey
+
+monkey.patch_all()
+
 import dns.resolver
 
 from slimta.smtp.reply import Reply
@@ -39,8 +42,6 @@ from .. import PermanentRelayError, Relay
 from .static import StaticSmtpRelay
 
 __all__ = ['MxSmtpRelay']
-
-monkey.patch_all()
 
 
 class NoDomainError(PermanentRelayError):

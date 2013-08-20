@@ -65,6 +65,9 @@ from wsgiref.headers import Headers
 import gevent
 from gevent.pywsgi import WSGIServer
 from gevent import monkey
+
+monkey.patch_all()
+
 from dns import resolver, reversename
 from dns.exception import DNSException
 
@@ -77,8 +80,6 @@ from slimta.relay import RelayError
 from . import Edge
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
-
-monkey.patch_all()
 
 
 class WsgiResponse(Exception):

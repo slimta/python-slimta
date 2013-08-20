@@ -29,6 +29,9 @@ from __future__ import absolute_import
 import gevent
 from gevent.server import StreamServer
 from gevent import monkey
+
+monkey.patch_all()
+
 from dns import resolver, reversename
 from dns.exception import DNSException
 
@@ -41,8 +44,6 @@ from slimta.relay import RelayError
 from . import EdgeServer
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
-
-monkey.patch_all()
 
 
 class SmtpValidators(object):
