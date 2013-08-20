@@ -74,7 +74,8 @@ class Server(object):
     :type socket: :class:`gevent.socket.socket`
     :param handlers: Object with methods that will be called when
                      corresponding SMTP commands are received. These methods
-                     can modify the |Reply| before the command response is sent.
+                     can modify the |Reply| before the command response is
+                     sent.
     :param auth_class: Optional |Auth| sub-class to enable authentication.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
@@ -93,8 +94,8 @@ class Server(object):
     """
 
     def __init__(self, socket, handlers, auth_class=None,
-                       tls=None, tls_immediately=False, tls_wrapper=None,
-                       command_timeout=None, data_timeout=None):
+                 tls=None, tls_immediately=False, tls_wrapper=None,
+                 command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
 

@@ -19,8 +19,8 @@
 # THE SOFTWARE.
 #
 
-"""Package defining the class containing a standard SMTP reply made up of a code
-and a message, as well as a few pre-defined standard replies.
+"""Package defining the class containing a standard SMTP reply made up of a
+code and a message, as well as a few pre-defined standard replies.
 
 .. _ENHANCEDSTATUSCODES: http://tools.ietf.org/html/rfc2034
 
@@ -74,7 +74,7 @@ class Reply(object):
 
     def __repr__(self):
         """Converts the reply into a string that shows appropriate internals of
-        the object. 
+        the object.
 
         :rtype: str
 

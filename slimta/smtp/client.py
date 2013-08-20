@@ -179,9 +179,9 @@ class Client(object):
         return helo
 
     def encrypt(self, tls):
-        """Encrypts the underlying socket with the information given by ``tls``.
-        This call should only be used directly against servers that expect to be
-        immediately encrypted. If encryption is negotiated with
+        """Encrypts the underlying socket with the information given by
+        ``tls``.  This call should only be used directly against servers that
+        expect to be immediately encrypted. If encryption is negotiated with
         :meth:`starttls()` there is no need to call this method.
 
         :param tls: Dictionary of keyword arguments for
@@ -209,15 +209,16 @@ class Client(object):
     def auth(self, authcid, secret, authzid=None, mechanism=None):
         """Negotiates authentication for the current SMTP session. This
         transaction may involve several back-and-forth packets to the server,
-        depending on the SASL mechanism used, and this function will only return
-        once all have completed.
+        depending on the SASL mechanism used, and this function will only
+        return once all have completed.
 
         :param authcid: The authentication identity, usually the username.
         :param secret: The secret (i.e. password) string to send for the given
                        authentication and authorization identities.
         :param authzid: The authorization identity, if applicable.
-        :param mechanism: Force the usage of the given SASL mechanism sub-class.
-                          If not given, the best mechanism available is used.
+        :param mechanism: Force the usage of the given SASL mechanism
+                          sub-class.  If not given, the best mechanism
+                          available is used.
         :type mechanism: :class:`~slimta.smtp.auth.ClientMechanism`
         :returns: |Reply| object populated with the response.
 
@@ -349,8 +350,8 @@ class Client(object):
         return self.custom_command('RSET')
 
     def quit(self):
-        """Sends the QUIT command and waits for the response. After the response
-        is received (should be 221) the socket should be closed.
+        """Sends the QUIT command and waits for the response. After the
+        response is received (should be 221) the socket should be closed.
 
         :returns: |Reply| object populated with the response.
 
