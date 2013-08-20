@@ -43,10 +43,10 @@ once::
 SMTP MX Relaying
 """"""""""""""""
 
-Email messages destined for a recipient address hosted elsewhere on the Internet
-are relayed by querying the recipient domain's MX records. The result is a
-prioritized list of hostnames that should be considered the next hop for the
-message. The highest priority (given by the lowest MX preference number)
+Email messages destined for a recipient address hosted elsewhere on the
+Internet are relayed by querying the recipient domain's MX records. The result
+is a prioritized list of hostnames that should be considered the next hop for
+the message. The highest priority (given by the lowest MX preference number)
 hostname is tried first, and lower priority hostnames should be tried
 subsequently. MX relaying always uses port 25.
 
@@ -58,11 +58,35 @@ destination, so that connections are re-used::
     from slimta.relay.smtp.mx import MxSmtpRelay
     relay = MxSmtpRelay()
 
-Recipient domains can be configured to ignore MX records and permanently deliver
-to a certain hostname using the
+Recipient domains can be configured to ignore MX records and permanently
+deliver to a certain hostname using the
 :meth:`~slimta.relay.smtp.mx.MxSmtpRelay.force_mx` method::
 
     relay.force_mx('example.com', 'smarthost.example.com')
+
+.. _relay-http:
+
+HTTP Relaying
+"""""""""""""
+
+Similar to the :ref:`HTTP Edge <edge-http>`, HTTP can be used to relay messages
+as the data payload of a request. The EHLO, sender, and recipients information
+usually transferred in the SMTP request are sent as headers in the request.
+Refer to the :mod:`slimta.relay.http` module for more information on how this
+request is constructed.
+
+If the remote host is an :ref:`HTTP Edge <edge-http>`, the response to the
+request will most likely have an ``X-Smtp-Reply`` header that is used as the
+message delivery |Reply| when returning to the queue. If the response does not
+have this header, then :class:`~slimta.relay.PermanentRelayError` is raised for
+``4XX`` codes and :class:`~slimta.relay.TransientRelayError` is raised for
+``5XX`` codes.
+
+HTTP relays are set up by creating a :class:`~slimta.relay.http.HttpRelay`
+object::
+
+    from slimta.relay.http import HttpRelay
+    relay = HttpRelay('http://example.com:8025/messages/')
 
 .. _relay-maildrop:
 

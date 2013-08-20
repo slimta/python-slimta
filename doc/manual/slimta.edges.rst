@@ -97,6 +97,53 @@ sub-section. These keys are:
     can be accepted. The keys and values in this dictionary are the usernames
     and passwords, respectively, of the valid authentication credentials.
 
+``http`` Edges
+""""""""""""""
+
+HTTP Edges produce an :class:`~slimta.edge.wsgi.WsgiEdge` object that is then
+configured to receive mail. It supports the following options:
+
+* ``listener``: Dictionary
+
+  This mapping defines how to open the listening socket. It takes two keys,
+  ``interface`` and ``port``. By default, these are ``'127.0.0.1'`` and
+  ``25``, respectively.
+
+* ``hostname``: String
+
+  This is the string presented as the machine's hostname in the SMTP banner
+  message. By default, this will be the machine's FQDN.
+
+* ``uri``: String
+
+  This option defines a regular expression pattern that request paths must
+  match, or a ``404 Not Found`` will be returned. If it is not given, all paths
+  are accepted.
+
+* ``tls``: Dictionary
+
+  This mapping, which takes the same keys as the keyword parameters to
+  :func:`~ssl.wrap_socket`, both enables and configures TLS encryption on this
+  HTTP edge. All inbound requests must be HTTPS. By default, TLS is not
+  enabled.
+
+* ``rules``: Dictionary
+
+  This sub-section gives extra configurability in the internals of the HTTP
+  edge. It has its own set of keys, all of which are optional:
+
+  * ``only_senders``: List
+
+    Only the email addresses in this list will be accepted when given in the
+    ``X-Envelope-Sender`` header from a client. By default, all senders are
+    accepted.
+
+  * ``only_recipients``: List
+
+    Only the email addresses in this list will be acceped when given in the
+    ``X-Envelope-Recipient`` headers from the client. By default, all
+    recipients are accepted.
+
 ``custom`` Edges
 """"""""""""""""
 

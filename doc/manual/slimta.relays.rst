@@ -141,6 +141,50 @@ one configuration key:
   The path to the ``dovecot-lda`` executable. By default, the ``$PATH``
   environment variable is searched.
 
+``http`` Relays
+"""""""""""""""
+
+The ``"http"`` relay type uses request headers to specify the information
+about the session and envelope normally given in SMTP commands, and the
+response code and headers to determine whether delivery was successful, or if
+it permanently or transiently failed.
+
+* ``url``: String
+
+  The URL string to POST messages to. This string determines the hostname,
+  port, and path for the request. The ``http:`` or ``https:`` scheme is ignored
+  in favor of the ``tls`` option below.
+
+* ``ehlo_as``: String
+
+  Optional string passed as the ``X-Ehlo`` header in the request. If not given,
+  the system FQDN is used.
+
+* ``timeout``: Number
+
+  Timeout in seconds for the entire request and response, including connection
+  time, before the delivery attempt transiently fails. Default is 60 seconds.
+
+* ``idle_timeout``: Number
+
+  If given, connections are left open after a response is received, and another
+  delivery is attempted before this timeout, the connection is recycled. By
+  default, connections are closed immediately.
+
+* ``tls``: Dictionary
+
+  This mapping, which takes the same keys as the keyword parameters to
+  :func:`~ssl.wrap_socket`, both enables and configures TLS encryption on this
+  HTTP relay. This means the server must be configured for HTTPS. By default,
+  TLS is not enabled.
+
+``blackhole`` Relays
+""""""""""""""""""""
+
+This relay type considers every message delivered to it a successful delivery,
+but will take no actual action. This is really only useful for testing. No
+additional options are associated with this relay type.
+
 ``custom`` Relays
 """""""""""""""""
 
