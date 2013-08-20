@@ -42,7 +42,7 @@ def monkeypatch_all(*args, **kwds):
     reverts after execution.
 
     :param *args: Positional arguments fed directly into
-                  :func:`gevent.monkey.patch_all`
+                  :func:`gevent.monkey.patch_all`.
     :param **kwds: Keyword arguments fed directly into
                    :func:`gevent.monkey.patch_all`.
 
