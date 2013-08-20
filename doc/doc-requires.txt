@@ -1,4 +1,0 @@
--e git+https://github.com/slimta/python-slimta-celeryqueue.git@master#egg=python_slimta_celeryqueue-dev
--e git+https://github.com/slimta/python-slimta-diskstorage.git@master#egg=python_slimta_diskstorage-dev
--e git+https://github.com/slimta/python-slimta-piperelay.git@master#egg=python_slimta_piperelay-dev
--e git+https://github.com/slimta/python-slimta-spf.git@master#egg=python_slimta_spf-dev
