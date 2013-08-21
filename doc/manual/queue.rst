@@ -52,9 +52,12 @@ for live mail systems. Install it with::
 Redis
 '''''
 
-The future plan is to have a |QueueStorage| implementation which uses redis_ as
-the back-end. This will essentially "out-source" the difficult problem of
-balancing and disconnecting storage and processing.
+The :class:`~slimta.redisstorage.RedisStorage` class implements a |QueueStorage|
+mechanism that uses redis_ as the backend. This essentially out-sources the
+difficult problem of ensuring data resiliency if the system goes down before a
+message is delivered. Install it with::
+
+    pip install python-slimta-redisstorage
 
 Delivery Attempts
 """""""""""""""""

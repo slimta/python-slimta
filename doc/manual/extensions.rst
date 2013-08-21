@@ -5,6 +5,8 @@
 .. _courier-maildrop: http://www.courier-mta.org/maildrop/
 .. _dovecot-deliver: http://wiki.dovecot.org/LDA
 .. _pyaio: https://github.com/felipecruz/pyaio
+.. _redis: http://redis.io/
+.. _redis-py: https://github.com/andymccurdy/redis-py
 .. _ESPs: http://en.wikipedia.org/wiki/E-mail_service_provider
 .. _spam-filled world: http://www.maawg.org/email_metrics_report
 .. _Celery Distributed Task Queue: http://www.celeryproject.org/
@@ -76,6 +78,48 @@ And to initialize a new :class:`~slimta.diskstorage.DiskStorage`::
 
     queue_dir = '/var/spool/slimta/queue'
     queue = DiskStorage(queue_dir, queue_dir)
+
+.. _redis-storage:
+
+Redis Storage
+"""""""""""""
+
+Taking advantage of the advanced data structures and ease of use of the redis_
+database, the :mod:`~slimta.redisstorage` extension simply creates a hash key
+for each queued message, containing its delivery metadata and a pickled version
+of the |Envelope|.
+
+The keys created in redis will look like the following::
+
+    redis 127.0.0.1:6379> KEYS *
+    1) "slimta:28195d3b0a5847f9853e5b0173c85151"
+    2) "slimta:5ebb94976cd94b418d6063a2ca4cbf8f"
+    3) "slimta:d33879cf66244472b983770ba762e07b"
+    redis 127.0.0.1:6379> 
+
+Each key is a hash that will look something like::
+
+    redis 127.0.0.1:6379> HGETALL slimta:d33879cf66244472b983770ba762e07b 
+    1) "attempts"
+    2) "2"
+    3) "timestamp"
+    4) "1377121655"
+    5) "envelope"
+    6) "..."
+    redis 127.0.0.1:6379> 
+
+On startup, the |Queue| will scan the keyspace (using the customizable prefix
+``slimta:``) and populate the queue with existing messages for delivery.
+
+To install this extension::
+
+    $ pip install python-slimta-redisstorage
+
+And to initialize a new :class:`~slimta.redisstorage.RedisStorage`::
+
+    from slimta.redisstorage import RedisStorage
+
+    store = RedisStorage('redis.example.com')
 
 .. _celery-queue:
 

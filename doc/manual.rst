@@ -53,6 +53,7 @@ Usage Manual
 
   * :ref:`External Process Delivery <pipe-relay>`
   * :ref:`Disk Storage <disk-storage>`
+  * :ref:`Redis Storage <redis-storage>`
   * :ref:`Celery Queuing <celery-queue>`
   * :ref:`Sender Policy Framework (SPF) <enforce-spf>`
 
