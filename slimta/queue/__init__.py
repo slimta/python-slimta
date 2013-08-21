@@ -127,6 +127,31 @@ class QueueStorage(object):
         """
         raise NotImplementedError()
 
+    def notify(self, id):
+        """If messages are not received in the same process as queue delivery,
+        the storage mechanism needs a way to notify the queue delivery process
+        that a new message has been stored and is ready to deliver.
+
+        :param id: The unique identfier string of the |Envelope| that has
+                   already been stored and needs its first delivery attempt.
+        :raises: :class:`QueueError`.
+
+        """
+        raise NotImplementedError()
+
+    def wait(self, timeout=None):
+        """If messages are not being delivered from the same process in which
+        they were received, the storage mechanism needs a way to wait until it
+        is notified that a new message has been stored.
+
+        :param timeout: The length of time in seconds to wait for new messages.
+        :returns: The unique identifier string of a new message in storage, or
+                  ``None`` if nothing was received before the timeout.
+        :raises: :class:`QueueError`.
+
+        """
+        raise NotImplementedError()
+
 
 class Queue(Greenlet):
     """Manages the queue of |Envelope| objects waiting for delivery. This is

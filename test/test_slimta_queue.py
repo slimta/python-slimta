@@ -43,6 +43,8 @@ class TestQueue(MoxTestBase):
         self.assertRaises(NotImplementedError, qs.load)
         self.assertRaises(NotImplementedError, qs.get, '1234')
         self.assertRaises(NotImplementedError, qs.remove, '1234')
+        self.assertRaises(NotImplementedError, qs.notify, '1234')
+        self.assertRaises(NotImplementedError, qs.wait)
 
     def test_policies(self):
         p1 = self.mox.CreateMock(QueuePolicy)
