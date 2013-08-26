@@ -131,7 +131,7 @@ class Extensions(object):
 
         :param header: The first line of the resulting string, which can be a
                        free-form message response for the EHLO command.
-        :rtype: string
+        :rtype: str
 
         """
         lines = [header]

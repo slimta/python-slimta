@@ -126,7 +126,7 @@ class DataReader(object):
     def recv(self):
         """Receives all message data from the session.
 
-        :rtype: string
+        :rtype: str
 
         """
         self.from_recv_buffer()

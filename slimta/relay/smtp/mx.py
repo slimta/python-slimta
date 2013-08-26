@@ -172,7 +172,7 @@ class MxSmtpRelay(Relay):
         :param attempts: The number of delivery attempts this message has
                          undergone.
         :returns: The ``host`` that was picked from the list.
-        :rtype: string
+        :rtype: str
 
         """
         i = attempts % len(records)
