@@ -48,10 +48,10 @@ class Forward(QueuePolicy):
         """Adds a mapping rule.
 
         :param pattern: Pattern to check recipient against.
-        :type pattern: :py:func:`str` or :class:`re.RegexObject`
+        :type pattern: :py:obj:`str` or :class:`re.RegexObject`
         :param repl: Replacement for ``pattern`` matches, as described by
                      :func:`re.sub()`.
-        :type repl: :py:func:`str` or function
+        :type repl: :py:obj:`str` or function
         :param count: Max number of replacements per recipient string.
 
         """

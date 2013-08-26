@@ -300,7 +300,7 @@ class Client(object):
         reply object is populated immediately.
 
         :param data: The message data parts.
-        :type data: :py:func:`str` or :py:func:`unicode`
+        :type data: :py:obj:`str` or :py:obj:`unicode`
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
                   not support PIPELINING.
@@ -323,7 +323,7 @@ class Client(object):
         populated immediately.
 
         :param data: The message data.
-        :type data: :py:func:`str` or :py:func:`unicode`
+        :type data: :py:obj:`str` or :py:obj:`unicode`
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
                   not support PIPELINING.
