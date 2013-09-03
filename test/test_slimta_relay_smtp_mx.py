@@ -133,13 +133,12 @@ class TestMxSmtpRelay(MoxTestBase):
         mx.attempt(env, 1)
 
     def test_attempt_no_answer(self):
-        env = Envelope('sender@bla.com', ['rcpt@bla.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         mx = MxSmtpRelay()
-        static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
         self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('bla.com', 'MX').AndRaise(dns.resolver.NoAnswer)
-        dns.resolver.query('bla.com', 'A').AndRaise(dns.resolver.NoAnswer)
+        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NoAnswer)
+        dns.resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             mx.attempt(env, 0)
