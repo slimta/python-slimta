@@ -96,10 +96,10 @@ class MxRecord(object):
     def _resolve(self):
         try:
             return self._resolve_mx()
-        except dns.resolver.NXDOMAIN:
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             try:
                 return self._resolve_a()
-            except dns.resolver.NXDOMAIN:
+            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
                 msg = 'No usable DNS records found: '+self.domain
                 raise ValueError(msg)
 
