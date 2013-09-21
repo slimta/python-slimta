@@ -309,7 +309,7 @@ class Queue(Greenlet):
             self.store.set_timestamp(id, when)
             self._add_queued((when, id))
 
-    def _notify_or_attempt(self, id, envelope, attempts)):
+    def _notify_or_attempt(self, id, envelope, attempts):
         try:
             self.store.notify(id)
         except NotImplementedError:
