@@ -134,20 +134,18 @@ class QueueStorage(object):
 
         :param id: The unique identifier string of the |Envelope| that has
                    already been stored and needs its first delivery attempt.
-        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
 
-    def wait(self, timeout=None):
+    def wait(self):
         """If messages are not being delivered from the same process in which
         they were received, the storage mechanism needs a way to wait until it
         is notified that a new message has been stored.
 
-        :param timeout: The length of time in seconds to wait for new messages.
-        :returns: The unique identifier string of a new message in storage, or
-                  ``None`` if nothing was received before the timeout.
-        :raises: :class:`QueueError`
+        :returns: The unique identifier string of a new message in storage. If
+                  ``None`` is returned indicating a timeout, this method is
+                  simply called again until an id is returned.
 
         """
         raise NotImplementedError()
@@ -281,7 +279,7 @@ class Queue(Greenlet):
         results = zip(envelopes, ids)
         for env, id in results:
             if not isinstance(id, BaseException):
-                self._pool_spawn('relay', self._attempt, id, env, 0)
+                self._pool_spawn('relay', self._notify_or_attempt, id, env, 0)
             elif not isinstance(id, QueueError):
                 raise id  # Re-raise exceptions that are not QueueError.
         return results
@@ -310,6 +308,12 @@ class Queue(Greenlet):
             when = time.time() + wait
             self.store.set_timestamp(id, when)
             self._add_queued((when, id))
+
+    def _notify_or_attempt(self, id, envelope, attempts)):
+        try:
+            self.store.notify(id)
+        except NotImplementedError:
+            self._attempt(id, envelope, attempts)
 
     def _attempt(self, id, envelope, attempts):
         try:
@@ -342,6 +346,15 @@ class Queue(Greenlet):
         if last_i > 0:
             self.queued = self.queued[last_i:]
 
+    def _wait_store(self):
+        while True:
+            try:
+                id = self.store.wait()
+            except NotImplementedError:
+                return
+            if id:
+                self.wake.set()
+
     def _wait_ready(self, now):
         try:
             first = self.queued[0]
@@ -373,6 +386,7 @@ class Queue(Greenlet):
 
     def _run(self):
         self._pool_spawn('store', self._load_all)
+        self._pool_spawn('store', self._wait_store)
         while True:
             self.queued_lock.acquire()
             try:
