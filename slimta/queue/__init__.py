@@ -127,13 +127,14 @@ class QueueStorage(object):
         """
         raise NotImplementedError()
 
-    def notify(self, id):
+    def notify(self, id, timestamp):
         """If messages are not received in the same process as queue delivery,
         the storage mechanism needs a way to notify the queue delivery process
         that a new message has been stored and is ready to deliver.
 
         :param id: The unique identifier string of the |Envelope| that has
                    already been stored and needs its first delivery attempt.
+        :param timestamp: Timestamp ofthe new message's next delivery attempt.
 
         """
         raise NotImplementedError()
@@ -143,9 +144,9 @@ class QueueStorage(object):
         they were received, the storage mechanism needs a way to wait until it
         is notified that a new message has been stored.
 
-        :returns: The unique identifier string of a new message in storage. If
-                  ``None`` is returned indicating a timeout, this method is
-                  simply called again until an id is returned.
+        :returns: A tuple of the timestamp and unique identifier string of a new
+                  message in storage. If ``None`` is returned indicating a
+                  timeout, this method is simply called again.
 
         """
         raise NotImplementedError()
@@ -279,7 +280,8 @@ class Queue(Greenlet):
         results = zip(envelopes, ids)
         for env, id in results:
             if not isinstance(id, BaseException):
-                self._pool_spawn('relay', self._notify_or_attempt, id, env, 0)
+                self._pool_spawn('relay', self._notify_or_attempt,
+                                 id, now, env, 0)
             elif not isinstance(id, QueueError):
                 raise id  # Re-raise exceptions that are not QueueError.
         return results
@@ -309,9 +311,9 @@ class Queue(Greenlet):
             self.store.set_timestamp(id, when)
             self._add_queued((when, id))
 
-    def _notify_or_attempt(self, id, envelope, attempts):
+    def _notify_or_attempt(self, id, timestamp, envelope, attempts):
         try:
-            self.store.notify(id)
+            self.store.notify(id, timestamp)
         except NotImplementedError:
             self._attempt(id, envelope, attempts)
 
@@ -349,11 +351,11 @@ class Queue(Greenlet):
     def _wait_store(self):
         while True:
             try:
-                id = self.store.wait()
+                entry = self.store.wait()
             except NotImplementedError:
                 return
-            if id:
-                self.wake.set()
+            if entry:
+                self._add_queued(entry)
 
     def _wait_ready(self, now):
         try:
