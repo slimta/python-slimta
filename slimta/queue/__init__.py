@@ -68,7 +68,7 @@ class QueueStorage(object):
         :param envelope: |Envelope| object to write.
         :param timestamp: Timestamp of message's next delivery attempt.
         :returns: Unique identifier string for the message in queue.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -78,7 +78,7 @@ class QueueStorage(object):
 
         :param id: The unique identifier string for the message.
         :param timestamp: The new delivery attempt timestamp.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -89,7 +89,7 @@ class QueueStorage(object):
 
         :param id: The unique identifier string for the message.
         :returns: The new number of message delivery attempts.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -100,7 +100,7 @@ class QueueStorage(object):
 
         :returns: Iterable that yields tuples of the form ``(timestamp, id)``
                   for each message in storage.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -109,7 +109,7 @@ class QueueStorage(object):
         """Returns the |Envelope| object associated with the given unique
         identifier sring.
 
-        :param id: The unique identfier string of the requested |Envelope|.
+        :param id: The unique identifier string of the requested |Envelope|.
         :returns: Tuple with the |Envelope| object and number of attempts.
         :raises: :class:`KeyError`, :class:`QueueError`
 
@@ -121,8 +121,8 @@ class QueueStorage(object):
         string from queue storage. This is typically used when the message has
         been successfully delivered or delivery has permanently failed.
 
-        :param id: The unique identfier string of the |Envelope| to remove.
-        :raises: :class:`QueueError`.
+        :param id: The unique identifier string of the |Envelope| to remove.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -132,9 +132,9 @@ class QueueStorage(object):
         the storage mechanism needs a way to notify the queue delivery process
         that a new message has been stored and is ready to deliver.
 
-        :param id: The unique identfier string of the |Envelope| that has
+        :param id: The unique identifier string of the |Envelope| that has
                    already been stored and needs its first delivery attempt.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
@@ -147,7 +147,7 @@ class QueueStorage(object):
         :param timeout: The length of time in seconds to wait for new messages.
         :returns: The unique identifier string of a new message in storage, or
                   ``None`` if nothing was received before the timeout.
-        :raises: :class:`QueueError`.
+        :raises: :class:`QueueError`
 
         """
         raise NotImplementedError()
