@@ -6,6 +6,7 @@ from functools import wraps
 from mox import MoxTestBase, IsA
 import gevent
 from gevent.pool import Pool
+from gevent.event import AsyncResult
 
 from slimta.queue import Queue, QueueStorage
 from slimta.smtp.reply import Reply
@@ -81,6 +82,14 @@ class TestQueue(MoxTestBase):
         queue._load_all()
         self.assertEqual([], queue.queued)
         self.assertFalse(queue.wake.isSet())
+
+    def test_enqueue_notify(self):
+        self.store.write(self.env, IsA(float)).AndReturn('1234')
+        self.store.notify('1234')
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, relay_pool=5)
+        self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
+        queue.relay_pool.join()
 
     def test_enqueue_wait(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
@@ -199,6 +208,18 @@ class TestQueue(MoxTestBase):
         queue._add_queued((20, '1234'))
         queue._check_ready(10)
         queue.store_pool.join()
+
+    def test_wait_store(self):
+        queue = Queue(self.store, self.relay, relay_pool=5)
+        queue.wake = self.mox.CreateMock(AsyncResult)
+        self.store.wait().AndReturn('1234')
+        queue.wake.set()
+        self.store.wait().AndReturn(None)
+        self.store.wait().AndReturn('5678')
+        queue.wake.set()
+        self.store.wait().AndRaise(NotImplementedError)
+        self.mox.ReplayAll()
+        queue._wait_store()
 
     def test_wait_ready_nonequeued(self):
         queue = Queue(self.store, self.relay)
