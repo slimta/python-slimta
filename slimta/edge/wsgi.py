@@ -134,7 +134,7 @@ class WsgiEdge(Edge, WsgiServer):
                             headers to validate the request.
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
-    :type uri_pattern: :py:class:`~re.RegexObject` or string
+    :type uri_pattern: :py:class:`~re.RegexObject` or :py:obj:`str`
 
     """
 

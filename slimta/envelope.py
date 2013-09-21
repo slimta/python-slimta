@@ -109,7 +109,7 @@ class Envelope(object):
         populate the :attr:`headers` and :attr:`message` attributes.
 
         :param data: The complete message, headers and message body.
-        :type data: string or :class:`~email.message.Message`
+        :type data: :py:obj:`str` or :class:`~email.message.Message`
 
         """
         if isinstance(data, Message):

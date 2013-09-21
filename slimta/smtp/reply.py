@@ -87,7 +87,7 @@ class Reply(object):
 
         :returns: The code, ENHANCEDSTATUSCODES_ string, and the message,
                   separated by spaces.
-        :rtype: string
+        :rtype: str
 
         """
         return '{0} {1}'.format(self.code, self.message)
