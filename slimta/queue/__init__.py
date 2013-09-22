@@ -29,6 +29,7 @@ SMTP queues will retry messages after certain periods of time.
 from __future__ import absolute_import
 
 import time
+import bisect
 from itertools import imap, izip, repeat, chain
 
 import gevent
@@ -174,6 +175,7 @@ class Queue(Greenlet):
         self.bounce_factory = bounce_factory or Bounce
         self.wake = Event()
         self.queued = []
+        self.queued_ids = set()
         self.queued_lock = Semaphore(1)
         self.queue_policies = []
         self._use_pool('store_pool', store_pool)
@@ -244,13 +246,11 @@ class Queue(Greenlet):
         return pool.spawn(func, *args, **kwargs)
 
     def _add_queued(self, entry):
-        for i, info in enumerate(self.queued):
-            if info[0] > entry[0]:  # [0] is the timestamp.
-                self.queued.insert(i, entry)
-                break
-        else:
-            self.queued.append(entry)
-        self.wake.set()
+        timestamp, id = entry
+        if id not in self.queued_ids:
+            bisect.insort(self.queued, entry)
+            self.queued_ids.add(id)
+            self.wake.set()
 
     def enqueue(self, envelope):
         """Drops a new message in the queue for delivery. The first delivery
@@ -331,6 +331,7 @@ class Queue(Greenlet):
                 break
         if last_i > 0:
             self.queued = self.queued[last_i:]
+            self.queued_ids = set([id for timestamp, id in self.queued])
 
     def _wait_store(self):
         while True:
