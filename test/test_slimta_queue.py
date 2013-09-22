@@ -44,7 +44,6 @@ class TestQueue(MoxTestBase):
         self.assertRaises(NotImplementedError, qs.load)
         self.assertRaises(NotImplementedError, qs.get, '1234')
         self.assertRaises(NotImplementedError, qs.remove, '1234')
-        self.assertRaises(NotImplementedError, qs.notify, '1234', 0.0)
         self.assertRaises(NotImplementedError, qs.wait)
 
     def test_policies(self):
@@ -83,21 +82,19 @@ class TestQueue(MoxTestBase):
         self.assertEqual([], queue.queued)
         self.assertFalse(queue.wake.isSet())
 
-    def test_enqueue_notify(self):
+    def test_enqueue_wait(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float))
+        self.relay._attempt(self.env, 0)
+        self.store.remove('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
         self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
         queue.relay_pool.join()
 
-    def test_enqueue_wait(self):
+    def test_enqueue_wait_norelay(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
-        self.relay._attempt(self.env, 0)
-        self.store.remove('1234')
         self.mox.ReplayAll()
-        queue = Queue(self.store, self.relay, relay_pool=5)
+        queue = Queue(self.store, relay_pool=5)
         self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
         queue.relay_pool.join()
 
@@ -116,9 +113,6 @@ class TestQueue(MoxTestBase):
         self.store.write(env1, IsA(float)).AndReturn('1234')
         self.store.write(env2, IsA(float)).AndReturn('5678')
         self.store.write(env3, IsA(float)).AndReturn('90AB')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
-        self.store.notify('5678', IsA(float)).AndRaise(NotImplementedError)
-        self.store.notify('90AB', IsA(float)).AndRaise(NotImplementedError)
         self.relay._attempt(env1, 0).InAnyOrder('relay')
         self.relay._attempt(env2, 0).InAnyOrder('relay')
         self.relay._attempt(env3, 0).InAnyOrder('relay')
@@ -142,7 +136,6 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_transientfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
         self.relay._attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
         self.store.increment_attempts('1234')
         self.store.set_timestamp('1234', IsA(float))
@@ -155,7 +148,6 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_transientfail_noretry(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
         self.relay._attempt(self.env, 0).AndRaise(TransientRelayError('transient', Reply('450', 'transient')))
         self.store.increment_attempts('1234')
         self.store.remove('1234')
@@ -168,7 +160,6 @@ class TestQueue(MoxTestBase):
 
     def test_enqueue_wait_permanentfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
         self.relay._attempt(self.env, 0).AndRaise(PermanentRelayError('permanent', Reply('550', 'permanent')))
         self.store.remove('1234')
         self.mox.ReplayAll()
@@ -181,7 +172,6 @@ class TestQueue(MoxTestBase):
     @_redirect_stderr
     def test_enqueue_wait_unhandledfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
-        self.store.notify('1234', IsA(float)).AndRaise(NotImplementedError)
         self.relay._attempt(self.env, 0).AndRaise(Exception('unhandled error'))
         self.store.increment_attempts('1234')
         self.store.set_timestamp('1234', IsA(float))
