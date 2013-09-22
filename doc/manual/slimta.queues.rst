@@ -115,6 +115,44 @@ with the following keys:
   message, including how many attempts it has undergone, and is kept separately
   so that it can be written to often.
 
+``redis`` Queues
+""""""""""""""""
+
+.. _SELECT: http://redis.io/commands/select
+.. _AUTH: http://redis.io/commands/auth
+
+With this queue type, messages and their metadata are stored as a hash in a
+local or remote redis instance. Additionally, a queue is maintained in redis of
+pending new message IDs, meaning this mechanism can receive and deliver messages
+across processes. This queue type is configured with the following keys:
+
+* ``host``: String
+
+  This is the hostname of the redis instance to connect to and use as queue
+  storage. By default, ``localhost`` is used.
+
+* ``port``: Integer
+
+  This is the port to connect to on the redis instance. By default, ``6379`` is
+  used.
+
+* ``db``: Integer
+
+  Upon connection, this is the database number to SELECT_ before doing anything
+  else. By default, ``0`` is used.
+
+* ``password``: String
+
+  If given, the AUTH_ command is called with this string before doing anything
+  else with the connection.
+
+* ``prefix``: String
+
+  This string is prefixed to every key created by the redis storage engine. This
+  can be used to isolate keys from others in the system, to allow for multiple
+  redis storage engines to run in the same database, or just to make keys more
+  recognizable. By default, ``slimta:`` is used.
+
 ``proxy`` Queues
 """"""""""""""""
 
