@@ -371,6 +371,8 @@ class Queue(Greenlet):
             self.queued_lock.release()
 
     def _run(self):
+        if not self.relay:
+            return
         self._pool_spawn('store', self._load_all)
         self._pool_spawn('store', self._wait_store)
         while True:
