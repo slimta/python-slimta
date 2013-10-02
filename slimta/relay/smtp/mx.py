@@ -133,6 +133,10 @@ class MxSmtpRelay(Relay):
                          timeout expires, the connection will be re-used. By
                          default, QUIT is sent immediately and connections are
                          never re-used.
+    :param binary_encoder: Optional function from :mod:`email.encoders` used as
+                           an argument to
+                           :meth:`~slimta.envelope.Envelope.encode_7bit` when
+                           conversion is necessary for the remote server.
 
     """
 

@@ -66,6 +66,10 @@ class StaticSmtpRelay(RelayPool):
                         passed as the arguments into the
                         :meth:`~slimta.smtp.client.Client.auth` method of the
                         session. By default, no authentication is attempted.
+    :param binary_encoder: Optional function from :mod:`email.encoders` used as
+                           an argument to
+                           :meth:`~slimta.envelope.Envelope.encode_7bit` when
+                           conversion is necessary for the remote server.
 
     """
 
