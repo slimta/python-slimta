@@ -31,7 +31,7 @@ import copy
 import cStringIO
 from email.message import Message
 from email.generator import Generator
-from email.parser import Parser
+from email.parser import Parser, FeedParser
 
 __all__ = ['Envelope']
 
@@ -103,6 +103,46 @@ class Envelope(object):
         Generator(outfp).flatten(self.headers, False)
         header_data = outfp.getvalue().replace('\r', '').replace('\n', '\r\n')
         return header_data, self.message
+
+    def _encode_parts(self, header_data, msg_data, encoder):
+        parser = FeedParser()
+        parser.feed(header_data)
+        parser.feed(msg_data)
+        msg = parser.close()
+
+        for part in msg.walk():
+            if not part.is_multipart():
+                payload = part.get_payload()
+                try:
+                    payload.encode('ascii')
+                except UnicodeDecodeError:
+                    del part['Content-Transfer-Encoding']
+                    encoder(part)
+
+        self.parse(msg)
+
+    def encode_7bit(self, encoder=None):
+        """Forces the message into 7-bit encoding such that it can be sent to
+        SMTP servers that do not support the ``8BITMIME`` extension.
+
+        If the ``encoder`` function is not given, this function is relatively
+        cheap and will just check the message body for 8-bit characters
+        (raising :py:exc:`UnicodeDecodeError` if any are found).  Otherwise,
+        this method can be very expensive. It will parse the entire message
+        into MIME parts in order to encode parts that are not 7-bit.
+
+        :param encoder: Optional function from :mod:`email.encoders` used to
+                        encode MIME parts that are not 7-bit.
+        :raises: UnicodeDecodeError
+
+        """
+        header_data, msg_data = self.flatten()
+        try:
+            msg_data.encode('ascii')
+        except UnicodeDecodeError:
+            if not encoder:
+                raise
+            self._encode_parts(header_data, msg_data, encoder)
 
     def parse(self, data):
         """Parses the given string or :class:`~email.message.Message` to

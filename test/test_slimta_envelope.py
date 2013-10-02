@@ -1,6 +1,8 @@
 
 import unittest
+from base64 import b64encode
 from email.message import Message
+from email.encoders import encode_base64
 
 from slimta.envelope import Envelope
 from slimta.bounce import Bounce
@@ -46,6 +48,34 @@ test test
         ret_headers, ret_body = env.flatten()
         self.assertEqual(header_str, ret_headers)
         self.assertEqual(body, ret_body)
+
+    def test_encode_7bit(self):
+        headers = Message()
+        headers['From'] = 'sender@example.com'
+        headers['To'] = 'rcpt@example.com'
+        body = ''.join([chr(i) for i in range(129, 256)])
+        env = Envelope(headers=headers, message=body)
+        header_str = '\r\n'.join(['From: sender@example.com',
+                                  'To: rcpt@example.com',
+                                  '', ''])
+        with self.assertRaises(UnicodeDecodeError):
+            env.encode_7bit()
+
+    def test_encode_7bit_encoding(self):
+        headers = Message()
+        headers['From'] = 'sender@example.com'
+        headers['To'] = 'rcpt@example.com'
+        body = ''.join([chr(i) for i in range(129, 256)])
+        env = Envelope(headers=headers, message=body)
+        header_str = '\r\n'.join(['From: sender@example.com',
+                                  'To: rcpt@example.com',
+                                  'Content-Transfer-Encoding: base64',
+                                  '', ''])
+        body_str = 'gYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5\nuru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy\n8/T19vf4+fr7/P3+/w=='
+        env.encode_7bit(encoder=encode_base64)
+        ret_headers, ret_body = env.flatten()
+        self.assertEqual(header_str, ret_headers)
+        self.assertEqual(body_str, ret_body)
 
     def test_parse(self):
         env = Envelope()
