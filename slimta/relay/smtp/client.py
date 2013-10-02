@@ -48,7 +48,7 @@ class SmtpRelayClient(RelayPoolClient):
                  tls_required=False, tls_wrapper=None,
                  connect_timeout=10.0, command_timeout=10.0,
                  data_timeout=None, idle_timeout=None,
-                 credentials=None):
+                 credentials=None, binary_encoder=None):
         super(SmtpRelayClient, self).__init__(queue, idle_timeout)
         self.address = address
         if socket_creator:
@@ -64,6 +64,7 @@ class SmtpRelayClient(RelayPoolClient):
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
         self.credentials = credentials
+        self.binary_encoder = binary_encoder
 
     def _socket_creator(self, address):
         socket = create_connection(address)
@@ -156,8 +157,21 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(send_data)
         return send_data
 
+    def _handle_encoding(self, result, envelope):
+        if '8BITMIME' not in self.client.extensions:
+            try:
+                envelope.encode_7bit(self.binary_encoder)
+            except UnicodeDecodeError:
+                reply = Reply('554', '5.6.3 Conversion not allowed')
+                e = SmtpRelayError.factory(reply)
+                result.set_exception(e)
+                return False
+        return True
+
     def _send_envelope(self, result, envelope):
         data = None
+        if not self._handle_encoding(result, envelope):
+            return False
         try:
             mailfrom = self._mailfrom(envelope.sender)
             rcpttos = [self._rcptto(rcpt) for rcpt in envelope.recipients]
