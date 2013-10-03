@@ -35,7 +35,8 @@ from email.parser import Parser, FeedParser
 
 __all__ = ['Envelope']
 
-header_boundary = re.compile(r'\r?\n\r?\n')
+_HEADER_BOUNDARY = re.compile(r'\r?\n\r?\n')
+_LINE_BREAK = re.compile(r'\r?\n')
 
 
 class Envelope(object):
@@ -101,10 +102,14 @@ class Envelope(object):
         """
         outfp = cStringIO.StringIO()
         Generator(outfp).flatten(self.headers, False)
-        header_data = outfp.getvalue().replace('\r', '').replace('\n', '\r\n')
+        header_data = re.sub(_LINE_BREAK, '\r\n', outfp.getvalue())
         return header_data, self.message
 
     def _encode_parts(self, header_data, msg_data, encoder):
+        """Encodes any MIME part in the current message that is 8-bit."""
+        self.headers = None
+        self.message = None
+
         parser = FeedParser()
         parser.feed(header_data)
         parser.feed(msg_data)
@@ -156,7 +161,7 @@ class Envelope(object):
             outfp = cStringIO.StringIO()
             Generator(outfp).flatten(data, False)
             data = outfp.getvalue()
-        match = header_boundary.search(data)
+        match = re.search(_HEADER_BOUNDARY, data)
         if not match:
             header_data = data
             payload = ''
@@ -168,8 +173,8 @@ class Envelope(object):
         self.message = payload
 
     def __repr__(self):
-        template = '<Envelope at {0}, sender={sender!r}>'
-        return template.format(hex(id(self)), **vars(self))
+        template = '<Envelope at {0}, sender={1!r}>'
+        return template.format(hex(id(self)), self.sender)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
