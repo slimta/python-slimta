@@ -1,9 +1,11 @@
 
 import unittest
 
-from mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
+from dns import resolver
+from dns.exception import DNSException
 
 from slimta.edge.smtp import SmtpEdge, SmtpSession
 from slimta.envelope import Envelope
@@ -22,6 +24,18 @@ class TestEdgeSmtp(MoxTestBase):
         self.mox.ReplayAll()
         h = SmtpSession(None, mock, None)
         h._call_validator('test', 'arg')
+
+    def test_ptr_lookup(self):
+        self.mox.StubOutWithMock(resolver, 'query')
+        resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
+        resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
+        self.mox.ReplayAll()
+        h = SmtpSession(('1.2.3.4', None), None, None)
+        with self.assertRaises(DNSException):
+            h._ptr_lookup()
+        self.assertIsNone(h.reverse_address)
+        h._ptr_lookup()
+        self.assertEqual('example.com', h.reverse_address)
 
     def test_protocol_attribute(self):
         h = SmtpSession(None, None, None)

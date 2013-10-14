@@ -29,6 +29,7 @@ from __future__ import absolute_import
 import gevent
 from gevent.server import StreamServer
 
+from slimta import logging
 from slimta.envelope import Envelope
 from slimta.smtp.server import Server
 from slimta.smtp.reply import unknown_command, bad_sequence
@@ -116,15 +117,19 @@ class SmtpSession(object):
         return proto
 
     def _ptr_lookup(self):
-        ptraddr = reversename.from_address(self.address[0])
         try:
-            answers = resolver.query(ptraddr, 'PTR')
-        except DNSException:
-            answers = []
-        try:
-            self.reverse_address = str(answers[0])
-        except IndexError:
-            pass
+            ptraddr = reversename.from_address(self.address[0])
+            try:
+                answers = resolver.query(ptraddr, 'PTR')
+            except resolver.NXDOMAIN:
+                answers = []
+            try:
+                self.reverse_address = str(answers[0])
+            except IndexError:
+                pass
+        except Exception:
+            logging.log_exception(__name__, query=self.address[0])
+            raise
 
     def _trigger_ptr_lookup(self):
         self._ptr_lookup_thread = gevent.spawn(self._ptr_lookup)
