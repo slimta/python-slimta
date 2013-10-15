@@ -27,11 +27,13 @@ running processes.
 from __future__ import absolute_import
 
 import os
+import os.path
 import sys
+from contextlib import contextmanager
 from pwd import getpwnam
 from grp import getgrnam
 
-__all__ = ['daemonize', 'redirect_stdio', 'drop_privileges']
+__all__ = ['daemonize', 'redirect_stdio', 'drop_privileges', 'pid_file']
 
 
 def daemonize():
@@ -114,6 +116,35 @@ def drop_privileges(user=None, group=None):
         except ValueError:
             uid = getpwnam(user).pw_uid
         os.setuid(uid)
+
+
+@contextmanager
+def pid_file(filename=None):
+    """Context manager which creates a PID file containing the current process
+    id, runs the context, and then removes the PID file.
+
+    An :py:exc:`OSError` exceptions when creating the PID file will be
+    propogated without executing the context.
+
+    :param filename: The filename to use for the PID file. If ``None`` is
+                     given, the context is simply executed with no PID file
+                     created.
+    :raises: :py:exc:`OSError`
+
+    """
+    if not filename:
+        yield
+    else:
+        filename = os.path.abspath(filename)
+        with open(filename, 'w') as pid:
+            pid.write('{0}\n'.format(os.getpid()))
+        try:
+            yield
+        finally:
+            try:
+                os.unlink(filename)
+            except OSError:
+                pass
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
