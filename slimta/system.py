@@ -118,8 +118,7 @@ def drop_privileges(user=None, group=None):
         os.setuid(uid)
 
 
-@contextmanager
-def pid_file(filename=None):
+class PidFile(object):
     """Context manager which creates a PID file containing the current process
     id, runs the context, and then removes the PID file.
 
@@ -129,22 +128,26 @@ def pid_file(filename=None):
     :param filename: The filename to use for the PID file. If ``None`` is
                      given, the context is simply executed with no PID file
                      created.
-    :raises: :py:exc:`OSError`
 
     """
-    if not filename:
-        yield
-    else:
-        filename = os.path.abspath(filename)
-        with open(filename, 'w') as pid:
-            pid.write('{0}\n'.format(os.getpid()))
+
+    def __init__(self, filename=None):
+        super(PidFile, self).__init__()
+        self.filename = os.path.abspath(filename)
+
+    def __enter__(self):
+        if not self.filename:
+            return
+        else:
+            with open(self.filename, 'w') as pid:
+                pid.write('{0}\n'.format(os.getpid()))
+            return self.filename
+
+    def __exit__(self, exc_type, exc_value, traceback):
         try:
-            yield
-        finally:
-            try:
-                os.unlink(filename)
-            except OSError:
-                pass
+            os.unlink(self.filename)
+        except OSError:
+            pass
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
