@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from pwd import getpwnam
 from grp import getgrnam
 
-__all__ = ['daemonize', 'redirect_stdio', 'drop_privileges', 'pid_file']
+__all__ = ['daemonize', 'redirect_stdio', 'drop_privileges', 'PidFile']
 
 
 def daemonize():
