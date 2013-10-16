@@ -35,6 +35,7 @@ from gevent import Timeout
 from gevent.socket import create_connection, SHUT_WR
 
 from slimta import logging
+from slimta.envelope import Envelope
 from . import PolicyError, QueuePolicy
 
 __all__ = ['SpamAssassinError', 'SpamAssassin']
@@ -130,16 +131,22 @@ class SpamAssassin(QueuePolicy):
             spammy = True
         return spammy, symbols
 
-    def scan(self, envelope):
+    def scan(self, message):
         """Convenience method that scans a message and returns the results,
         without adding the spam headers.
 
-        :param envelope: |Envelope| object to scan.
+        :param message: Message to scan.
+        :type message: :py:obj:`str` or :class:`~slimta.envelope.Envelope`
         :returns: Tuple of a spammy boolean followed by a list of the symbols
                   matched in the scan.
 
         """
-        header_data, message_data = envelope.flatten()
+
+        if isinstance(message, Envelope):
+            header_data, message_data = message.flatten()
+        else:
+            header_data = ''
+            message_data = message
         socket = None
         try:
             socket = self._socket_creator(self.address)
