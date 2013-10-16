@@ -73,10 +73,11 @@ class SpamAssassin(QueuePolicy):
     def __init__(self, address=None, timeout=None, socket_creator=None):
         self.address = address or ('127.0.0.1', 783)
         self.timeout = timeout
-        if socket_creator:
-            self._socket_creator = socket_creator
+        self.custom_socket_creator = socket_creator
 
     def _socket_creator(self, address):
+        if self.custom_socket_creator:
+            return self.custom_socket_creator(address)
         socket = create_connection(address)
         log.connect(socket, address)
         return socket
