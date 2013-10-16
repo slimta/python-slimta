@@ -59,7 +59,8 @@ class SmtpValidators(object):
     - ``handle_helo(reply, helo_as)``: Validate the HELO string.
     - ``handle_mail(reply, sender)``: Validate the sender address.
     - ``handle_rcpt(reply, recipient)``: Validate one recipient address.
-    - ``handle_data(reply)``: Any remaining validation before accepting data.
+    - ``handle_data(reply)``: Any remaining validation before receiving data.
+    - ``handle_have_data(reply, data)``: Validate the received message data.
     - ``handle_rset(reply)``: Called before replying to an RSET command.
     - ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
@@ -181,6 +182,10 @@ class SmtpSession(object):
             return
         elif err:
             raise err
+
+        self._call_validator('have_data', reply, data)
+        if reply.code != '250':
+            return
 
         self.envelope.client['ip'] = self.address[0]
         self.envelope.client['host'] = self.reverse_address
