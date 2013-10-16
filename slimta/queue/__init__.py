@@ -175,6 +175,7 @@ class Queue(Greenlet):
         self.bounce_factory = bounce_factory or Bounce
         self.wake = Event()
         self.queued = []
+        self.active_ids = set()
         self.queued_ids = set()
         self.queued_lock = Semaphore(1)
         self.queue_policies = []
@@ -247,7 +248,7 @@ class Queue(Greenlet):
 
     def _add_queued(self, entry):
         timestamp, id = entry
-        if id not in self.queued_ids:
+        if id not in self.queued_ids | self.active_ids:
             bisect.insort(self.queued, entry)
             self.queued_ids.add(id)
             self.wake.set()
@@ -271,6 +272,7 @@ class Queue(Greenlet):
         for env, id in results:
             if not isinstance(id, BaseException):
                 if self.relay:
+                    self.active_ids.add(id)
                     self._pool_spawn('relay', self._attempt, id, env, 0)
             elif not isinstance(id, QueueError):
                 raise id  # Re-raise exceptions that are not QueueError.
@@ -280,13 +282,18 @@ class Queue(Greenlet):
         for entry in self.store.load():
             self._add_queued(entry)
 
+    def _remove(self, id):
+        self.store.remove(id)
+        self.queued_ids.discard(id)
+        self.active_ids.discard(id)
+
     def _bounce(self, envelope, reply):
         bounce = self.bounce_factory(envelope, reply)
         if bounce:
             return self.enqueue(bounce)
 
     def _perm_fail(self, id, envelope, reply):
-        self._pool_spawn('store', self.store.remove, id)
+        self._pool_spawn('store', self._remove, id)
         if envelope.sender:  # Can't bounce to null-sender.
             self._pool_spawn('bounce', self._bounce, envelope, reply)
 
@@ -299,6 +306,7 @@ class Queue(Greenlet):
         else:
             when = time.time() + wait
             self.store.set_timestamp(id, when)
+            self.active_ids.discard(id)
             self._add_queued((when, id))
 
     def _attempt(self, id, envelope, attempts):
@@ -314,10 +322,11 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            self._pool_spawn('store', self.store.remove, id)
+            self._pool_spawn('store', self._remove, id)
 
     def _dequeue(self, id):
         envelope, attempts = self.store.get(id)
+        self.active_ids.add(id)
         self._pool_spawn('relay', self._attempt, id, envelope, attempts)
 
     def _check_ready(self, now):
