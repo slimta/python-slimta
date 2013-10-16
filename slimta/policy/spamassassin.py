@@ -44,6 +44,7 @@ log = logging.getSocketLogger(__name__)
 first_line_pattern = re.compile(r'^SPAMD/[^ ]+ 0 EX_OK$')
 spammy_pattern = re.compile(r'^Spam: ([^ ]+)', re.MULTILINE)
 divider_pattern = re.compile(r'^(.*?)\r?\n(.*?)\r?\n\r?\n', re.DOTALL)
+symbols_pattern = re.compile(r'[^\s,]+')
 
 
 class SpamAssassinError(PolicyError):
@@ -118,7 +119,8 @@ class SpamAssassin(QueuePolicy):
         return first_line, headers, after
 
     def _recv_response(self, socket):
-        first_line, headers, symbols = self._recv_all(socket)
+        first_line, headers, body = self._recv_all(socket)
+        symbols = symbols_pattern.findall(body)
         match = first_line_pattern.match(first_line)
         if not match:
             raise SpamAssassinError()
@@ -133,7 +135,7 @@ class SpamAssassin(QueuePolicy):
         without adding the spam headers.
 
         :param envelope: |Envelope| object to scan.
-        :returns: Tuple of a spammy boolean followed by a string of the symbols
+        :returns: Tuple of a spammy boolean followed by a list of the symbols
                   matched in the scan.
 
         """
@@ -152,7 +154,7 @@ class SpamAssassin(QueuePolicy):
         spammy, symbols = self.scan(envelope)
         if spammy:
             envelope.headers['X-Spam-Status'] = 'YES'
-            envelope.headers['X-Spam-Symbols'] = symbols
+            envelope.headers['X-Spam-Symbols'] = ','.join(symbols)
         else:
             envelope.headers['X-Spam-Status'] = 'NO'
 
