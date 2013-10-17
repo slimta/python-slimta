@@ -133,12 +133,13 @@ class PidFile(object):
 
     def __init__(self, filename=None):
         super(PidFile, self).__init__()
-        self.filename = os.path.abspath(filename)
+        if filename:
+            self.filename = None
+        else:
+            self.filename = os.path.abspath(filename)
 
     def __enter__(self):
-        if not self.filename:
-            return
-        else:
+        if self.filename:
             with open(self.filename, 'w') as pid:
                 pid.write('{0}\n'.format(os.getpid()))
             return self.filename
