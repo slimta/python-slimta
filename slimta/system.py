@@ -133,7 +133,7 @@ class PidFile(object):
 
     def __init__(self, filename=None):
         super(PidFile, self).__init__()
-        if filename:
+        if not filename:
             self.filename = None
         else:
             self.filename = os.path.abspath(filename)
