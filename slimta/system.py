@@ -145,10 +145,11 @@ class PidFile(object):
             return self.filename
 
     def __exit__(self, exc_type, exc_value, traceback):
-        try:
-            os.unlink(self.filename)
-        except OSError:
-            pass
+        if self.filename:
+            try:
+                os.unlink(self.filename)
+            except OSError:
+                pass
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
