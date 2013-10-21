@@ -96,7 +96,10 @@ class EdgeServer(Edge, gevent.Greenlet):
                   envelope is properly queued before acknowledged by the edge
                   service.
     :param listener: Usually a ``(ip, port)`` tuple defining the interface and
-                     port upon which to listen for connections.
+                     port upon which to listen for connections. See
+                     the ``listener`` parameter to
+                     :class:`~gevent.baseserver.BaseServer` for more
+                     information.
     :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                  use for new greenlets.
     :param hostname: String identifying the local machine. See |Edge| for more

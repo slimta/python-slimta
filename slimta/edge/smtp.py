@@ -214,7 +214,8 @@ class SmtpEdge(EdgeServer):
     """Class that uses :mod:`slimta.smtp.server` to implement an edge
     service to receive messages.
 
-    :param listener: ``(ip, port)`` tuple to listen on, as described in |Edge|.
+    :param listener: ``(ip, port)`` tuple to listen on, as described in
+                     |EdgeServer|.
     :param queue: |Queue| object for handing off messages, as described in
                   :meth:`~slimta.edge.Edge.handoff()`.
     :param pool: Optional greenlet pool, as described in |Edge|.

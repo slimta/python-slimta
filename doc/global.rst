@@ -7,6 +7,7 @@
 .. |slimta| replace:: `slimta`_
 .. |slimta-mod| replace:: :mod:`slimta`
 .. |Edge| replace:: :class:`~slimta.edge.Edge`
+.. |EdgeServer| replace:: :class:`~slimta.edge.EdgeServer`
 .. |SmtpEdge| replace:: :class:`~slimta.edge.smtp.SmtpEdge`
 .. |Extensions| replace:: :class:`~slimta.smtp.extensions.Extensions`
 .. |Reply| replace:: :class:`~slimta.smtp.reply.Reply`
