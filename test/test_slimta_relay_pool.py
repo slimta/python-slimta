@@ -52,5 +52,16 @@ class TestRelayPool(unittest.TestCase):
         ret = pool.attempt(env, 0)
         self.assertEqual('test', ret)
 
+    def test_kill(self):
+        pool = RelayPool()
+        pool.pool.add(RelayPoolClient(None))
+        pool.pool.add(RelayPoolClient(None))
+        pool.pool.add(RelayPoolClient(None))
+        for client in pool.pool:
+            self.assertFalse(client.ready())
+        pool.kill()
+        for client in pool.pool:
+            self.assertTrue(client.ready())
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

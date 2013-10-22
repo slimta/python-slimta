@@ -261,5 +261,12 @@ class TestQueue(MoxTestBase):
         queue.store_pool.join()
         queue.relay_pool.join()
 
+    def test_kill(self):
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay)
+        self.assertFalse(queue.ready())
+        queue.kill()
+        self.assertTrue(queue.ready())
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

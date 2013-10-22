@@ -42,6 +42,11 @@ class TestProxyQueue(MoxTestBase):
         q = ProxyQueue(self.relay)
         q.start()
 
+    def test_kill_noop(self):
+        self.mox.ReplayAll()
+        q = ProxyQueue(self.relay)
+        q.kill()
+
     def test_flush_noop(self):
         self.mox.ReplayAll()
         q = ProxyQueue(self.relay)

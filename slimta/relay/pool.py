@@ -54,6 +54,10 @@ class RelayPool(Relay):
         #: requests to idle clients in the pool.
         self.queue = BlockingDeque()
 
+    def kill(self):
+        for client in self.pool:
+            client.kill()
+
     def _remove_client(self, client):
         self.pool.remove(client)
         if len(self.queue) > 0 and not self.pool:

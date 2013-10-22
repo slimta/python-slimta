@@ -386,7 +386,7 @@ class Queue(Greenlet):
         threads) and close resources.
 
         """
-        pass
+        super(Queue, self).kill()
 
     def _run(self):
         if not self.relay:

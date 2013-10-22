@@ -38,5 +38,9 @@ class TestRelay(MoxTestBase):
         relay = Relay()
         self.assertRaises(NotImplementedError, relay.attempt, env, 0)
 
+    def test_kill(self):
+        relay = Relay()
+        relay.kill()  # no-op!
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
