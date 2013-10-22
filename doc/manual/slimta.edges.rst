@@ -63,8 +63,6 @@ consistent options. This sub-section is defined as:
 SMTP Edges produce an |SmtpEdge| object from the extra keys given in the edge
 sub-section. These keys are:
 
-.. _slimta-listener:
-
 * ``listener``: Dictionary
 
   This mapping defines how to open the listening socket. See the
