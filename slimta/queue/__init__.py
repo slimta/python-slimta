@@ -380,6 +380,14 @@ class Queue(Greenlet):
         finally:
             self.queued_lock.release()
 
+    def kill(self):
+        """This method is used by |Queue| and |Queue|-like objects to properly
+        end any associated services (such as running :class:`~gevent.Greenlet`
+        threads) and close resources.
+
+        """
+        pass
+
     def _run(self):
         if not self.relay:
             return

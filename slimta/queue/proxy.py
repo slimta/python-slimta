@@ -54,6 +54,11 @@ class ProxyQueue(object):
         # for backwards compatibility with the standard Queue class.
         pass
 
+    def kill(self):
+        # No-op, because this class does not inherit from Greenlet. Provided
+        # for backwards compatibility with the standard Queue class.
+        pass
+
     def flush(self):
         # No-op, because this class does not maintain an actual queue. Provided
         # for backwards compatibility with the standard Queue class.

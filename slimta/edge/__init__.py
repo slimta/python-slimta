@@ -84,6 +84,14 @@ class Edge(object):
             logging.log_exception(__name__)
             raise
 
+    def kill(self):
+        """This method is used by |Edge| and |Edge|-like objects to properly
+        end associated services (such as running :class:`~gevent.Greenlet`
+        threads) and close resources.
+
+        """
+        pass
+
 
 class EdgeServer(Edge, gevent.Greenlet):
     """This class implements a :class:`~gevent.Greenlet` serving a
@@ -131,6 +139,9 @@ class EdgeServer(Edge, gevent.Greenlet):
 
         """
         raise NotImplementedError()
+
+    def kill(self):
+        self.server.stop()
 
     def _run(self):
         self.server.start()

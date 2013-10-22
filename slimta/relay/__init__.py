@@ -96,5 +96,13 @@ class Relay(object):
         """
         raise NotImplementedError()
 
+    def kill(self):
+        """This method is used by |Relay| and |Relay|-like objects to properly
+        end associated services (such as running :class:`~gevent.Greenlet`
+        threads) and close resources.
+
+        """
+        pass
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
