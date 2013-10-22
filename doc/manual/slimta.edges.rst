@@ -20,17 +20,56 @@ a mapping with two required keys:
   queue. The value of this queue is a name, which must correspond to a key in
   the top-level ``queue`` section.
 
+When available, edges may also include a ``listener`` sub-section that uses
+consistent options. This sub-section is defined as:
+
+.. _slimta-listener:
+
+* ``listener``: Dictionary
+
+  This mapping defines how to open the listening socket. Available keys are as
+  follows:
+
+  * ``type``: String
+
+    Defines the type of listening socket. Valid values are ``tcp`` , ``udp``
+    and ``unix``. The default type is ``tcp``.
+
+  * ``interface``: String
+
+    For ``tcp`` and ``udp`` types, this setting defines the interface IP on
+    which to bind. Examples are ``'127.0.0.1'`` to only listen locally, or
+    ``''`` to listen on all interfaces. The default is ``'127.0.0.1'``.
+
+  * ``port``: Integer
+
+    For ``tcp`` and ``udp`` types, this setting defines the port on which to
+    bind. The default port number depends on the type of edge.
+
+  * ``path``: String
+
+    For ``unix`` types, this setting defines the file path where the listening
+    UNIX socket is created. There is no default value.
+
+  * ``backlog``: Integer
+
+    For ``tcp`` and ``unix`` types, this setting defines the size of the
+    backlog of unaccepted connections. See the :meth:`~socket.socket.listen`
+    method for more information. The default is ``256``.
+
 ``smtp`` Edges
 """"""""""""""
 
 SMTP Edges produce an |SmtpEdge| object from the extra keys given in the edge
 sub-section. These keys are:
 
+.. _slimta-listener:
+
 * ``listener``: Dictionary
 
-  This mapping defines how to open the listening socket. It takes two keys,
-  ``interface`` and ``port``. By default, these are ``'127.0.0.1'`` and
-  ``25``, respectively.
+  This mapping defines how to open the listening socket. See the
+  :ref:`listener sub-section <slimta-listener>` for information on its
+  available keys. The default value for ``port`` is ``25``.
 
 * ``hostname``: String
 
@@ -79,6 +118,13 @@ sub-section. These keys are:
     ``temperror``, ``softfail``, ``none``, and ``neutral``. By default, no SPF
     results are rejected.
 
+  * ``reject_spam``: Dictionary
+
+    Specifies a spam engine that will be used to reject message data that is
+    considered spam before it is accepted for delivery. At the moment, only
+    :mod:`~slimta.policy.spamassassin` is available, which takes optional
+    ``host`` and ``port`` keys.
+
   * ``only_senders``: List
 
     Only the email addresses in this list will be accepted when given in the
@@ -105,9 +151,9 @@ configured to receive mail. It supports the following options:
 
 * ``listener``: Dictionary
 
-  This mapping defines how to open the listening socket. It takes two keys,
-  ``interface`` and ``port``. By default, these are ``'127.0.0.1'`` and
-  ``25``, respectively.
+  This mapping defines how to open the listening socket. See the
+  :ref:`listener sub-section <slimta-listener>` for information on its
+  available keys. The default value for ``port`` is ``8025``.
 
 * ``hostname``: String
 
