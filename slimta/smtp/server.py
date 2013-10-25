@@ -44,8 +44,9 @@ from .reply import *
 __all__ = ['Server']
 
 from_pattern = re.compile(r'^[fF][rR][oO][mM]:\s*<')
-size_pattern = re.compile(r'\b[sS][iI][zZ][eE]\=(\w+)\b')
 to_pattern = re.compile(r'^[tT][oO]:\s*<')
+param_keyword_pattern = re.compile(r'\b([a-zA-Z0-9][a-zA-Z0-9-]*)')
+param_value_pattern = re.compile(r'\=([\x21-\x3C\x3E-\x7F]+)')
 
 
 def find_outside_quotes(haystack, needle, start_i=0, quotes='"'):
@@ -217,6 +218,24 @@ class Server(object):
                 self.io.flush_send()
                 break
 
+    def _gather_params(self, remaining):
+        params = {}
+        pos = 0
+        while True:
+            match = param_keyword_pattern.search(remaining, pos)
+            if not match:
+                break
+            param_keyword = match.group(1).upper()
+            pos = match.end(0)
+            value_match = param_value_pattern.match(remaining, pos)
+            if value_match:
+                param_value = value_match.group(1)
+                params[param_keyword] = param_value
+                pos = value_match.end(0)
+            else:
+                params[param_keyword] = True
+        return params
+
     def _command_BANNER_(self, arg):
         reply = Reply('220', 'ESMTP server')
         reply.enhanced_status_code = False
@@ -324,10 +343,11 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        match = size_pattern.search(arg, end+1)
-        if match:
+        params = self._gather_params(arg[end+1:])
+
+        if 'SIZE' in params:
             try:
-                size = int(match.group(1))
+                size = int(params['SIZE'])
             except ValueError:
                 bad_arguments.send(self.io)
                 return
@@ -342,7 +362,7 @@ class Server(object):
                 return
 
         reply = Reply('250', '2.1.0 Sender <{0}> Ok'.format(address))
-        self._call_custom_handler('MAIL', reply, address)
+        self._call_custom_handler('MAIL', reply, address, params)
 
         reply.send(self.io)
 
@@ -365,8 +385,10 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
+        params = self._gather_params(arg[end+1:])
+
         reply = Reply('250', '2.1.5 Recipient <{0}> Ok'.format(address))
-        self._call_custom_handler('RCPT', reply, address)
+        self._call_custom_handler('RCPT', reply, address, params)
 
         reply.send(self.io)
 

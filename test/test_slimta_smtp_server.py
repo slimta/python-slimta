@@ -404,5 +404,12 @@ class TestSmtpServer(MoxTestBase):
         s = Server(self.sock, None)
         s.handle()
 
+    def test_gather_params(self):
+        s = Server(None, None)
+        self.assertEqual({'ONE': '1'}, s._gather_params(' ONE=1'))
+        self.assertEqual({'TWO': True}, s._gather_params('TWO'))
+        self.assertEqual({'THREE': 'foo', 'FOUR': 'bar'}, s._gather_params(' THREE=foo FOUR=bar'))
+        self.assertEqual({'FIVE': True}, s._gather_params('five'))
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

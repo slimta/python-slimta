@@ -57,8 +57,8 @@ class SmtpValidators(object):
       sending the SMTP banner.
     - ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
     - ``handle_helo(reply, helo_as)``: Validate the HELO string.
-    - ``handle_mail(reply, sender)``: Validate the sender address.
-    - ``handle_rcpt(reply, recipient)``: Validate one recipient address.
+    - ``handle_mail(reply, sender, params)``: Validate the sender address.
+    - ``handle_rcpt(reply, recipient, params)``: Validate one recipient address.
     - ``handle_data(reply)``: Any remaining validation before receiving data.
     - ``handle_have_data(reply, data)``: Validate the received message data.
     - ``handle_rset(reply)``: Called before replying to an RSET command.
@@ -162,13 +162,21 @@ class SmtpSession(object):
     def RSET(self, reply):
         self.envelope = None
 
-    def MAIL(self, reply, address):
-        self._call_validator('mail', reply, address)
+    def MAIL(self, reply, address, params):
+        try:
+            self._call_validator('mail', reply, address, params)
+        except TypeError:
+            # XXX: Temporary for backwards-compatibility.
+            self._call_validator('mail', reply, address)
         if reply.code == '250':
             self.envelope = Envelope(sender=address)
 
-    def RCPT(self, reply, address):
-        self._call_validator('rcpt', reply, address)
+    def RCPT(self, reply, address, params):
+        try:
+            self._call_validator('rcpt', reply, address, params)
+        except TypeError:
+            # XXX: Temporary for backwards-compatibility.
+            self._call_validator('rcpt', reply, address)
         if reply.code == '250':
             self.envelope.recipients.append(address)
 
