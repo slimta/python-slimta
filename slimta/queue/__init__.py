@@ -133,9 +133,10 @@ class QueueStorage(object):
         they were received, the storage mechanism needs a way to wait until it
         is notified that a new message has been stored.
 
-        :returns: A tuple of the timestamp and unique identifier string of a new
-                  message in storage. If ``None`` is returned indicating a
-                  timeout, this method is simply called again.
+        :returns: An iterable or generator producing tuples with the timestamp
+                  and unique identifier string of a new message in storage. When
+                  the iterable or generator is exhausted, :meth:`.wait` is
+                  simply called again.
 
         """
         raise NotImplementedError()
@@ -345,11 +346,10 @@ class Queue(Greenlet):
     def _wait_store(self):
         while True:
             try:
-                entry = self.store.wait()
+                for entry in self.store.wait():
+                    self._add_queued(entry)
             except NotImplementedError:
                 return
-            if entry:
-                self._add_queued(entry)
 
     def _wait_ready(self, now):
         try:
