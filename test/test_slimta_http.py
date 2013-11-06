@@ -4,7 +4,7 @@ import unittest
 from mox import MoxTestBase, IsA
 from gevent import socket, ssl
 
-from slimta.http import HTTPConnection, HTTPSConnection
+from slimta.http import HTTPConnection, HTTPSConnection, get_connection
 
 
 class TestHTTPConnection(MoxTestBase):
@@ -39,6 +39,15 @@ class TestHTTPSConnection(MoxTestBase):
         conn.sock.close()
         self.mox.ReplayAll()
         conn.close()
+
+
+class TestGetConnection(MoxTestBase):
+
+    def test_get_connection(self):
+        conn = get_connection('http://localhost')
+        self.assertIsInstance(conn, HTTPConnection)
+        conn = get_connection('https://localhost')
+        self.assertIsInstance(conn, HTTPSConnection)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
