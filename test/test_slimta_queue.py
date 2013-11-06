@@ -203,10 +203,10 @@ class TestQueue(MoxTestBase):
     def test_wait_store(self):
         queue = Queue(self.store, self.relay, relay_pool=5)
         queue.wake = self.mox.CreateMock(AsyncResult)
-        self.store.wait().AndReturn((1234567890, '1234'))
+        self.store.wait().AndReturn([(1234567890, '1234')])
         queue.wake.set()
-        self.store.wait().AndReturn(None)
-        self.store.wait().AndReturn((2345678901, '5678'))
+        self.store.wait().AndReturn([])
+        self.store.wait().AndReturn([(2345678901, '5678')])
         queue.wake.set()
         self.store.wait().AndRaise(NotImplementedError)
         self.mox.ReplayAll()
