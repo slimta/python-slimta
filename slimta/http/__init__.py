@@ -30,26 +30,21 @@ similar interface to other slimta libraries that use SSL/TLS.
 
 from __future__ import absolute_import
 
-from httplib import HTTPConnection
+import urlparse
+from socket import error as socket_error
+from httplib import HTTPConnection as BuiltinHTTPConnection
 
 from gevent import socket, ssl
 
 from slimta.core import SlimtaError
 
-__all__ = ['HttpError', 'HTTPConnection', 'HTTPSConnection']
+__all__ = ['HTTPConnection', 'HTTPSConnection', 'get_connection']
 
 
-class HttpError(SlimtaError):
-    """Base exception for all custom HTTP exceptions."""
-    pass
-
-
-class HTTPConnection(HTTPConnection):
+class HTTPConnection(BuiltinHTTPConnection):
     """Modified version of the :py:class:`httplib.HTTPConnection` class that
     uses gevent sockets. This attempts to avoid the complete re-implementation
     that ships in :mod:`gevent.httplib`.
-
-    :param ...: Arguments as passed in to :py:class:`~httplib.HTTPConnection`.
 
     """
 
@@ -64,16 +59,16 @@ class HTTPSConnection(HTTPConnection):
     """Modified version of the :py:class:`httplib.HTTPSConnection` class that
     uses gevent sockets and the more functional ``tls`` parameter.
 
-    :param ...: Arguments as passed in to :py:class:`~httplib.HTTPConnection`.
     :param tls: This keyword argument contains the keyword arguments passed
                 into :class:`~gevent.ssl.SSLSocket` when the connection is
                 encrypted.
 
     """
 
-    def __init__(self, *args, **kwargs):
-        self.tls = kwargs.pop('tls', None)
-        HTTPConnection.__init__(self, *args, **kwargs)
+    def __init__(self, host, port=443, tls=None, *args, **kwargs):
+        self.tls = tls or {}
+        port = port or 443
+        HTTPConnection.__init__(self, host, port, *args, **kwargs)
 
     def connect(self):
         HTTPConnection.connect(self)
@@ -84,10 +79,32 @@ class HTTPSConnection(HTTPConnection):
         if self.sock:
             try:
                 self.sock.unwrap()
-            except socket.error as (errno, message):
+            except socket_error as (errno, message):
                 if errno != 0:
                     raise
         HTTPConnection.close(self)
+
+
+def get_connection(url, tls=None):
+    """This convenience functions returns a :class:`HTTPConnection` or
+    :class:`HTTPSConnection` based on the information contained in URL.
+
+    :param url: URL string to create a connection for. Alternatively, passing in
+                the results of :py:func:`urlparse.urlsplit` works as well.
+    :param tls: When the URL scheme is ``https``, this is passed in as the
+                ``tls`` parameter to :class:`HTTPSConnection`.
+
+    """
+    if isinstance(url, basestring):
+        url = urlparse.urlsplit(url, 'http')
+    host = url.netloc or 'localhost'
+    host = host.rsplit(':', 1)[0]
+    port = url.port
+    if url.scheme == 'https':
+        conn = HTTPSConnection(host, port, strict=True, tls=tls)
+    else:
+        conn = HTTPConnection(host, port, strict=True)
+    return conn
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

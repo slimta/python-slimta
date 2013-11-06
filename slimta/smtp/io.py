@@ -23,6 +23,7 @@ from __future__ import absolute_import
 
 import re
 import cStringIO
+from socket import error as socket_error
 from errno import ECONNRESET, EPIPE
 
 from gevent.ssl import SSLSocket, SSLError
@@ -57,7 +58,7 @@ class IO(object):
         if isinstance(self.socket, SSLSocket):
             try:
                 self.socket.unwrap()
-            except socket.error as (errno, message):
+            except socket_error as (errno, message):
                 if errno not in (0, EPIPE, ECONNRESET):
                     raise
         self.socket.close()
@@ -65,7 +66,7 @@ class IO(object):
     def raw_send(self, data):
         try:
             self.socket.sendall(data)
-        except socket.error as (errno, message):
+        except socket_error as (errno, message):
             if errno == ECONNRESET:
                 raise ConnectionLost()
             raise
@@ -74,7 +75,7 @@ class IO(object):
     def raw_recv(self):
         try:
             data = self.socket.recv(4096)
-        except socket.error as (errno, message):
+        except socket_error as (errno, message):
             if errno == ECONNRESET:
                 raise ConnectionLost()
             raise
