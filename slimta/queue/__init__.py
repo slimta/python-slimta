@@ -326,7 +326,10 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._remove, id)
 
     def _dequeue(self, id):
-        envelope, attempts = self.store.get(id)
+        try:
+            envelope, attempts = self.store.get(id)
+        except KeyError:
+            return
         self.active_ids.add(id)
         self._pool_spawn('relay', self._attempt, id, envelope, attempts)
 

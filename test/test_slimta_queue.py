@@ -193,6 +193,14 @@ class TestQueue(MoxTestBase):
         queue._check_ready(20)
         queue.store_pool.join()
 
+    def test_check_ready_missing(self):
+        self.store.get('1234').AndRaise(KeyError)
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, store_pool=Pool(5))
+        queue._add_queued((10, '1234'))
+        queue._check_ready(20)
+        queue.store_pool.join()
+
     def test_check_ready_empty(self):
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, store_pool=5)
