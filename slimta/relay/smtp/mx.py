@@ -82,7 +82,9 @@ class MxRecord(object):
         return ret, answer.expiration
 
     def _resolve_mx(self):
-        answer = dns.resolver.query(self.domain, 'MX')
+        resolver = dns.resolver.Resolver()
+        resolver.retry_servfail = True
+        answer = resolver.query(self.domain, 'MX')
         ret = []
         for rdata in answer:
             for i, rec in enumerate(ret):
