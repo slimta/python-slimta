@@ -57,10 +57,8 @@ class TestHttpRelayClient(MoxTestBase):
         self.client._wait_for_request()
 
     def test_handle_request(self):
-        self.mox.StubOutWithMock(self.client, '_get_connection')
         self.mox.StubOutWithMock(self.client, '_process_response')
-        conn = self.mox.CreateMockAnything()
-        self.client._get_connection().AndReturn(conn)
+        conn = self.client.conn = self.mox.CreateMockAnything()
         conn.putrequest('POST', '/path/info')
         conn.putheader('Content-Length', 31)
         conn.putheader('Content-Type', 'message/rfc822')
@@ -131,10 +129,6 @@ class TestHttpRelayClient(MoxTestBase):
         self.result.set_exception(IsA(TransientRelayError))
         self.mox.ReplayAll()
         self.client._process_response(http_res, self.result)
-
-    def test_get_connection(self):
-        conn = self.client._get_connection()
-        self.assertIsInstance(conn, HTTPConnection)
 
     def test_run(self):
         self.mox.StubOutWithMock(self.client, '_wait_for_request')

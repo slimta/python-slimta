@@ -39,7 +39,7 @@ from gevent.event import AsyncResult
 
 from slimta import logging
 from slimta.smtp.reply import Reply
-from slimta.http import HTTPConnection, HTTPSConnection
+from slimta.http import get_connection
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
@@ -81,7 +81,7 @@ class HttpRelayClient(RelayPoolClient):
 
     def _handle_request(self, result, envelope):
         if not self.conn:
-            self.conn = self._get_connection()
+            self.conn = get_connection(self.url, self.relay.tls)
         with gevent.Timeout(self.relay.timeout):
             msg_headers, msg_body = envelope.flatten()
             headers = self._build_headers(envelope, msg_headers, msg_body)
@@ -122,17 +122,6 @@ class HttpRelayClient(RelayPoolClient):
         else:
             exc = TransientRelayError(http_res.reason)
         result.set_exception(exc)
-
-    def _get_connection(self):
-        host = self.url.netloc or 'localhost'
-        host = host.rsplit(':', 1)[0]
-        port = self.url.port
-        if self.relay.tls:
-            conn = HTTPSConnection(host, port, strict=True,
-                                   **self.relay.tls)
-        else:
-            conn = HTTPConnection(host, port, strict=True)
-        return conn
 
     def _run(self):
         try:

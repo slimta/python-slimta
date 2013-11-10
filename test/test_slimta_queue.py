@@ -193,6 +193,14 @@ class TestQueue(MoxTestBase):
         queue._check_ready(20)
         queue.store_pool.join()
 
+    def test_check_ready_missing(self):
+        self.store.get('1234').AndRaise(KeyError)
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, store_pool=Pool(5))
+        queue._add_queued((10, '1234'))
+        queue._check_ready(20)
+        queue.store_pool.join()
+
     def test_check_ready_empty(self):
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, store_pool=5)
@@ -203,10 +211,10 @@ class TestQueue(MoxTestBase):
     def test_wait_store(self):
         queue = Queue(self.store, self.relay, relay_pool=5)
         queue.wake = self.mox.CreateMock(AsyncResult)
-        self.store.wait().AndReturn((1234567890, '1234'))
+        self.store.wait().AndReturn([(1234567890, '1234')])
         queue.wake.set()
-        self.store.wait().AndReturn(None)
-        self.store.wait().AndReturn((2345678901, '5678'))
+        self.store.wait().AndReturn([])
+        self.store.wait().AndReturn([(2345678901, '5678')])
         queue.wake.set()
         self.store.wait().AndRaise(NotImplementedError)
         self.mox.ReplayAll()
