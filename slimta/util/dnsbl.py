@@ -71,16 +71,17 @@ class DnsBlocklist(object):
     def __getitem__(self, ip):
         return self.get_reason(ip, timeout=10.0)
 
-    def get(self, ip, timeout=None, strict=True):
+    def get(self, ip, timeout=None, strict=False):
         """Checks this DNSBL for the given IP address. This method does not
         check the answer, only that the response was not ``NXDOMAIN``.
 
         :param ip: The IP address string to check.
         :param timeout: A timeout in seconds before ``False`` is returned.
         :param strict: If ``True``, DNS exceptions that are not ``NXDOMAIN``
-                       will result in a ``False`` return.
-        :returns: ``True`` if the query succeeded and the result was not
-                  ``NXDOMAIN``, ``False`` otherwise.
+                       (including timeouts) will also  result in a ``True``
+                       return value.
+        :returns: ``True`` if the DNSBL had an entry for the given IP address,
+                  ``False`` otherwise.
 
         """
         with gevent.Timeout(timeout, None):
@@ -94,7 +95,7 @@ class DnsBlocklist(object):
                 return not strict
             else:
                 return True
-        return False
+        return strict
 
     def get_reason(self, ip, timeout=None):
         """Gets the TXT record for the IP address on this DNSBL. This is
