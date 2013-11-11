@@ -31,11 +31,13 @@ from __future__ import absolute_import
 from functools import wraps
 
 import gevent
-import dns.resolver
+from dns.resolver import NXDOMAIN
 from dns.exception import DNSException
 from gevent.pool import Pool, Group
 from gevent.event import Event
 
+from slimta import logging
+from slimta.util import dns_resolver
 from slimta.smtp.reply import Reply
 
 __all__ = ['DnsBlocklist', 'DnsBlocklistGroup', 'check_dnsbl']
@@ -69,12 +71,14 @@ class DnsBlocklist(object):
     def __getitem__(self, ip):
         return self.get_reason(ip, timeout=10.0)
 
-    def get(self, ip, timeout=None):
+    def get(self, ip, timeout=None, strict=True):
         """Checks this DNSBL for the given IP address. This method does not
         check the answer, only that the response was not ``NXDOMAIN``.
 
         :param ip: The IP address string to check.
         :param timeout: A timeout in seconds before ``False`` is returned.
+        :param strict: If ``True``, DNS exceptions that are not ``NXDOMAIN``
+                       will result in a ``False`` return.
         :returns: ``True`` if the query succeeded and the result was not
                   ``NXDOMAIN``, ``False`` otherwise.
 
@@ -82,9 +86,12 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns.resolver.query(query, 'A')
-            except dns.resolver.NXDOMAIN:
+                answers = dns_resolver.query(query, 'A')
+            except NXDOMAIN:
                 return False
+            except DNSException:
+                logging.log_exception(__name__, query=query)
+                return not strict
             else:
                 return True
         return False
@@ -102,7 +109,7 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns.resolver.query(query, 'TXT')
+                answers = dns_resolver.query(query, 'TXT')
             except DNSException:
                 pass
             else:

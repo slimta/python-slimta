@@ -64,6 +64,8 @@ from wsgiref.headers import Headers
 
 import gevent
 from gevent.pywsgi import WSGIServer
+from dns import reversename
+from dns.exception import DNSException
 
 from slimta.logging import log_exception
 from slimta.http.wsgi import WsgiServer
@@ -71,12 +73,8 @@ from slimta.envelope import Envelope
 from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
-from slimta.util import monkeypatch_all
+from slimta.util import dns_resolver
 from . import Edge
-
-with monkeypatch_all():
-    from dns import resolver, reversename
-    from dns.exception import DNSException
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
 
@@ -209,15 +207,18 @@ class WsgiEdge(Edge, WsgiServer):
 
     def _ptr_lookup(self, environ):
         ip = environ.get('REMOTE_ADDR', '0.0.0.0')
-        ptraddr = reversename.from_address(ip)
         try:
-            answers = resolver.query(ptraddr, 'PTR')
-        except DNSException:
-            answers = []
-        try:
-            environ['slimta.reverse_address'] = str(answers[0])
-        except IndexError:
-            pass
+            ptraddr = reversename.from_address(ip)
+            try:
+                answers = dns_resolver.query(ptraddr, 'PTR')
+            except NXDOMAIN:
+                answers = []
+            try:
+                environ['slimta.reverse_address'] = str(answers[0])
+            except IndexError:
+                pass
+        except Exception:
+            log_exception(__name__, query=ip)
 
     def _trigger_ptr_lookup(self, environ):
         thread = gevent.spawn(self._ptr_lookup, environ)

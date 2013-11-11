@@ -28,6 +28,8 @@ from __future__ import absolute_import
 
 import gevent
 from gevent.server import StreamServer
+from dns import reversename
+from dns.resolver import NXDOMAIN
 
 from slimta import logging
 from slimta.envelope import Envelope
@@ -36,12 +38,8 @@ from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
-from slimta.util import monkeypatch_all
+from slimta.util import dns_resolver
 from . import EdgeServer
-
-with monkeypatch_all():
-    from dns import resolver, reversename
-    from dns.exception import DNSException
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
 
@@ -121,8 +119,8 @@ class SmtpSession(object):
         try:
             ptraddr = reversename.from_address(self.address[0])
             try:
-                answers = resolver.query(ptraddr, 'PTR')
-            except resolver.NXDOMAIN:
+                answers = dns_resolver.query(ptraddr, 'PTR')
+            except NXDOMAIN:
                 answers = []
             try:
                 self.reverse_address = str(answers[0])
@@ -130,7 +128,6 @@ class SmtpSession(object):
                 pass
         except Exception:
             logging.log_exception(__name__, query=self.address[0])
-            raise
 
     def _trigger_ptr_lookup(self):
         self._ptr_lookup_thread = gevent.spawn(self._ptr_lookup)
