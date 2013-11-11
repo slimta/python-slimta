@@ -31,13 +31,12 @@ from __future__ import absolute_import
 
 import time
 
+from dns.resolver import NXDOMAIN, NoAnswer
+
 from slimta.smtp.reply import Reply
-from slimta.util import monkeypatch_all
+from slimta.util import dns_resolver
 from .. import PermanentRelayError, Relay
 from .static import StaticSmtpRelay
-
-with monkeypatch_all():
-    import dns.resolver
 
 __all__ = ['MxSmtpRelay']
 
@@ -74,7 +73,7 @@ class MxRecord(object):
             return self._records
 
     def _resolve_a(self):
-        answer = dns.resolver.query(self.domain, 'A')
+        answer = dns_resolver.query(self.domain, 'A')
         ret = []
         for rdata in answer:
             ret.append((0, str(rdata.address)))
@@ -82,9 +81,7 @@ class MxRecord(object):
         return ret, answer.expiration
 
     def _resolve_mx(self):
-        resolver = dns.resolver.Resolver()
-        resolver.retry_servfail = True
-        answer = resolver.query(self.domain, 'MX')
+        answer = dns_resolver.query(self.domain, 'MX')
         ret = []
         for rdata in answer:
             for i, rec in enumerate(ret):
@@ -98,10 +95,10 @@ class MxRecord(object):
     def _resolve(self):
         try:
             return self._resolve_mx()
-        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+        except (NXDOMAIN, NoAnswer):
             try:
                 return self._resolve_a()
-            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            except (NXDOMAIN, NoAnswer):
                 msg = 'No usable DNS records found: '+self.domain
                 raise ValueError(msg)
 

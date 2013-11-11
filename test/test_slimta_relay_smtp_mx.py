@@ -7,6 +7,7 @@ import dns.resolver
 from slimta.relay import PermanentRelayError
 from slimta.relay.smtp.mx import MxSmtpRelay, MxRecord, NoDomainError
 from slimta.relay.smtp.static import StaticSmtpRelay
+from slimta.util import dns_resolver
 from slimta.envelope import Envelope
 
 
@@ -65,8 +66,8 @@ class TestMxSmtpRelay(MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
         mx.new_static_relay('mx1.example.com', 25).AndReturn(static)
         static.attempt(env, 0)
         mx.new_static_relay('mx2.example.com', 25).AndReturn(static)
@@ -81,9 +82,9 @@ class TestMxSmtpRelay(MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
-        dns.resolver.query('example.com', 'A').AndReturn(a_ret)
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
+        dns_resolver.query('example.com', 'A').AndReturn(a_ret)
         mx.new_static_relay('1.2.3.4', 25).AndReturn(static)
         static.attempt(env, 0)
         self.mox.ReplayAll()
@@ -94,9 +95,9 @@ class TestMxSmtpRelay(MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
-        dns.resolver.query('example.com', 'A').AndRaise(dns.resolver.NXDOMAIN)
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
+        dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NXDOMAIN)
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             mx.attempt(env, 0)
@@ -108,11 +109,11 @@ class TestMxSmtpRelay(MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
         mx.new_static_relay('mx1.example.com', 25).AndReturn(static)
         static.attempt(env, 0)
-        dns.resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
         mx.new_static_relay('mx2.example.com', 25).AndReturn(static)
         static.attempt(env, 1)
         self.mox.ReplayAll()
@@ -136,9 +137,9 @@ class TestMxSmtpRelay(MoxTestBase):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         mx = MxSmtpRelay()
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns.resolver, 'query')
-        dns.resolver.query('example.com', 'MX').AndRaise(dns.resolver.NoAnswer)
-        dns.resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NoAnswer)
+        dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             mx.attempt(env, 0)

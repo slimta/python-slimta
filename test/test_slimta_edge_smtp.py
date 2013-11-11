@@ -4,10 +4,11 @@ import unittest
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
-from dns import resolver
+from dns.resolver import NXDOMAIN
 from dns.exception import DNSException
 
 from slimta.edge.smtp import SmtpEdge, SmtpSession
+from slimta.util import dns_resolver
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
@@ -26,13 +27,15 @@ class TestEdgeSmtp(MoxTestBase):
         h._call_validator('test', 'arg')
 
     def test_ptr_lookup(self):
-        self.mox.StubOutWithMock(resolver, 'query')
-        resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
-        resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(NXDOMAIN)
+        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
+        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
         self.mox.ReplayAll()
         h = SmtpSession(('1.2.3.4', None), None, None)
-        with self.assertRaises(DNSException):
-            h._ptr_lookup()
+        h._ptr_lookup()
+        self.assertIsNone(h.reverse_address)
+        h._ptr_lookup()
         self.assertIsNone(h.reverse_address)
         h._ptr_lookup()
         self.assertEqual('example.com', h.reverse_address)

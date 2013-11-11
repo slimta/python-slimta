@@ -5,10 +5,10 @@ from base64 import b64encode
 
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
-from dns import resolver
 from dns.exception import DNSException
 
 from slimta.edge.wsgi import WsgiEdge, WsgiValidators
+from slimta.util import dns_resolver
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
@@ -26,13 +26,13 @@ class TestEdgeWsgi(MoxTestBase):
                         'HTTP_X_ENVELOPE_RECIPIENT': '{0}, {1}'.format(b64encode('rcpt1@example.com'), b64encode('rcpt2@example.com')),
                         'HTTP_X_CUSTOM_HEADER': 'custom test',
                         'wsgi.input': StringIO('')}
-        self.mox.StubOutWithMock(resolver, 'query')
 
     def test_ptr_lookup(self):
         environ = self.environ.copy()
         environ['REMOTE_ADDR'] = '1.2.3.4'
-        resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
-        resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
+        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
         self.mox.ReplayAll()
         w = WsgiEdge(None)
         w._ptr_lookup(environ)

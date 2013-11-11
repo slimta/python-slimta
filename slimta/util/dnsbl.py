@@ -31,11 +31,13 @@ from __future__ import absolute_import
 from functools import wraps
 
 import gevent
-import dns.resolver
+from dns.resolver import NXDOMAIN
 from dns.exception import DNSException
 from gevent.pool import Pool, Group
 from gevent.event import Event
 
+from slimta import logging
+from slimta.util import dns_resolver
 from slimta.smtp.reply import Reply
 
 __all__ = ['DnsBlocklist', 'DnsBlocklistGroup', 'check_dnsbl']
@@ -69,25 +71,31 @@ class DnsBlocklist(object):
     def __getitem__(self, ip):
         return self.get_reason(ip, timeout=10.0)
 
-    def get(self, ip, timeout=None):
+    def get(self, ip, timeout=None, strict=False):
         """Checks this DNSBL for the given IP address. This method does not
         check the answer, only that the response was not ``NXDOMAIN``.
 
         :param ip: The IP address string to check.
         :param timeout: A timeout in seconds before ``False`` is returned.
-        :returns: ``True`` if the query succeeded and the result was not
-                  ``NXDOMAIN``, ``False`` otherwise.
+        :param strict: If ``True``, DNS exceptions that are not ``NXDOMAIN``
+                       (including timeouts) will also  result in a ``True``
+                       return value.
+        :returns: ``True`` if the DNSBL had an entry for the given IP address,
+                  ``False`` otherwise.
 
         """
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns.resolver.query(query, 'A')
-            except dns.resolver.NXDOMAIN:
+                answers = dns_resolver.query(query, 'A')
+            except NXDOMAIN:
                 return False
+            except DNSException:
+                logging.log_exception(__name__, query=query)
+                return not strict
             else:
                 return True
-        return False
+        return strict
 
     def get_reason(self, ip, timeout=None):
         """Gets the TXT record for the IP address on this DNSBL. This is
@@ -102,7 +110,7 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns.resolver.query(query, 'TXT')
+                answers = dns_resolver.query(query, 'TXT')
             except DNSException:
                 pass
             else:

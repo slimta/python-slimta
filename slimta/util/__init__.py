@@ -33,7 +33,7 @@ from gevent import monkey
 
 from slimta.smtp.auth import Auth, CredentialsInvalidError
 
-__all__ = ['monkeypatch_all', 'build_auth_from_dict']
+__all__ = ['monkeypatch_all', 'dns_resolver', 'build_auth_from_dict']
 
 
 @contextmanager
@@ -60,6 +60,17 @@ def monkeypatch_all(*args, **kwds):
         for mod in modules:
             for k, v in before[mod][1].items():
                 setattr(before[mod][0], k, v)
+
+
+with monkeypatch_all():
+    import dns.resolver
+
+#: This is an instance of `dns.resolver.Resolver()
+#: <http://www.dnspython.org/docs/1.11.1/dns.resolver.Resolver-class.html>`_
+#: monkey-patched with :mod:`gevent`. Additionally it has its ``retry_servfail``
+#: attribute set to ``True``.
+dns_resolver = dns.resolver.Resolver()
+dns_resolver.retry_servfail = True
 
 
 def build_auth_from_dict(dict, lower_case=False, only_verify=True):
