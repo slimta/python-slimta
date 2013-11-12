@@ -50,9 +50,11 @@ class DnsBlocklist(object):
         if '123.4.56.7' in dnsbl:
             reason = dnsbl['123.4.56.7']
 
-    *Note:* Because ``__getitem__`` simply calls :meth:`.get_reason()`, it
-    will never raise a :class:`KeyError` and should only be used after using
-    :meth:`.get()` or ``__contains__``.
+    .. note::
+
+       Because ``__getitem__`` simply calls :meth:`.get_reason()`, it
+       will never raise a :class:`KeyError` and should only be used after using
+       :meth:`.get()` or ``__contains__``.
 
     :param address: The DNSBL domain name.
 
