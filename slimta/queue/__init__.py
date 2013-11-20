@@ -370,7 +370,9 @@ class Queue(Greenlet):
         """Attempts to immediately flush all messages waiting in the queue,
         regardless of their retry timers.
 
-        ***Note:*** This can be a very expensive operation, use with care.
+        .. warning::
+
+           This can be a very expensive operation, use with care.
 
         """
         self.wake.set()
