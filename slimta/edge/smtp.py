@@ -39,6 +39,7 @@ from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from slimta.util import dns_resolver
+from slimta.util.ptrlookup import PtrLookup
 from . import EdgeServer
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
@@ -115,25 +116,9 @@ class SmtpSession(object):
             proto += 'A'
         return proto
 
-    def _ptr_lookup(self):
-        try:
-            ptraddr = reversename.from_address(self.address[0])
-            try:
-                answers = dns_resolver.query(ptraddr, 'PTR')
-            except NXDOMAIN:
-                answers = []
-            try:
-                self.reverse_address = str(answers[0])
-            except IndexError:
-                pass
-        except Exception:
-            logging.log_exception(__name__, query=self.address[0])
-
-    def _trigger_ptr_lookup(self):
-        self._ptr_lookup_thread = gevent.spawn(self._ptr_lookup)
-
     def BANNER_(self, reply):
-        self._trigger_ptr_lookup()
+        self._ptr_lookup = PtrLookup(self.address[0])
+        self._ptr_lookup.start()
         self._call_validator('banner', reply, self.address)
 
     def EHLO(self, reply, ehlo_as):
@@ -197,8 +182,6 @@ class SmtpSession(object):
         self.envelope.client['name'] = self.ehlo_as
         self.envelope.client['protocol'] = self.protocol
         self.envelope.client['auth'] = self.auth_result
-        if hasattr(self, '_ptr_lookup_thread'):
-            self._ptr_lookup_thread.kill(block=False)
 
         self.envelope.parse(data)
 

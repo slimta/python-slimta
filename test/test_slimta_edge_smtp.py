@@ -26,20 +26,6 @@ class TestEdgeSmtp(MoxTestBase):
         h = SmtpSession(None, mock, None)
         h._call_validator('test', 'arg')
 
-    def test_ptr_lookup(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(NXDOMAIN)
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
-        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
-        self.mox.ReplayAll()
-        h = SmtpSession(('1.2.3.4', None), None, None)
-        h._ptr_lookup()
-        self.assertIsNone(h.reverse_address)
-        h._ptr_lookup()
-        self.assertIsNone(h.reverse_address)
-        h._ptr_lookup()
-        self.assertEqual('example.com', h.reverse_address)
-
     def test_protocol_attribute(self):
         h = SmtpSession(None, None, None)
         self.assertEqual('SMTP', h.protocol)
