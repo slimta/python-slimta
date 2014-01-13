@@ -141,6 +141,21 @@ class QueueStorage(object):
         """
         raise NotImplementedError()
 
+    def get_info(self):
+        """Queries the storage backend for relevant information about the
+        contents of the queue. The result is a :func:`dict` containing required
+        keys along with any other custom keys dependent on the particular
+        backend.
+
+        Only one key is required in the result:
+
+        * ``size``: The number of messages currently in the queue.
+
+        :rtype: :func:`dict`
+
+        """
+        raise NotImplementedError()
+
 
 class Queue(Greenlet):
     """Manages the queue of |Envelope| objects waiting for delivery. This is

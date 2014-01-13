@@ -75,5 +75,14 @@ class TestDictStorage(unittest.TestCase):
         del self.meta[id]
         self.dict.remove(id)
 
+    def test_get_info(self):
+        id1, _ = self._write_test_envelope()
+        id2, _ = self._write_test_envelope()
+        id3, _ = self._write_test_envelope()
+        self.dict.remove(id2)
+        info = self.dict.get_info()
+        self.assertEqual(2, info['size'])
+        self.assertEqual(2, info['meta_size'])
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
