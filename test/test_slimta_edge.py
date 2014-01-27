@@ -51,7 +51,10 @@ class TestEdgeServer(MoxTestBase):
         sock.fileno().AndReturn(15)
         edge.handle(sock, 'test address')
         self.mox.ReplayAll()
-        edge.server.pre_start()
+        try:
+            edge.server.pre_start()
+        except AttributeError:
+            edge.server.init_socket()
         edge._handle(sock, 'test address')
 
     def test_handle_error(self):
@@ -62,7 +65,10 @@ class TestEdgeServer(MoxTestBase):
         sock.fileno().AndReturn(15)
         edge.handle(sock, 5).AndRaise(RuntimeError)
         self.mox.ReplayAll()
-        edge.server.pre_start()
+        try:
+            edge.server.pre_start()
+        except AttributeError:
+            edge.server.init_socket()
         with self.assertRaises(RuntimeError):
             edge._handle(sock, 5)
 
