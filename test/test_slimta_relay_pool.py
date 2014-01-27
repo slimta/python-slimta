@@ -28,7 +28,8 @@ class TestRelayPool(unittest.TestCase):
         pool = TestPool()
         pool.queue.append(True)
         pool._add_client()
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         gevent.sleep(0)
         self.assertFalse(pool.pool)
@@ -38,10 +39,12 @@ class TestRelayPool(unittest.TestCase):
         pool.queue.append(True)
         pool.queue.append(True)
         pool._add_client()
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         self.assertTrue(pool.pool)
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         gevent.sleep(0)
         self.assertFalse(pool.pool)
