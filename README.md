@@ -29,7 +29,7 @@ Use a [virtualenv][2] to get started developing against `python-slimta`:
 
 To run the suite of unit tests included with `slimta`:
 
-    (.venv)$ pip install nose mox testfixtures
+    (.venv)$ pip install -r test/requirements.txt
     (.venv)$ nosetests
 
 Running the Example
