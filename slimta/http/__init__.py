@@ -89,8 +89,8 @@ def get_connection(url, tls=None):
     """This convenience functions returns a :class:`HTTPConnection` or
     :class:`HTTPSConnection` based on the information contained in URL.
 
-    :param url: URL string to create a connection for. Alternatively, passing in
-                the results of :py:func:`urlparse.urlsplit` works as well.
+    :param url: URL string to create a connection for. Alternatively, passing
+                in the results of :py:func:`urlparse.urlsplit` works as well.
     :param tls: When the URL scheme is ``https``, this is passed in as the
                 ``tls`` parameter to :class:`HTTPSConnection`.
 

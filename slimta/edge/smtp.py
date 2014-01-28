@@ -56,7 +56,8 @@ class SmtpValidators(object):
     - ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
     - ``handle_helo(reply, helo_as)``: Validate the HELO string.
     - ``handle_mail(reply, sender, params)``: Validate the sender address.
-    - ``handle_rcpt(reply, recipient, params)``: Validate one recipient address.
+    - ``handle_rcpt(reply, recipient, params)``: Validate one recipient
+                                                 address.
     - ``handle_data(reply)``: Any remaining validation before receiving data.
     - ``handle_have_data(reply, data)``: Validate the received message data.
     - ``handle_rset(reply)``: Called before replying to an RSET command.

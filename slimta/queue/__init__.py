@@ -134,8 +134,8 @@ class QueueStorage(object):
         is notified that a new message has been stored.
 
         :returns: An iterable or generator producing tuples with the timestamp
-                  and unique identifier string of a new message in storage. When
-                  the iterable or generator is exhausted, :meth:`.wait` is
+                  and unique identifier string of a new message in storage.
+                  When the iterable or generator is exhausted, :meth:`.wait` is
                   simply called again.
 
         """
