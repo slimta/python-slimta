@@ -35,7 +35,7 @@ from itertools import imap, izip, repeat, chain
 import gevent
 from gevent import Greenlet
 from gevent.event import Event
-from gevent.coros import Semaphore
+from gevent.lock import Semaphore
 from gevent.pool import Pool
 
 from slimta.logging import log_exception

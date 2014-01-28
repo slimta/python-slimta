@@ -2,7 +2,7 @@
 import unittest
 
 from mox import MoxTestBase, IsA
-from gevent.coros import Semaphore
+from gevent.lock import Semaphore
 
 from slimta.util.deque import BlockingDeque
 
