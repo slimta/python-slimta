@@ -19,11 +19,22 @@
 # THE SOFTWARE.
 #
 
-"""
+"""When a client connects to the server, it is useful to know who they claim to
+be. One such method is looking up the PTR records for the client's IP address
+in DNS. If it exists, a PTR record will map an IP address to an arbitrary
+hostname.
+
+However, it is not usually desired to slow down a client's request just because
+their PTR record lookup has not yet finished. This module implements a
+:class:`~gevent.Greenlet` thread that will look up a client's PTR record will
+its request is being processed. If the request finishes before the PTR record
+lookup, the lookup is stopped
 
 """
 
 from __future__ import absolute_import
+
+import time
 
 import gevent
 from dns import reversename
@@ -37,23 +48,52 @@ __all__ = ['PtrLookup']
 
 
 class PtrLookup(gevent.Greenlet):
-    """Asynchronously looks up the PTR record of an IP address.
+    """Asynchronously looks up the PTR record of an IP address, implemented as
+    a :class:`~gevent.Greenlet` thread.
+
+    :param ip: The IP address to query.
 
     """
 
     def __init__(self, ip):
         super(PtrLookup, self).__init__()
         self.ip = ip
+        self.start_time = None
 
     @classmethod
     def from_getpeername(cls, socket):
+        """Creates a :class:`PtrLookup` object based on the IP address of the
+        socket's remote address, using :py:meth:`~socket.socket.getpeername`.
+
+        :param socket: The :py:class:`~socket.socket` object to use.
+        :returns: A tuple containing the new :class:`PtrLookup` object and the
+                  port number from :py:meth:`~socket.socket.getpeername`.
+
+        """
         ip, port = socket.getpeername()
         return cls(ip), port
 
     @classmethod
     def from_getsockname(cls, socket):
+        """Creates a :class:`PtrLookup` object based on the IP address of the
+        socket's local address, using :py:meth:`~socket.socket.getsockname`.
+
+        :param socket: The :py:class:`~socket.socket` object to use.
+        :returns: A tuple containing the new :class:`PtrLookup` object and the
+                  port number from :py:meth:`~socket.socket.getsockname`.
+
+        """
         ip, port = socket.getsockname()
         return cls(ip), port
+
+    def start(self):
+        """Starts the PTR lookup thread.
+
+        .. seealso:: :meth:`gevent.Greenlet.start`
+
+        """
+        self.start_time = time.time()
+        super(PtrLookup, self).start()
 
     def _run(self):
         try:
@@ -71,9 +111,26 @@ class PtrLookup(gevent.Greenlet):
         except Exception:
             logging.log_exception(__name__, query=self.ip)
 
-    def finish(self, block=False, timeout=None):
+    def finish(self, runtime=None):
+        """Attempts to get the results of the PTR lookup. If the results are
+        not available, ``None`` is returned instead.
+
+        :param runtime: If this many seconds have not passed since the lookup
+                        started, the method call blocks the remaining time. For
+                        example, if 3.5 seconds have elapsed since calling
+                        :meth:`.start` and you pass in ``5.0``, this method
+                        will wait at most 1.5 seconds for the results to come
+                        in.
+        :type runtime: float
+        :returns: The PTR lookup results (a hostname string) or ``None``.
+
+        """
         try:
-            result = self.get(block=block, timeout=timeout)
+            if runtime is None:
+                result = self.get(block=False)
+            else:
+                timeout = time.time() - self.start_time
+                result = self.get(block=True, timeout=timeout)
         except gevent.Timeout:
             result = None
         self.kill(block=False)

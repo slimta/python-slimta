@@ -60,7 +60,7 @@ class TestPtrLookup(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         ptr.start()
-        self.assertEqual('example.com', ptr.finish(block=True, timeout=1.0))
+        self.assertEqual('example.com', ptr.finish(runtime=1.0))
 
     def test_finish_timeout(self):
         self.mox.StubOutWithMock(dns_resolver, 'query')
@@ -70,7 +70,7 @@ class TestPtrLookup(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         ptr.start()
-        self.assertIsNone(ptr.finish(block=True, timeout=0.0))
+        self.assertIsNone(ptr.finish(runtime=0.0))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
