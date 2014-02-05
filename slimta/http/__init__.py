@@ -49,7 +49,7 @@ class HTTPConnection(BuiltinHTTPConnection):
     """
 
     def connect(self):
-        if hasattr(self, 'source_address'):
+        if hasattr(self, 'source_address') and self.source_address:
             self.sock = socket.create_connection((self.host, self.port),
                                                  self.timeout,
                                                  self.source_address)
