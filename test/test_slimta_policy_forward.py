@@ -1,11 +1,11 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.policy.forward import Forward
 from slimta.envelope import Envelope
 
 
-class TestPolicyForward(unittest.TestCase):
+class TestPolicyForward(BackportedAssertions):
 
     def test_no_mappings(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])

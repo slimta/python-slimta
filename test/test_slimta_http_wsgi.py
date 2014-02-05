@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 import gevent
@@ -8,7 +8,7 @@ from gevent.pywsgi import WSGIServer as GeventWSGIServer
 from slimta.http.wsgi import WsgiServer, log
 
 
-class TestWsgiServer(MoxTestBase):
+class TestWsgiServer(MoxTestBase, BackportedAssertions):
 
     def test_build_server(self):
         w = WsgiServer()

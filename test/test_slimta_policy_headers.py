@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 import re
 
 from slimta.policy.headers import AddDateHeader, AddMessageIdHeader, \
@@ -7,7 +7,7 @@ from slimta.policy.headers import AddDateHeader, AddMessageIdHeader, \
 from slimta.envelope import Envelope
 
 
-class TestPolicyHeaders(unittest.TestCase):
+class TestPolicyHeaders(BackportedAssertions):
 
     def test_add_date_header(self):
         env = Envelope()

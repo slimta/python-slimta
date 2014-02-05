@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA, IgnoreArg
 from gevent.event import AsyncResult
@@ -12,7 +12,7 @@ from slimta.relay.http import HttpRelay, HttpRelayClient
 from slimta.http import HTTPConnection
 
 
-class TestHttpRelay(MoxTestBase):
+class TestHttpRelay(MoxTestBase, BackportedAssertions):
 
     def test_add_client(self):
         static = HttpRelay('http://testurl')
@@ -20,7 +20,7 @@ class TestHttpRelay(MoxTestBase):
         self.assertIsInstance(ret, HttpRelayClient)
 
 
-class TestHttpRelayClient(MoxTestBase):
+class TestHttpRelayClient(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestHttpRelayClient, self).setUp()

@@ -1,11 +1,11 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.smtp.reply import Reply
 from slimta.smtp.io import IO
 
 
-class TestSmtpReply(unittest.TestCase):
+class TestSmtpReply(BackportedAssertions):
 
     def test_not_populated(self):
         r = Reply(command='SOMECOMMAND')

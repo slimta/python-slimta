@@ -1,11 +1,11 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.policy.split import RecipientSplit, RecipientDomainSplit
 from slimta.envelope import Envelope
 
 
-class TestPoliySplit(unittest.TestCase):
+class TestPoliySplit(BackportedAssertions):
 
     def test_recipientsplit_apply(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',

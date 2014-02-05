@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 import gevent
 
@@ -22,13 +22,14 @@ class TestClient(RelayPoolClient):
             result.set('test')
 
 
-class TestRelayPool(unittest.TestCase):
+class TestRelayPool(BackportedAssertions):
 
     def test_add_remove_client(self):
         pool = TestPool()
         pool.queue.append(True)
         pool._add_client()
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         gevent.sleep(0)
         self.assertFalse(pool.pool)
@@ -38,10 +39,12 @@ class TestRelayPool(unittest.TestCase):
         pool.queue.append(True)
         pool.queue.append(True)
         pool._add_client()
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         self.assertTrue(pool.pool)
-        for client in pool.pool:
+        pool_copy = pool.pool.copy()
+        for client in pool_copy:
             client.join()
         gevent.sleep(0)
         self.assertFalse(pool.pool)

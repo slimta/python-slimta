@@ -1,6 +1,6 @@
 
 import sys
-import unittest
+from assertions import BackportedAssertions
 from functools import wraps
 
 from mox import MoxTestBase, IsA
@@ -28,7 +28,7 @@ def _redirect_stderr(f):
     return wrapper
 
 
-class TestQueue(MoxTestBase):
+class TestQueue(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestQueue, self).setUp()
@@ -45,6 +45,7 @@ class TestQueue(MoxTestBase):
         self.assertRaises(NotImplementedError, qs.get, '1234')
         self.assertRaises(NotImplementedError, qs.remove, '1234')
         self.assertRaises(NotImplementedError, qs.wait)
+        self.assertRaises(NotImplementedError, qs.get_info)
 
     def test_policies(self):
         p1 = self.mox.CreateMock(QueuePolicy)

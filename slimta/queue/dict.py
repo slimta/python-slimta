@@ -100,5 +100,9 @@ class DictStorage(QueueStorage):
             pass
         log.remove(id)
 
+    def get_info(self):
+        return {'size': len(self.env_db),
+                'meta_size': len(self.meta_db)}
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

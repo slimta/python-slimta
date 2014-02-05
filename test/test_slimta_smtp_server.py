@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -24,7 +24,7 @@ class FakeAuth(Auth):
         return [Plain]
 
 
-class TestSmtpServer(MoxTestBase):
+class TestSmtpServer(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestSmtpServer, self).setUp()

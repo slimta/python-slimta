@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 from StringIO import StringIO
 from base64 import b64encode
 
@@ -14,7 +14,7 @@ from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
 
 
-class TestEdgeWsgi(MoxTestBase):
+class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestEdgeWsgi, self).setUp()

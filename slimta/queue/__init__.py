@@ -35,7 +35,7 @@ from itertools import imap, izip, repeat, chain
 import gevent
 from gevent import Greenlet
 from gevent.event import Event
-from gevent.coros import Semaphore
+from gevent.lock import Semaphore
 from gevent.pool import Pool
 
 from slimta.logging import log_exception
@@ -134,9 +134,24 @@ class QueueStorage(object):
         is notified that a new message has been stored.
 
         :returns: An iterable or generator producing tuples with the timestamp
-                  and unique identifier string of a new message in storage. When
-                  the iterable or generator is exhausted, :meth:`.wait` is
+                  and unique identifier string of a new message in storage.
+                  When the iterable or generator is exhausted, :meth:`.wait` is
                   simply called again.
+
+        """
+        raise NotImplementedError()
+
+    def get_info(self):
+        """Queries the storage backend for relevant information about the
+        contents of the queue. The result is a :func:`dict` containing required
+        keys along with any other custom keys dependent on the particular
+        backend.
+
+        Only one key is required in the result:
+
+        * ``size``: The number of messages currently in the queue.
+
+        :rtype: :func:`dict`
 
         """
         raise NotImplementedError()

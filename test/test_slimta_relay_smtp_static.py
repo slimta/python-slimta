@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 
@@ -7,7 +7,7 @@ from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.relay.smtp.client import SmtpRelayClient
 
 
-class TestStaticSmtpRelay(MoxTestBase):
+class TestStaticSmtpRelay(MoxTestBase, BackportedAssertions):
 
     def test_add_client(self):
         static = StaticSmtpRelay('testhost')

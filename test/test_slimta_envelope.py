@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 from base64 import b64encode
 from email.message import Message
 from email.encoders import encode_base64
@@ -9,7 +9,7 @@ from slimta.bounce import Bounce
 from slimta.smtp.reply import Reply
 
 
-class TestEnvelope(unittest.TestCase):
+class TestEnvelope(BackportedAssertions):
 
     def test_copy(self):
         env1 = Envelope('sender@example.com', ['rcpt1@example.com'])

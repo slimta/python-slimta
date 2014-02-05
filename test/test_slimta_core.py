@@ -1,8 +1,8 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 
-class TestSlimtaCore(unittest.TestCase):
+class TestSlimtaCore(BackportedAssertions):
 
     def test_import_slimta(self):
         import slimta

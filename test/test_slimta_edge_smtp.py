@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
@@ -16,7 +16,7 @@ from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.smtp.client import Client
 
 
-class TestEdgeSmtp(MoxTestBase):
+class TestEdgeSmtp(MoxTestBase, BackportedAssertions):
 
     def test_call_validator(self):
         mock = self.mox.CreateMockAnything()

@@ -49,8 +49,13 @@ class HTTPConnection(BuiltinHTTPConnection):
     """
 
     def connect(self):
-        self.sock = socket.create_connection((self.host, self.port),
-                                             self.timeout, self.source_address)
+        if hasattr(self, 'source_address') and self.source_address:
+            self.sock = socket.create_connection((self.host, self.port),
+                                                 self.timeout,
+                                                 self.source_address)
+        else:
+            self.sock = socket.create_connection((self.host, self.port),
+                                                 self.timeout)
         if self._tunnel_host:
             self._tunnel()
 
@@ -89,8 +94,8 @@ def get_connection(url, tls=None):
     """This convenience functions returns a :class:`HTTPConnection` or
     :class:`HTTPSConnection` based on the information contained in URL.
 
-    :param url: URL string to create a connection for. Alternatively, passing in
-                the results of :py:func:`urlparse.urlsplit` works as well.
+    :param url: URL string to create a connection for. Alternatively, passing
+                in the results of :py:func:`urlparse.urlsplit` works as well.
     :param tls: When the URL scheme is ``https``, this is passed in as the
                 ``tls`` parameter to :class:`HTTPSConnection`.
 

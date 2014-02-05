@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 import dns.resolver
@@ -38,7 +38,7 @@ class FakeAAnswer(object):
         return iter(self.rdata)
 
 
-class TestMxSmtpRelay(MoxTestBase):
+class TestMxSmtpRelay(MoxTestBase, BackportedAssertions):
 
     def test_get_rcpt_domain(self):
         env = Envelope('sender@example.com', ['rcpt@Example.com'])

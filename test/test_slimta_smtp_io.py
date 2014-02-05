@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -9,7 +9,7 @@ from slimta.smtp import BadReply, ConnectionLost
 from slimta.smtp.reply import Reply
 
 
-class TestSmtpIO(MoxTestBase):
+class TestSmtpIO(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestSmtpIO, self).setUp()

@@ -1,12 +1,12 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from testfixtures import log_capture
 
 from slimta.logging import logline, parseline, log_exception
 
 
-class TestLogging(unittest.TestCase):
+class TestLogging(BackportedAssertions):
 
     def _check_logline(self, expected):
         def check(data):

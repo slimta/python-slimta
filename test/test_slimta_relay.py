@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 
@@ -8,7 +8,7 @@ from slimta.policy import RelayPolicy
 from slimta.envelope import Envelope
 
 
-class TestRelay(MoxTestBase):
+class TestRelay(MoxTestBase, BackportedAssertions):
 
     def test_policies(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
