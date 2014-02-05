@@ -49,8 +49,13 @@ class HTTPConnection(BuiltinHTTPConnection):
     """
 
     def connect(self):
-        self.sock = socket.create_connection((self.host, self.port),
-                                             self.timeout, self.source_address)
+        if hasattr(self, 'source_address'):
+            self.sock = socket.create_connection((self.host, self.port),
+                                                 self.timeout,
+                                                 self.source_address)
+        else:
+            self.sock = socket.create_connection((self.host, self.port),
+                                                 self.timeout)
         if self._tunnel_host:
             self._tunnel()
 

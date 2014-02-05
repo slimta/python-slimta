@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 from email.encoders import encode_base64
 
 from mox import MoxTestBase, IsA
@@ -13,7 +13,7 @@ from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
 
 
-class TestSmtpRelayClient(MoxTestBase):
+class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestSmtpRelayClient, self).setUp()

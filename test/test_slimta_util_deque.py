@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent.lock import Semaphore
@@ -7,7 +7,7 @@ from gevent.lock import Semaphore
 from slimta.util.deque import BlockingDeque
 
 
-class TestBlockingDeque(MoxTestBase):
+class TestBlockingDeque(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestBlockingDeque, self).setUp()

@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -9,7 +9,7 @@ from slimta.smtp.io import IO
 from slimta.smtp import ConnectionLost, MessageTooBig
 
 
-class TestSmtpDataReader(MoxTestBase):
+class TestSmtpDataReader(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestSmtpDataReader, self).setUp()

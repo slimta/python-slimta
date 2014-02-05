@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 
@@ -9,7 +9,7 @@ from slimta.relay import Relay, TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestProxyQueue(MoxTestBase):
+class TestProxyQueue(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestProxyQueue, self).setUp()

@@ -1,10 +1,10 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.policy import QueuePolicy, RelayPolicy
 
 
-class TestPolicy(unittest.TestCase):
+class TestPolicy(BackportedAssertions):
 
     def test_queuepolicy_interface(self):
         qp = QueuePolicy()

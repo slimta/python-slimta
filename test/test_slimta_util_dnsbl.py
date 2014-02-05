@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 import gevent
@@ -10,7 +10,7 @@ from slimta.util.dnsbl import DnsBlocklist, DnsBlocklistGroup, check_dnsbl
 from slimta.smtp.reply import Reply
 
 
-class TestDnsbl(MoxTestBase):
+class TestDnsbl(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestDnsbl, self).setUp()

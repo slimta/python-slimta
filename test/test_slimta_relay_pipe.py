@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent import Timeout
@@ -10,7 +10,7 @@ from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestPipeRelay(MoxTestBase):
+class TestPipeRelay(MoxTestBase, BackportedAssertions):
 
     def test_exec_process(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -86,7 +86,7 @@ class TestPipeRelay(MoxTestBase):
             m.attempt(env, 0)
 
 
-class TestMaildropRelay(MoxTestBase):
+class TestMaildropRelay(MoxTestBase, BackportedAssertions):
 
     def test_extra_args(self):
         m = MaildropRelay(extra_args=['-t', 'test'])
@@ -100,7 +100,7 @@ class TestMaildropRelay(MoxTestBase):
             m.raise_error(13, 'message', '')
 
 
-class TestDovecotLdaRelay(MoxTestBase):
+class TestDovecotLdaRelay(MoxTestBase, BackportedAssertions):
 
     def test_extra_args(self):
         m = DovecotLdaRelay(extra_args=['-t', 'test'])

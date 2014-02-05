@@ -1,12 +1,12 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from testfixtures import log_capture
 
 from slimta.logging import getHttpLogger
 
 
-class TestHttpLogger(unittest.TestCase):
+class TestHttpLogger(BackportedAssertions):
 
     def setUp(self):
         self.log = getHttpLogger('test')

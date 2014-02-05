@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -8,7 +8,7 @@ from slimta.smtp.client import Client
 from slimta.smtp.auth.standard import Plain
 
 
-class TestSmtpClient(MoxTestBase):
+class TestSmtpClient(MoxTestBase, BackportedAssertions):
 
     def setUp(self):
         super(TestSmtpClient, self).setUp()

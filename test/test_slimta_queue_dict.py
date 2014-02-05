@@ -1,12 +1,12 @@
 
-import unittest
+from assertions import BackportedAssertions
 import re
 
 from slimta.queue.dict import DictStorage
 from slimta.envelope import Envelope
 
 
-class TestDictStorage(unittest.TestCase):
+class TestDictStorage(BackportedAssertions):
 
     id_pattern = re.compile(r'[0-9a-fA-F]{32}')
 

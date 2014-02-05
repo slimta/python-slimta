@@ -1,12 +1,12 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.relay.blackhole import BlackholeRelay
 from slimta.envelope import Envelope
 from slimta.policy import RelayPolicy
 
 
-class TestBlackholeRelay(unittest.TestCase):
+class TestBlackholeRelay(BackportedAssertions):
 
     def test_attempt(self):
         env = Envelope()

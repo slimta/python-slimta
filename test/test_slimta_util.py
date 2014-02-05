@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from mox import MoxTestBase, IsA
 
@@ -7,7 +7,7 @@ from slimta.util import build_auth_from_dict
 from slimta.smtp.auth import Auth, CredentialsInvalidError
 
 
-class TestUtil(MoxTestBase):
+class TestUtil(MoxTestBase, BackportedAssertions):
 
     def test_build_auth_from_dict(self):
         test = {'user@example.com': 'asdftest'}

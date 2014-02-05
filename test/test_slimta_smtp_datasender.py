@@ -1,10 +1,10 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.smtp.datasender import DataSender
 
 
-class TestSmtpDataSender(unittest.TestCase):
+class TestSmtpDataSender(BackportedAssertions):
 
     def test_empty_data(self):
         ret = ''.join(DataSender(''))

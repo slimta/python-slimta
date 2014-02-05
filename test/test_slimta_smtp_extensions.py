@@ -1,10 +1,10 @@
 
-import unittest
+from assertions import BackportedAssertions
 
 from slimta.smtp.extensions import Extensions
 
 
-class TestSmtpExtensions(unittest.TestCase):
+class TestSmtpExtensions(BackportedAssertions):
 
     def setUp(self):
         self.ext = Extensions()

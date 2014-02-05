@@ -1,12 +1,14 @@
 
 import time
 
+from assertions import BackportedAssertions
+
 from mox import MoxTestBase
 
 from slimta.edge import Edge, EdgeServer
 
 
-class TestEdge(MoxTestBase):
+class TestEdge(MoxTestBase, BackportedAssertions):
 
     def test_handoff(self):
         self.mox.StubOutWithMock(time, 'time')
@@ -36,7 +38,7 @@ class TestEdge(MoxTestBase):
         edge.kill()
 
 
-class TestEdgeServer(MoxTestBase):
+class TestEdgeServer(MoxTestBase, BackportedAssertions):
 
     def test_edge_interface(self):
         edge = EdgeServer(('127.0.0.1', 0), None)
