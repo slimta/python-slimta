@@ -14,7 +14,7 @@ can incorporate any protocol or policy, custom or built-in. An MTA built with
 Python's great community.
 
 The `python-slimta` project is released under the [MIT License][4]. It requires
-Python 2.7+ and is **not** currently compatible with 3.x.
+Python 2.6+ and is **not** currently compatible with 3.x.
 
 [![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
 
