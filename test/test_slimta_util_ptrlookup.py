@@ -1,4 +1,6 @@
 
+from assertions import BackportedAssertions
+
 import gevent
 from mox import MoxTestBase, IgnoreArg
 from dns.resolver import NXDOMAIN
@@ -9,7 +11,7 @@ from slimta.util import dns_resolver
 from slimta.util.ptrlookup import PtrLookup
 
 
-class TestPtrLookup(MoxTestBase):
+class TestPtrLookup(MoxTestBase, BackportedAssertions):
 
     def test_from_getpeername(self):
         sock = self.mox.CreateMockAnything()
@@ -62,11 +64,13 @@ class TestPtrLookup(MoxTestBase):
 
     def test_finish_timeout(self):
         self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(gevent.Timeout)
+        def long_sleep(*args):
+            gevent.sleep(1.0)
+        dns_resolver.query(IgnoreArg(), 'PTR').WithSideEffects(long_sleep)
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         ptr.start()
-        self.assertIsNone(ptr.finish(block=True))
+        self.assertIsNone(ptr.finish(block=True, timeout=0.0))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
