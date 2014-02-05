@@ -36,7 +36,7 @@ from .reply import Reply
 __all__ = ['IO']
 
 line_pattern = re.compile(r'(.*?)\r?\n')
-code_pattern = re.compile(r'^\d\d\d')
+reply_line_pattern = re.compile(r'((\d\d\d)([ \t-])(.*?))\r?\n')
 command_pattern = re.compile(r'^([a-zA-Z]+)\s*$')
 command_arg_pattern = re.compile(r'^([a-zA-Z]+)\s+(.+?)\s*$')
 
@@ -112,45 +112,35 @@ class IO(object):
         self.send_buffer = cStringIO.StringIO()
 
     def recv_reply(self):
-        pattern = None
         code = None
         message_lines = []
         incomplete = True
         input = self.recv_buffer
 
         while incomplete:
-            if not pattern:
-                match = code_pattern.match(input)
+            start_i = 0
+            while start_i is not None:
+                match = reply_line_pattern.match(input, start_i)
                 if match:
-                    code = match.group(0)
-                    pattern = re.compile(re.escape(code)+r'([ \t-])(.*?)\r?\n')
-                else:
-                    match = line_pattern.match(input)
-                    if match:
-                        self.recv_buffer = input[match.end(0):]
+                    if code and code != match.group(2):
                         raise BadReply(match.group(1))
+                    code = match.group(2)
+                    message_lines.append(match.group(4))
+                    self.recv_buffer = input[match.end(0):]
 
-            if pattern:
-                start_i = 0
-                while start_i is not None:
-                    match = pattern.match(input, start_i)
-                    if match:
-                        message_lines.append(match.group(2))
-                        self.recv_buffer = input[match.end(0):]
-
-                        if match.group(1) != '-':
-                            incomplete = False
-                            start_i = None
-                        else:
-                            start_i = match.end(0)
+                    if match.group(3) != '-':
+                        incomplete = False
+                        start_i = None
                     else:
-                        match = line_pattern.match(input, start_i)
-                        if match:
-                            self.recv_buffer = input[match.end(0):]
-                            message_lines.append(match.group(1))
-                            raise BadReply('\r\n'.join(message_lines))
-                        else:
-                            start_i = None
+                        start_i = match.end(0)
+                else:
+                    match = line_pattern.match(input, start_i)
+                    if match:
+                        self.recv_buffer = input[match.end(0):]
+                        message_lines.append(match.group(1))
+                        raise BadReply('\r\n'.join(message_lines))
+                    else:
+                        start_i = None
 
             if incomplete:
                 self.buffered_recv()
