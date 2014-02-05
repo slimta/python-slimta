@@ -115,6 +115,9 @@ class PtrLookup(gevent.Greenlet):
         """Attempts to get the results of the PTR lookup. If the results are
         not available, ``None`` is returned instead.
 
+        When this method returns, the :class:`~gevent.Greenlet` executing the
+        lookup is killed.
+
         :param runtime: If this many seconds have not passed since the lookup
                         started, the method call blocks the remaining time. For
                         example, if 3.5 seconds have elapsed since calling
