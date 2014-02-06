@@ -1,6 +1,8 @@
 
+import unittest
 import uuid
-from assertions import BackportedAssertions
+
+from assertions import *
 
 from testfixtures import log_capture
 
@@ -8,7 +10,7 @@ from slimta.logging import getQueueStorageLogger
 from slimta.envelope import Envelope
 
 
-class TestSocketLogger(BackportedAssertions):
+class TestSocketLogger(unittest.TestCase):
 
     def setUp(self):
         self.log = getQueueStorageLogger('test')

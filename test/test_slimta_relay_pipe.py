@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase, IsA
 from gevent import Timeout
@@ -10,7 +10,7 @@ from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestPipeRelay(MoxTestBase, BackportedAssertions):
+class TestPipeRelay(MoxTestBase):
 
     def test_exec_process(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -27,9 +27,9 @@ class TestPipeRelay(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
         status, stdout, stderr = m._exec_process(env)
-        self.assertEqual(0, status)
-        self.assertEqual('testout', stdout)
-        self.assertEqual('testerr', stderr)
+        assert_equal(0, status)
+        assert_equal('testout', stdout)
+        assert_equal('testerr', stderr)
 
     def test_exec_process_error(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -46,9 +46,9 @@ class TestPipeRelay(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
         status, stdout, stderr = m._exec_process(env)
-        self.assertEqual(1337, status)
-        self.assertEqual('', stdout)
-        self.assertEqual('', stderr)
+        assert_equal(1337, status)
+        assert_equal('', stdout)
+        assert_equal('', stderr)
 
     def test_attempt(self):
         env = Envelope()
@@ -64,7 +64,7 @@ class TestPipeRelay(MoxTestBase, BackportedAssertions):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndReturn((1337, 'transient failure', ''))
         self.mox.ReplayAll()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             m.attempt(env, 0)
 
     def test_attempt_timeout(self):
@@ -73,7 +73,7 @@ class TestPipeRelay(MoxTestBase, BackportedAssertions):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndRaise(Timeout)
         self.mox.ReplayAll()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             m.attempt(env, 0)
 
     def test_attempt_permanentfail(self):
@@ -82,35 +82,35 @@ class TestPipeRelay(MoxTestBase, BackportedAssertions):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndReturn((13, '5.0.0 permanent failure', ''))
         self.mox.ReplayAll()
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             m.attempt(env, 0)
 
 
-class TestMaildropRelay(MoxTestBase, BackportedAssertions):
+class TestMaildropRelay(MoxTestBase):
 
     def test_extra_args(self):
         m = MaildropRelay(extra_args=['-t', 'test'])
-        self.assertEquals(['-t', 'test'], m.args[-2:])
+        assert_equals(['-t', 'test'], m.args[-2:])
 
     def test_raise_error(self):
         m = MaildropRelay()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             m.raise_error(m.EX_TEMPFAIL, 'message', '')
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             m.raise_error(13, 'message', '')
 
 
-class TestDovecotLdaRelay(MoxTestBase, BackportedAssertions):
+class TestDovecotLdaRelay(MoxTestBase):
 
     def test_extra_args(self):
         m = DovecotLdaRelay(extra_args=['-t', 'test'])
-        self.assertEquals(['-t', 'test'], m.args[-2:])
+        assert_equals(['-t', 'test'], m.args[-2:])
 
     def test_raise_error(self):
         m = DovecotLdaRelay()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             m.raise_error(m.EX_TEMPFAIL, 'message', '')
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             m.raise_error(13, 'message', '')
 
 

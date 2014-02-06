@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 from StringIO import StringIO
 from base64 import b64encode
 
@@ -14,7 +14,7 @@ from slimta.queue import QueueError
 from slimta.smtp.reply import Reply
 
 
-class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
+class TestEdgeWsgi(MoxTestBase):
 
     def setUp(self):
         super(TestEdgeWsgi, self).setUp()
@@ -36,9 +36,9 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         w = WsgiEdge(None)
         w._ptr_lookup(environ)
-        self.assertNotIn('slimta.reverse_address', environ)
+        assert_not_in('slimta.reverse_address', environ)
         w._ptr_lookup(environ)
-        self.assertEqual('example.com', environ['slimta.reverse_address'])
+        assert_equal('example.com', environ['slimta.reverse_address'])
 
     def test_invalid_path(self):
         environ = self.environ.copy()
@@ -47,7 +47,7 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.start_response.__call__('404 Not Found', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue, uri_pattern=valid_paths)
-        self.assertEqual([], w(environ, self.start_response))
+        assert_equal([], w(environ, self.start_response))
 
     def test_invalid_method(self):
         environ = self.environ.copy()
@@ -55,7 +55,7 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.start_response.__call__('405 Method Not Allowed', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
-        self.assertEqual([], w(environ, self.start_response))
+        assert_equal([], w(environ, self.start_response))
 
     def test_invalid_content_type(self):
         environ = self.environ.copy()
@@ -63,7 +63,7 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.start_response.__call__('415 Unsupported Media Type', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
-        self.assertEqual([], w(environ, self.start_response))
+        assert_equal([], w(environ, self.start_response))
 
     def test_unexpected_exception(self):
         environ = self.environ.copy()
@@ -71,7 +71,7 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.start_response.__call__('500 Internal Server Error', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
-        self.assertEqual(["'NoneType' object has no attribute 'read'\n"], w(environ, self.start_response))
+        assert_equal(["'NoneType' object has no attribute 'read'\n"], w(environ, self.start_response))
 
     def test_no_error(self):
         def verify_envelope(env):
@@ -88,24 +88,24 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
         self.start_response.__call__('200 OK', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
-        self.assertEqual([], w(self.environ, self.start_response))
+        assert_equal([], w(self.environ, self.start_response))
 
     def test_queueerror(self):
         self.queue.enqueue(IsA(Envelope)).AndReturn([(Envelope(), QueueError())])
         self.start_response.__call__('500 Internal Server Error', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
-        self.assertEqual([], w(self.environ, self.start_response))
+        assert_equal([], w(self.environ, self.start_response))
 
     def test_run_validators(self):
         self.validated = 0
         class Validators(WsgiValidators):
             custom_headers = ['X-Custom-Header']
             def validate_ehlo(self2, ehlo):
-                self.assertEqual('test', ehlo)
+                assert_equal('test', ehlo)
                 self.validated += 1
             def validate_sender(self2, sender):
-                self.assertEqual('sender@example.com', sender)
+                assert_equal('sender@example.com', sender)
                 self.validated += 2
             def validate_recipient(self2, recipient):
                 if recipient == 'rcpt1@example.com':
@@ -115,12 +115,12 @@ class TestEdgeWsgi(MoxTestBase, BackportedAssertions):
                 else:
                     raise AssertionError('bad recipient: '+recipient)
             def validate_custom(self2, name, value):
-                self.assertEqual('X-Custom-Header', name)
-                self.assertEqual('custom test', value)
+                assert_equal('X-Custom-Header', name)
+                assert_equal('custom test', value)
                 self.validated += 16
         w = WsgiEdge(None, validator_class=Validators)
         w._run_validators(self.environ)
-        self.assertEqual(31, self.validated)
+        assert_equal(31, self.validated)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

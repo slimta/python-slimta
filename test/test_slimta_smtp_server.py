@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -24,7 +24,7 @@ class FakeAuth(Auth):
         return [Plain]
 
 
-class TestSmtpServer(MoxTestBase, BackportedAssertions):
+class TestSmtpServer(MoxTestBase):
 
     def setUp(self):
         super(TestSmtpServer, self).setUp()
@@ -34,19 +34,19 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
 
     def test_starttls_extension(self):
         s = Server(None, None)
-        self.assertFalse('STARTTLS' in s.extensions)
+        assert_false('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=False)
-        self.assertTrue('STARTTLS' in s.extensions)
+        assert_true('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=True)
-        self.assertFalse('STARTTLS' in s.extensions)
+        assert_false('STARTTLS' in s.extensions)
 
     def test_recv_command(self):
         self.sock.recv(IsA(int)).AndReturn('cmd ARG\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         cmd, arg = s._recv_command()
-        self.assertEqual('CMD', cmd)
-        self.assertEqual('ARG', arg)
+        assert_equal('CMD', cmd)
+        assert_equal('ARG', arg)
 
     def test_get_message_data(self):
         expected_reply = '250 2.6.0 Message Accepted for Delivery\r\n'
@@ -56,15 +56,15 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s._get_message_data()
-        self.assertFalse(s.have_mailfrom)
-        self.assertFalse(s.have_rcptto)
+        assert_false(s.have_mailfrom)
+        assert_false(s.have_rcptto)
 
     def test_call_custom_handler(self):
         class TestHandler(object):
             def TEST(self, arg):
                 return arg.lower()
         s = Server(None, TestHandler())
-        self.assertEqual('stuff', s._call_custom_handler('TEST', 'STUFF'))
+        assert_equal('stuff', s._call_custom_handler('TEST', 'STUFF'))
 
     def test_banner_quit(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -81,9 +81,9 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.sock.sendall('421 4.3.0 Unhandled system error\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, TestHandler())
-        with self.assertRaises(Exception) as cm:
+        with assert_raises(Exception) as cm:
             s.handle()
-        self.assertEqual(('test', ), cm.exception.args)
+        assert_equal(('test', ), cm.exception.args)
 
     def test_banner_command(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -130,7 +130,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.extensions.reset()
         s.extensions.add('TEST')
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        assert_equal('there', s.ehlo_as)
 
     def test_helo(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -141,7 +141,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        assert_equal('there', s.ehlo_as)
 
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
@@ -159,7 +159,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
-        self.assertEqual(None, s.ehlo_as)
+        assert_equal(None, s.ehlo_as)
 
     def test_starttls_bad(self):
         sock = self.mox.CreateMockAnything()
@@ -180,7 +180,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        assert_equal('there', s.ehlo_as)
 
     def test_auth(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -195,7 +195,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.extensions.reset()
         s.extensions.add('AUTH', FakeAuth(s))
         s.handle()
-        self.assertEqual(('testuser', 'testzid'), s.auth_result)
+        assert_equal(('testuser', 'testzid'), s.auth_result)
 
     def test_mailfrom(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -208,7 +208,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertTrue(s.have_mailfrom)
+        assert_true(s.have_mailfrom)
 
     def test_mailfrom_bad(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -231,7 +231,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertTrue(s.have_mailfrom)
+        assert_true(s.have_mailfrom)
 
     def test_mailfrom_send_extension(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -250,7 +250,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.extensions.reset()
         s.extensions.add('SIZE', 10)
         s.handle()
-        self.assertTrue(s.have_mailfrom)
+        assert_true(s.have_mailfrom)
 
     def test_rcptto(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -265,7 +265,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.ehlo_as = 'test'
         s.have_mailfrom = True
         s.handle()
-        self.assertTrue(s.have_rcptto)
+        assert_true(s.have_rcptto)
 
     def test_rcptto_bad(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -286,7 +286,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertFalse(s.have_rcptto)
+        assert_false(s.have_rcptto)
 
     def test_data(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -326,7 +326,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         s.ehlo_as = 'test'
         s.have_mailfrom = True
         s.have_rcptto = True
-        self.assertRaises(ConnectionLost, s.handle)
+        assert_raises(ConnectionLost, s.handle)
 
     def test_noop(self):
         self.sock.sendall('220 ESMTP server\r\n')
@@ -342,9 +342,9 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
         class TestHandlers(object):
             server = None
             def NOOP(self2, reply):
-                self.assertEqual('test', self2.server.ehlo_as)
-                self.assertFalse(self2.server.have_mailfrom)
-                self.assertFalse(self2.server.have_rcptto)
+                assert_equal('test', self2.server.ehlo_as)
+                assert_false(self2.server.have_mailfrom)
+                assert_false(self2.server.have_rcptto)
         self.sock.sendall('220 ESMTP server\r\n')
         self.sock.recv(IsA(int)).AndReturn('RSET arg\r\n')
         self.sock.sendall('501 5.5.4 Syntax error in parameters or arguments\r\n')
@@ -375,7 +375,7 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
     def test_custom_command(self):
         class TestHandlers(object):
             def TEST(self2, reply, arg, server):
-                self.assertTrue(server.have_mailfrom)
+                assert_true(server.have_mailfrom)
                 reply.code = '250'
                 reply.message = 'Doing '+arg
         self.sock.sendall('220 ESMTP server\r\n')
@@ -406,10 +406,10 @@ class TestSmtpServer(MoxTestBase, BackportedAssertions):
 
     def test_gather_params(self):
         s = Server(None, None)
-        self.assertEqual({'ONE': '1'}, s._gather_params(' ONE=1'))
-        self.assertEqual({'TWO': True}, s._gather_params('TWO'))
-        self.assertEqual({'THREE': 'foo', 'FOUR': 'bar'}, s._gather_params(' THREE=foo FOUR=bar'))
-        self.assertEqual({'FIVE': True}, s._gather_params('five'))
+        assert_equal({'ONE': '1'}, s._gather_params(' ONE=1'))
+        assert_equal({'TWO': True}, s._gather_params('TWO'))
+        assert_equal({'THREE': 'foo', 'FOUR': 'bar'}, s._gather_params(' THREE=foo FOUR=bar'))
+        assert_equal({'FIVE': True}, s._gather_params('five'))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

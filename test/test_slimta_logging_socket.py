@@ -1,6 +1,8 @@
 
-from assertions import BackportedAssertions
+import unittest
 import socket
+
+from assertions import *
 
 from testfixtures import log_capture
 
@@ -20,7 +22,7 @@ class FakeSocket(object):
         return self.peer
 
 
-class TestSocketLogger(BackportedAssertions):
+class TestSocketLogger(unittest.TestCase):
 
     def setUp(self):
         self.log = getSocketLogger('test')

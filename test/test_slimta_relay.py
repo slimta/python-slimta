@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase, IsA
 
@@ -8,7 +8,7 @@ from slimta.policy import RelayPolicy
 from slimta.envelope import Envelope
 
 
-class TestRelay(MoxTestBase, BackportedAssertions):
+class TestRelay(MoxTestBase):
 
     def test_policies(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
@@ -20,7 +20,7 @@ class TestRelay(MoxTestBase, BackportedAssertions):
         relay = Relay()
         relay.add_policy(p1)
         relay.add_policy(p2)
-        self.assertRaises(TypeError, relay.add_policy, None)
+        assert_raises(TypeError, relay.add_policy, None)
         relay._run_policies(env)
 
     def test_private_attempt(self):
@@ -36,7 +36,7 @@ class TestRelay(MoxTestBase, BackportedAssertions):
     def test_public_attempt(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         relay = Relay()
-        self.assertRaises(NotImplementedError, relay.attempt, env, 0)
+        assert_raises(NotImplementedError, relay.attempt, env, 0)
 
     def test_kill(self):
         relay = Relay()

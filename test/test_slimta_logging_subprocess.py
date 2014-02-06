@@ -1,5 +1,7 @@
 
-from assertions import BackportedAssertions
+import unittest
+
+from assertions import *
 
 from testfixtures import log_capture
 
@@ -13,7 +15,7 @@ class FakeSubprocess(object):
         self.returncode = returncode
 
 
-class TestSocketLogger(BackportedAssertions):
+class TestSocketLogger(unittest.TestCase):
 
     def setUp(self):
         self.log = getSubprocessLogger('test')

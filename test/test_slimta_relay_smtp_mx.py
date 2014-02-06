@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase, IsA
 import dns.resolver
@@ -38,26 +38,26 @@ class FakeAAnswer(object):
         return iter(self.rdata)
 
 
-class TestMxSmtpRelay(MoxTestBase, BackportedAssertions):
+class TestMxSmtpRelay(MoxTestBase):
 
     def test_get_rcpt_domain(self):
         env = Envelope('sender@example.com', ['rcpt@Example.com'])
         mx = MxSmtpRelay()
-        self.assertEqual('example.com', mx._get_rcpt_domain(env))
+        assert_equal('example.com', mx._get_rcpt_domain(env))
 
     def test_get_rcpt_domain_error(self):
         env = Envelope('sender@example.com', ['badrcpt'])
         mx = MxSmtpRelay()
-        self.assertRaises(NoDomainError, mx._get_rcpt_domain, env)
+        assert_raises(NoDomainError, mx._get_rcpt_domain, env)
 
     def test_choose_mx(self):
         records = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
         mx = MxSmtpRelay()
-        self.assertEqual(1, mx.choose_mx(records, 0))
-        self.assertEqual(5, mx.choose_mx(records, 4))
-        self.assertEqual(1, mx.choose_mx(records, 5))
-        self.assertEqual(3, mx.choose_mx(records, 7))
-        self.assertEqual(2, mx.choose_mx(records, 1821))
+        assert_equal(1, mx.choose_mx(records, 0))
+        assert_equal(5, mx.choose_mx(records, 4))
+        assert_equal(1, mx.choose_mx(records, 5))
+        assert_equal(3, mx.choose_mx(records, 7))
+        assert_equal(2, mx.choose_mx(records, 1821))
 
     def test_attempt(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
@@ -99,7 +99,7 @@ class TestMxSmtpRelay(MoxTestBase, BackportedAssertions):
         dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
         dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NXDOMAIN)
         self.mox.ReplayAll()
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             mx.attempt(env, 0)
 
     def test_attempt_expiredmx(self):
@@ -141,7 +141,7 @@ class TestMxSmtpRelay(MoxTestBase, BackportedAssertions):
         dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NoAnswer)
         dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
         self.mox.ReplayAll()
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             mx.attempt(env, 0)
 
 

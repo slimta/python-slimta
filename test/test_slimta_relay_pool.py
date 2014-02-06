@@ -1,5 +1,7 @@
 
-from assertions import BackportedAssertions
+import unittest
+
+from assertions import *
 
 import gevent
 
@@ -22,7 +24,7 @@ class TestClient(RelayPoolClient):
             result.set('test')
 
 
-class TestRelayPool(BackportedAssertions):
+class TestRelayPool(unittest.TestCase):
 
     def test_add_remove_client(self):
         pool = TestPool()
@@ -32,7 +34,7 @@ class TestRelayPool(BackportedAssertions):
         for client in pool_copy:
             client.join()
         gevent.sleep(0)
-        self.assertFalse(pool.pool)
+        assert_false(pool.pool)
 
     def test_add_remove_client_morequeued(self):
         pool = TestPool()
@@ -42,18 +44,18 @@ class TestRelayPool(BackportedAssertions):
         pool_copy = pool.pool.copy()
         for client in pool_copy:
             client.join()
-        self.assertTrue(pool.pool)
+        assert_true(pool.pool)
         pool_copy = pool.pool.copy()
         for client in pool_copy:
             client.join()
         gevent.sleep(0)
-        self.assertFalse(pool.pool)
+        assert_false(pool.pool)
 
     def test_attempt(self):
         env = Envelope()
         pool = TestPool()
         ret = pool.attempt(env, 0)
-        self.assertEqual('test', ret)
+        assert_equal('test', ret)
 
     def test_kill(self):
         pool = RelayPool()
@@ -61,10 +63,10 @@ class TestRelayPool(BackportedAssertions):
         pool.pool.add(RelayPoolClient(None))
         pool.pool.add(RelayPoolClient(None))
         for client in pool.pool:
-            self.assertFalse(client.ready())
+            assert_false(client.ready())
         pool.kill()
         for client in pool.pool:
-            self.assertTrue(client.ready())
+            assert_true(client.ready())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

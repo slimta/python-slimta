@@ -1,14 +1,14 @@
 
 import time
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase
 
 from slimta.edge import Edge, EdgeServer
 
 
-class TestEdge(MoxTestBase, BackportedAssertions):
+class TestEdge(MoxTestBase):
 
     def test_handoff(self):
         self.mox.StubOutWithMock(time, 'time')
@@ -18,9 +18,9 @@ class TestEdge(MoxTestBase, BackportedAssertions):
         queue.enqueue(env).AndReturn('asdf')
         self.mox.ReplayAll()
         edge = Edge(queue, 'test.example.com')
-        self.assertEqual('asdf', edge.handoff(env))
-        self.assertEqual('test.example.com', env.receiver)
-        self.assertEqual(12345, env.timestamp)
+        assert_equal('asdf', edge.handoff(env))
+        assert_equal('test.example.com', env.receiver)
+        assert_equal(12345, env.timestamp)
 
     def test_handoff_error(self):
         env = self.mox.CreateMockAnything()
@@ -28,7 +28,7 @@ class TestEdge(MoxTestBase, BackportedAssertions):
         queue.enqueue(env).AndRaise(RuntimeError)
         self.mox.ReplayAll()
         edge = Edge(queue)
-        with self.assertRaises(RuntimeError):
+        with assert_raises(RuntimeError):
             edge.handoff(env)
 
     def test_kill(self):
@@ -38,11 +38,11 @@ class TestEdge(MoxTestBase, BackportedAssertions):
         edge.kill()
 
 
-class TestEdgeServer(MoxTestBase, BackportedAssertions):
+class TestEdgeServer(MoxTestBase):
 
     def test_edge_interface(self):
         edge = EdgeServer(('127.0.0.1', 0), None)
-        with self.assertRaises(NotImplementedError):
+        with assert_raises(NotImplementedError):
             edge.handle(None, None)
 
     def test_handle(self):
@@ -71,7 +71,7 @@ class TestEdgeServer(MoxTestBase, BackportedAssertions):
             edge.server.pre_start()
         except AttributeError:
             edge.server.init_socket()
-        with self.assertRaises(RuntimeError):
+        with assert_raises(RuntimeError):
             edge._handle(sock, 5)
 
     def test_kill(self):

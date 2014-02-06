@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 
 from mox import MoxTestBase, IsA
 import gevent
@@ -8,16 +8,16 @@ from gevent.pywsgi import WSGIServer as GeventWSGIServer
 from slimta.http.wsgi import WsgiServer, log
 
 
-class TestWsgiServer(MoxTestBase, BackportedAssertions):
+class TestWsgiServer(MoxTestBase):
 
     def test_build_server(self):
         w = WsgiServer()
         server = w.build_server(('0.0.0.0', 0))
-        self.assertIsInstance(server, GeventWSGIServer)
+        assert_is_instance(server, GeventWSGIServer)
 
     def test_handle_unimplemented(self):
         w = WsgiServer()
-        with self.assertRaises(NotImplementedError):
+        with assert_raises(NotImplementedError):
             w.handle(None, None)
 
     def test_call(self):
@@ -34,7 +34,7 @@ class TestWsgiServer(MoxTestBase, BackportedAssertions):
         start_response('200 Test', 13)
         log.wsgi_response(environ, '200 Test', 13)
         self.mox.ReplayAll()
-        self.assertEqual(['test'], w(environ, start_response))
+        assert_equal(['test'], w(environ, start_response))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

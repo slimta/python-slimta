@@ -1,68 +1,84 @@
 
-import unittest
 import re
 
-
-class _AssertRaisesContextManager(object):
-
-    def __init__(self, expected_exception):
-        super(_AssertRaisesContextManager, self).__init__()
-        self._expected_exception = expected_exception
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.exception = exc_val
-        return issubclass(exc_type, self._expected_exception)
+from nose.tools import assert_raises as old_assert_raises, \
+                       assert_true as old_assert_true, \
+                       assert_false as old_assert_false, \
+                       __all__ as nose_tools_all
+from nose.tools import *
 
 
-class BackportedAssertions(unittest.TestCase):
+__all__ = nose_tools_all
 
-    def assertIs(self, a, b, msg=None):
+
+try:
+    # This will throw a TypeError exception on Python < 2.7.
+    old_assert_raises(Exception)
+except TypeError:
+
+    __all__ += ['assert_is', 'assert_is_not',
+                'assert_is_none', 'assert_is_not_none',
+                'assert_in', 'assert_not_in',
+                'assert_is_instance', 'assert_not_is_instance',
+                'assert_regexp_matches', 'assert_not_regexp_matches']
+
+    class _AssertRaisesContextManager(object):
+
+        def __init__(self, expected_exception):
+            super(_AssertRaisesContextManager, self).__init__()
+            self._expected_exception = expected_exception
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.exception = exc_val
+            return issubclass(exc_type, self._expected_exception)
+
+
+    def assert_is(a, b, msg=None):
         msg = msg or '{0!r} is not {1!r}'.format(a, b)
-        self.assertTrue(a is b, msg)
+        old_assert_true(a is b, msg)
 
-    def assertIsNot(self, a, b, msg=None):
+    def assert_is_not(a, b, msg=None):
         msg = msg or '{0!r} is {1!r}'.format(a, b)
-        self.assertTrue(a is not b, msg)
+        old_assert_true(a is not b, msg)
 
-    def assertIsNone(self, a, msg=None):
+    def assert_is_none(a, msg=None):
         msg = msg or '{0!r} is not None'.format(a)
-        self.assertTrue(a is None, msg)
+        old_assert_true(a is None, msg)
 
-    def assertIsNotNone(self, a, msg=None):
+    def assert_is_not_none(a, msg=None):
         msg = msg or '{0!r} is None'.format(a)
-        self.assertTrue(a is not None, msg)
+        old_assert_true(a is not None, msg)
 
-    def assertIn(self, a, b, msg=None):
+    def assert_in(a, b, msg=None):
         msg = msg or '{0!r} not in {1!r}'.format(a, b)
-        self.assertTrue(a in b, msg)
+        old_assert_true(a in b, msg)
 
-    def assertNotIn(self, a, b, msg=None):
+    def assert_not_in(a, b, msg=None):
         msg = msg or '{0!r} in {1!r}'.format(a, b)
-        self.assertTrue(a not in b, msg)
+        old_assert_true(a not in b, msg)
 
-    def assertIsInstance(self, a, b, msg=None):
+    def assert_is_instance(a, b, msg=None):
         msg = msg or '{0!r} is not an instance of {1}'.format(a, b.__name__)
-        self.assertTrue(isinstance(a, b), msg)
+        old_assert_true(isinstance(a, b), msg)
 
-    def assertNotIsInstance(self, a, b, msg=None):
+    def assert_not_is_instance(a, b, msg=None):
         msg = msg or '{0!r} is an instance of {1}'.format(a, b.__name__)
-        self.assertTrue(not isinstance(a, b), msg)
+        old_assert_true(not isinstance(a, b), msg)
 
-    def assertRegexpMatches(self, s, r, msg=None):
+    def assert_regexp_matches(s, r, msg=None):
         msg = msg or '{0!r} does not match {1!r}'.format(s, r)
-        self.assertTrue(re.match(r, s), msg)
+        old_assert_true(re.match(r, s), msg)
 
-    def assertNotRegexpMatches(self, s, r, msg=None):
+    def assert_not_regexp_matches(s, r, msg=None):
         msg = msg or '{0!r} matches {1!r}'.format(s, r)
-        self.assertFalse(re.match(r, s), msg)
+        old_assert_false(re.match(r, s), msg)
 
-    def assertRaises(self, exception, callable=None, *args, **kwargs):
+    def assert_raises(exception, callable=None, *args, **kwargs):
         if callable:
-            old_assertRaises = super(BackportedAssertions, self).assertRaises
-            return old_assertRaises(exception, callable, *args, **kwargs)
+            return old_assert_raises(exception, callable, *args, **kwargs)
         else:
             return _AssertRaisesContextManager(exception)
 

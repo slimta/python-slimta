@@ -1,5 +1,5 @@
 
-from assertions import BackportedAssertions
+from assertions import *
 from email.encoders import encode_base64
 
 from mox import MoxTestBase, IsA
@@ -13,7 +13,7 @@ from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
 
 
-class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
+class TestSmtpRelayClient(MoxTestBase):
 
     def setUp(self):
         super(TestSmtpRelayClient, self).setUp()
@@ -35,7 +35,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
             raise socket_error(None, None)
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator)
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             client._connect()
 
     def test_banner(self):
@@ -45,7 +45,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._banner()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             client._banner()
 
     def test_ehlo(self):
@@ -57,7 +57,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._connect()
         client._ehlo()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             client._ehlo()
 
     def test_starttls(self):
@@ -74,7 +74,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator, tls=self.tls_args, tls_wrapper=sock.tls_wrapper, tls_required=True)
         client._connect()
         client._starttls()
-        with self.assertRaises(TransientRelayError):
+        with assert_raises(TransientRelayError):
             client._starttls()
 
     def test_handshake_tls_immediately(self):
@@ -163,7 +163,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, self.queue, socket_creator=socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='test')
         client._connect()
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             client._handshake()
 
     def test_mailfrom(self):
@@ -175,7 +175,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._mailfrom('sender')
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             client._mailfrom('sender')
 
     def test_rcptto(self):
@@ -187,7 +187,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._rcptto('recipient')
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             client._rcptto('recipient')
 
     def test_send_message_data(self):
@@ -201,7 +201,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._send_message_data(env)
-        with self.assertRaises(PermanentRelayError):
+        with assert_raises(PermanentRelayError):
             client._send_message_data(env)
 
     def test_send_envelope(self):
@@ -292,7 +292,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         client = SmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._connect()
         client._ehlo()
-        with self.assertRaises(ConnectionLost):
+        with assert_raises(ConnectionLost):
             client._send_envelope(result, env)
 
     def test_send_envelope_conversion(self):
@@ -407,7 +407,7 @@ class TestSmtpRelayClient(MoxTestBase, BackportedAssertions):
         self.sock.close()
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
-        with self.assertRaises(ValueError):
+        with assert_raises(ValueError):
             client._run()
 
     def test_run_smtperror(self):
