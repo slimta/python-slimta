@@ -153,6 +153,8 @@ class QueueStorage(object):
 
         :rtype: :func:`dict`
 
+        .. versionadded:: 0.3.20
+
         """
         raise NotImplementedError()
 
