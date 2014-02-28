@@ -19,10 +19,10 @@
 # THE SOFTWARE.
 #
 
-"""Relays an |Envelope| locally to an external process. This functionality is
-modeled closely off the pipe_ daemon in postfix.
+""".. versionadded:: 0.3.21
 
-.. versionadded:: 0.3.21
+Relays an |Envelope| locally to an external process. This functionality is
+modeled closely off the pipe_ daemon in postfix.
 
 .. _pipe: http://www.postfix.org/pipe.8.html
 .. _courier-maildrop: http://www.courier-mta.org/maildrop/

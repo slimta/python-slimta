@@ -19,7 +19,9 @@
 # THE SOFTWARE.
 #
 
-"""When a client connects to the server, it is useful to know who they claim to
+""".. versionadded:: 0.3.21
+
+When a client connects to the server, it is useful to know who they claim to
 be. One such method is looking up the PTR records for the client's IP address
 in DNS. If it exists, a PTR record will map an IP address to an arbitrary
 hostname.
@@ -29,8 +31,6 @@ their PTR record lookup has not yet finished. This module implements a
 :class:`~gevent.Greenlet` thread that will look up a client's PTR record will
 its request is being processed. If the request finishes before the PTR record
 lookup, the lookup is stopped
-
-.. versionadded:: 0.3.21
 
 """
 
