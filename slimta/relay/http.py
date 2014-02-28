@@ -30,6 +30,7 @@ from __future__ import absolute_import
 
 import re
 import urlparse
+from socket import getfqdn
 from base64 import b64encode
 
 import gevent
@@ -187,7 +188,7 @@ class HttpRelay(RelayPool):
         super(HttpRelay, self).__init__(pool_size)
         self.url = url
         self.tls = tls
-        self.ehlo_as = ehlo_as or socket.getfqdn()
+        self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout
 

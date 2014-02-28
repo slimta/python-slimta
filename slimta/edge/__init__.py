@@ -27,9 +27,9 @@ a listening socket under various protocols.
 from __future__ import absolute_import
 
 import time
+from socket import getfqdn
 
 import gevent
-from gevent.socket import getfqdn
 from gevent.server import StreamServer
 from gevent.ssl import SSLSocket
 

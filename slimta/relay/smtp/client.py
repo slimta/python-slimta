@@ -22,11 +22,11 @@
 from __future__ import absolute_import
 
 import time
-from socket import error as socket_error
+from socket import getfqdn, error as socket_error
 
 import gevent
 from gevent import Timeout, Greenlet
-from gevent.socket import create_connection, getfqdn
+from gevent.socket import create_connection
 
 from slimta.smtp import SmtpError
 from slimta.smtp.reply import Reply
