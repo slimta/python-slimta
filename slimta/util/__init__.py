@@ -69,6 +69,8 @@ with monkeypatch_all():
 #: <http://www.dnspython.org/docs/1.11.1/dns.resolver.Resolver-class.html>`_
 #: monkey-patched with :mod:`gevent`. Additionally it has its
 #: ``retry_servfail`` attribute set to ``True``.
+#:
+#: .. versionadded:: 0.3.19
 dns_resolver = dns.resolver.Resolver()
 dns_resolver.retry_servfail = True
 

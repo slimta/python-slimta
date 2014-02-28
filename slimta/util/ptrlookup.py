@@ -30,6 +30,8 @@ their PTR record lookup has not yet finished. This module implements a
 its request is being processed. If the request finishes before the PTR record
 lookup, the lookup is stopped
 
+.. versionadded:: 0.3.21
+
 """
 
 from __future__ import absolute_import

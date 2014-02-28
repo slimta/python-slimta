@@ -85,9 +85,11 @@ class Edge(object):
             raise
 
     def kill(self):
-        """This method is used by |Edge| and |Edge|-like objects to properly
-        end associated services (such as running :class:`~gevent.Greenlet`
-        threads) and close resources.
+        """.. versionadded:: 0.3.15
+        
+        This method is used by |Edge| and |Edge|-like objects to properly end
+        associated services (such as running :class:`~gevent.Greenlet` threads)
+        and close resources.
 
         """
         pass

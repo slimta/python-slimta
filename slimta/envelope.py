@@ -127,8 +127,10 @@ class Envelope(object):
         self.parse(msg)
 
     def encode_7bit(self, encoder=None):
-        """Forces the message into 7-bit encoding such that it can be sent to
-        SMTP servers that do not support the ``8BITMIME`` extension.
+        """.. versionadded:: 0.3.12
+        
+        Forces the message into 7-bit encoding such that it can be sent to SMTP
+        servers that do not support the ``8BITMIME`` extension.
 
         If the ``encoder`` function is not given, this function is relatively
         cheap and will just check the message body for 8-bit characters
