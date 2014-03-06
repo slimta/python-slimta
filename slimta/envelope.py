@@ -128,7 +128,7 @@ class Envelope(object):
 
     def encode_7bit(self, encoder=None):
         """.. versionadded:: 0.3.12
-        
+
         Forces the message into 7-bit encoding such that it can be sent to SMTP
         servers that do not support the ``8BITMIME`` extension.
 

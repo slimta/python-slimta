@@ -120,7 +120,7 @@ def drop_privileges(user=None, group=None):
 
 class PidFile(object):
     """.. versionadded:: 0.3.13
-    
+
     Context manager which creates a PID file containing the current process id,
     runs the context, and then removes the PID file.
 

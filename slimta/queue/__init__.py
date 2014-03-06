@@ -143,7 +143,7 @@ class QueueStorage(object):
 
     def get_info(self):
         """.. versionadded:: 0.3.20
-        
+
         Queries the storage backend for relevant information about the
         contents of the queue. The result is a :func:`dict` containing required
         keys along with any other custom keys dependent on the particular
