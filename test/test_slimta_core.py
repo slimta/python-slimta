@@ -1,6 +1,8 @@
 
 import unittest
 
+from assertions import *
+
 
 class TestSlimtaCore(unittest.TestCase):
 

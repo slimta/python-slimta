@@ -1,5 +1,7 @@
 
 import unittest
+
+from assertions import *
 from base64 import b64encode
 from email.message import Message
 from email.encoders import encode_base64
@@ -22,17 +24,17 @@ test test
         env2 = env1.copy()
         env2.recipients.append('rcpt2@example.com')
         env2.headers['To'] = 'rcpt2@example.com'
-        self.assertEqual('sender@example.com', env1.sender)
-        self.assertEqual(['rcpt1@example.com'], env1.recipients)
-        self.assertEqual(['rcpt1@example.com'], env1.headers.get_all('To'))
-        self.assertEqual('sender@example.com', env2.sender)
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env2.recipients)
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env2.headers.get_all('To'))
+        assert_equal('sender@example.com', env1.sender)
+        assert_equal(['rcpt1@example.com'], env1.recipients)
+        assert_equal(['rcpt1@example.com'], env1.headers.get_all('To'))
+        assert_equal('sender@example.com', env2.sender)
+        assert_equal(['rcpt1@example.com', 'rcpt2@example.com'], env2.recipients)
+        assert_equal(['rcpt1@example.com', 'rcpt2@example.com'], env2.headers.get_all('To'))
 
     def test_repr(self):
         env = Envelope('sender@example.com')
         s = repr(env)
-        self.assertRegexpMatches(s, r"<Envelope at 0x[a-fA-F0-9]+, sender='sender@example.com'>")
+        assert_regexp_matches(s, r"<Envelope at 0x[a-fA-F0-9]+, sender='sender@example.com'>")
 
     def test_flatten(self):
         headers = Message()
@@ -46,8 +48,8 @@ test test
                                   'To: rcpt2@example.com',
                                   '', ''])
         ret_headers, ret_body = env.flatten()
-        self.assertEqual(header_str, ret_headers)
-        self.assertEqual(body, ret_body)
+        assert_equal(header_str, ret_headers)
+        assert_equal(body, ret_body)
 
     def test_encode_7bit(self):
         headers = Message()
@@ -58,7 +60,7 @@ test test
         header_str = '\r\n'.join(['From: sender@example.com',
                                   'To: rcpt@example.com',
                                   '', ''])
-        with self.assertRaises(UnicodeDecodeError):
+        with assert_raises(UnicodeDecodeError):
             env.encode_7bit()
 
     def test_encode_7bit_encoding(self):
@@ -74,8 +76,8 @@ test test
         body_str = 'gYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5\nuru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy\n8/T19vf4+fr7/P3+/w=='
         env.encode_7bit(encoder=encode_base64)
         ret_headers, ret_body = env.flatten()
-        self.assertEqual(header_str, ret_headers)
-        self.assertEqual(body_str, ret_body)
+        assert_equal(header_str, ret_headers)
+        assert_equal(body_str, ret_body)
 
     def test_parse(self):
         env = Envelope()
@@ -86,10 +88,10 @@ To: rcpt2@example.com
 
 test test\r
 """)
-        self.assertEqual('sender@example.com', env.headers['from'])
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
+        assert_equal('sender@example.com', env.headers['from'])
+        assert_equal(['rcpt1@example.com', 'rcpt2@example.com'],
                          env.headers.get_all('To'))
-        self.assertEqual('test test\r\n', env.message)
+        assert_equal('test test\r\n', env.message)
 
     def test_parse_onlyheaders(self):
         env = Envelope()
@@ -97,9 +99,9 @@ test test\r
 From: sender@example.com
 Subject: important things
 """)
-        self.assertEqual('sender@example.com', env.headers['from'])
-        self.assertEqual('important things', env.headers['subject'])
-        self.assertEqual('', env.message)
+        assert_equal('sender@example.com', env.headers['from'])
+        assert_equal('important things', env.headers['subject'])
+        assert_equal('', env.message)
 
     def test_parse_message_object(self):
         data = Message()
@@ -109,9 +111,9 @@ Subject: important things
         data.set_payload('test test\r\n')
         env = Envelope()
         env.parse(data)
-        self.assertEqual('sender@example.com', env.headers['from'])
-        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env.headers.get_all('to'))
-        self.assertEqual('test test\r\n', env.message)
+        assert_equal('sender@example.com', env.headers['from'])
+        assert_equal(['rcpt1@example.com', 'rcpt2@example.com'], env.headers.get_all('to'))
+        assert_equal('test test\r\n', env.message)
 
     def test_bounce(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',
@@ -137,12 +139,12 @@ EOM
 """
         bounce = Bounce(env, reply)
 
-        self.assertEqual('', bounce.sender)
-        self.assertEqual(['sender@example.com'], bounce.recipients)
-        self.assertEqual('550', bounce.headers['X-Reply-Code'])
-        self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
-        self.assertEqual('sender@example.com', bounce.headers['X-Orig-Sender'])
-        self.assertEqual("""\
+        assert_equal('', bounce.sender)
+        assert_equal(['sender@example.com'], bounce.recipients)
+        assert_equal('550', bounce.headers['X-Reply-Code'])
+        assert_equal('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
+        assert_equal('sender@example.com', bounce.headers['X-Orig-Sender'])
+        assert_equal("""\
 From: sender@example.com\r
 To: rcpt1@example.com\r
 To: rcpt2@example.com\r
@@ -176,12 +178,12 @@ EOM\r
 """
         bounce = Bounce(env, reply, headers_only=True)
 
-        self.assertEqual('', bounce.sender)
-        self.assertEqual(['sender@example.com'], bounce.recipients)
-        self.assertEqual('550', bounce.headers['X-Reply-Code'])
-        self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
-        self.assertEqual('sender@example.com', bounce.headers['X-Orig-Sender'])
-        self.assertEqual("""\
+        assert_equal('', bounce.sender)
+        assert_equal(['sender@example.com'], bounce.recipients)
+        assert_equal('550', bounce.headers['X-Reply-Code'])
+        assert_equal('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
+        assert_equal('sender@example.com', bounce.headers['X-Orig-Sender'])
+        assert_equal("""\
 From: sender@example.com\r
 To: rcpt1@example.com\r
 To: rcpt2@example.com\r

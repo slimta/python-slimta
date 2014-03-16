@@ -1,0 +1,6 @@
+nose
+mox
+testfixtures
+coverage
+nosexcover
+pep8

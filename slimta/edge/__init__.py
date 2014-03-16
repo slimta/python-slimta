@@ -27,9 +27,9 @@ a listening socket under various protocols.
 from __future__ import absolute_import
 
 import time
+from socket import getfqdn
 
 import gevent
-from gevent.socket import getfqdn
 from gevent.server import StreamServer
 from gevent.ssl import SSLSocket
 
@@ -85,9 +85,11 @@ class Edge(object):
             raise
 
     def kill(self):
-        """This method is used by |Edge| and |Edge|-like objects to properly
-        end associated services (such as running :class:`~gevent.Greenlet`
-        threads) and close resources.
+        """.. versionadded:: 0.3.15
+
+        This method is used by |Edge| and |Edge|-like objects to properly end
+        associated services (such as running :class:`~gevent.Greenlet` threads)
+        and close resources.
 
         """
         pass

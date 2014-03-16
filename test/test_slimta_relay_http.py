@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import *
 
 from mox import MoxTestBase, IsA, IgnoreArg
 from gevent.event import AsyncResult
@@ -17,7 +17,7 @@ class TestHttpRelay(MoxTestBase):
     def test_add_client(self):
         static = HttpRelay('http://testurl')
         ret = static.add_client()
-        self.assertIsInstance(ret, HttpRelayClient)
+        assert_is_instance(ret, HttpRelayClient)
 
 
 class TestHttpRelayClient(MoxTestBase):
@@ -80,15 +80,15 @@ class TestHttpRelayClient(MoxTestBase):
         http_res.getheader('X-Smtp-Reply', '').AndReturn('asdf')
         self.mox.ReplayAll()
         reply1 = self.client._parse_smtp_reply_header(http_res)
-        self.assertEqual('250', reply1.code)
-        self.assertEqual('2.0.0 Ok', reply1.message)
-        self.assertEqual(None, reply1.command)
+        assert_equal('250', reply1.code)
+        assert_equal('2.0.0 Ok', reply1.message)
+        assert_equal(None, reply1.command)
         reply2 = self.client._parse_smtp_reply_header(http_res)
-        self.assertEqual('550', reply2.code)
-        self.assertEqual('5.0.0 Nope', reply2.message)
-        self.assertEqual('smtpcmd', reply2.command)
+        assert_equal('550', reply2.code)
+        assert_equal('5.0.0 Nope', reply2.message)
+        assert_equal('smtpcmd', reply2.command)
         reply3 = self.client._parse_smtp_reply_header(http_res)
-        self.assertEqual(None, reply3)
+        assert_equal(None, reply3)
 
     def test_process_response_200(self):
         http_res = self.mox.CreateMockAnything()

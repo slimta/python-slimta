@@ -1,6 +1,8 @@
 
-import uuid
 import unittest
+import uuid
+
+from assertions import *
 
 from testfixtures import log_capture
 

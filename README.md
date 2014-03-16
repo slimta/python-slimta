@@ -13,7 +13,8 @@ can incorporate any protocol or policy, custom or built-in. An MTA built with
 `python-slimta` can integrate with other Python libraries and take advantage of
 Python's great community.
 
-The `python-slimta` project is released under the [MIT License][4].
+The `python-slimta` project is released under the [MIT License][4]. It requires
+Python 2.6+ and is **not** currently compatible with 3.x.
 
 [![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
 
@@ -29,7 +30,7 @@ Use a [virtualenv][2] to get started developing against `python-slimta`:
 
 To run the suite of unit tests included with `slimta`:
 
-    (.venv)$ pip install nose mox testfixtures
+    (.venv)$ pip install -r test/requirements.txt
     (.venv)$ nosetests
 
 Running the Example

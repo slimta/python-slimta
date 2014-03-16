@@ -1,6 +1,5 @@
 
-import unittest
-
+from assertions import *
 from mox import MoxTestBase, IsA
 
 from slimta.util import build_auth_from_dict
@@ -14,22 +13,22 @@ class TestUtil(MoxTestBase):
         Auth1 = build_auth_from_dict(test)
         Auth2 = build_auth_from_dict(test, lower_case=True)
         Auth3 = build_auth_from_dict(test, only_verify=False)
-        self.assertTrue(issubclass(Auth1, Auth))
-        self.assertTrue(issubclass(Auth2, Auth))
-        self.assertTrue(issubclass(Auth3, Auth))
+        assert_true(issubclass(Auth1, Auth))
+        assert_true(issubclass(Auth2, Auth))
+        assert_true(issubclass(Auth3, Auth))
         auth1 = Auth1(None)
         auth2 = Auth2(None)
         auth3 = Auth3(None)
-        self.assertEqual('user@example.com', auth1.verify_secret('user@example.com', 'asdftest', None))
-        with self.assertRaises(CredentialsInvalidError):
+        assert_equal('user@example.com', auth1.verify_secret('user@example.com', 'asdftest', None))
+        with assert_raises(CredentialsInvalidError):
             auth1.verify_secret('user@example.com', 'derp', None)
-        with self.assertRaises(CredentialsInvalidError):
+        with assert_raises(CredentialsInvalidError):
             auth1.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        with self.assertRaises(CredentialsInvalidError):
+        with assert_raises(CredentialsInvalidError):
             auth1.get_secret('user@example.com', None)
         auth2.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        self.assertEqual(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))
-        with self.assertRaises(CredentialsInvalidError):
+        assert_equal(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))
+        with assert_raises(CredentialsInvalidError):
             auth3.get_secret('bad@example.com', None)
 
 

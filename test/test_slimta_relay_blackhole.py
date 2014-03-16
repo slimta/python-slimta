@@ -1,6 +1,8 @@
 
 import unittest
 
+from assertions import *
+
 from slimta.relay.blackhole import BlackholeRelay
 from slimta.envelope import Envelope
 from slimta.policy import RelayPolicy
@@ -12,7 +14,7 @@ class TestBlackholeRelay(unittest.TestCase):
         env = Envelope()
         blackhole = BlackholeRelay()
         ret = blackhole.attempt(env, 0)
-        self.assertEqual('250', ret.code)
+        assert_equal('250', ret.code)
 
     def test_attempt_policies(self):
         class BadPolicy(RelayPolicy):
@@ -22,7 +24,7 @@ class TestBlackholeRelay(unittest.TestCase):
         blackhole = BlackholeRelay()
         blackhole.add_policy(BadPolicy())
         ret = blackhole._attempt(env, 0)
-        self.assertEqual('250', ret.code)
+        assert_equal('250', ret.code)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

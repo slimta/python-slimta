@@ -119,8 +119,10 @@ def drop_privileges(user=None, group=None):
 
 
 class PidFile(object):
-    """Context manager which creates a PID file containing the current process
-    id, runs the context, and then removes the PID file.
+    """.. versionadded:: 0.3.13
+
+    Context manager which creates a PID file containing the current process id,
+    runs the context, and then removes the PID file.
 
     An :py:exc:`OSError` exceptions when creating the PID file will be
     propogated without executing the context.

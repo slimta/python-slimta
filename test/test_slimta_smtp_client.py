@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import *
 
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -21,18 +21,18 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.get_reply('[TEST]')
-        self.assertEqual('421', reply.code)
-        self.assertEqual('4.0.0 Test', reply.message)
-        self.assertEqual('[TEST]', reply.command)
+        assert_equal('421', reply.code)
+        assert_equal('4.0.0 Test', reply.message)
+        assert_equal('[TEST]', reply.command)
 
     def test_get_banner(self):
         self.sock.recv(IsA(int)).AndReturn('220 Go\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.get_banner()
-        self.assertEqual('220', reply.code)
-        self.assertEqual('Go', reply.message)
-        self.assertEqual('[BANNER]', reply.command)
+        assert_equal('220', reply.code)
+        assert_equal('Go', reply.message)
+        assert_equal('[BANNER]', reply.command)
 
     def test_custom_command(self):
         self.sock.sendall('cmd arg\r\n')
@@ -40,9 +40,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.custom_command('cmd', 'arg')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('CMD', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('CMD', reply.command)
 
     def test_ehlo(self):
         self.sock.sendall('EHLO there\r\n')
@@ -51,12 +51,12 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.ehlo('there')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('Hello there', reply.message)
-        self.assertEqual('EHLO', reply.command)
-        self.assertTrue('TEST' in client.extensions)
-        self.assertTrue('EXTEN' in client.extensions)
-        self.assertEqual('arg', client.extensions.getparam('TEST'))
+        assert_equal('250', reply.code)
+        assert_equal('Hello there', reply.message)
+        assert_equal('EHLO', reply.command)
+        assert_true('TEST' in client.extensions)
+        assert_true('EXTEN' in client.extensions)
+        assert_equal('arg', client.extensions.getparam('TEST'))
 
     def test_helo(self):
         self.sock.sendall('HELO there\r\n')
@@ -64,9 +64,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.helo('there')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('Hello', reply.message)
-        self.assertEqual('HELO', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('Hello', reply.message)
+        assert_equal('HELO', reply.command)
 
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
@@ -77,9 +77,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(sock, tls_wrapper=sock.tls_wrapper)
         reply = client.starttls(self.tls_args)
-        self.assertEqual('220', reply.code)
-        self.assertEqual('2.0.0 Go ahead', reply.message)
-        self.assertEqual('STARTTLS', reply.command)
+        assert_equal('220', reply.code)
+        assert_equal('2.0.0 Go ahead', reply.message)
+        assert_equal('STARTTLS', reply.command)
 
     def test_starttls_noencrypt(self):
         self.sock.sendall('STARTTLS\r\n')
@@ -87,9 +87,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.starttls({})
-        self.assertEqual('420', reply.code)
-        self.assertEqual('4.0.0 Nope', reply.message)
-        self.assertEqual('STARTTLS', reply.command)
+        assert_equal('420', reply.code)
+        assert_equal('4.0.0 Nope', reply.message)
+        assert_equal('STARTTLS', reply.command)
 
     def test_auth(self):
         self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
@@ -98,9 +98,9 @@ class TestSmtpClient(MoxTestBase):
         client = Client(self.sock)
         client.extensions.add('AUTH', 'PLAIN')
         reply = client.auth('test@example.com', 'asdf')
-        self.assertEqual('235', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('AUTH', reply.command)
+        assert_equal('235', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('AUTH', reply.command)
 
     def test_auth_force_mechanism(self):
         self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
@@ -108,9 +108,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.auth('test@example.com', 'asdf', mechanism=Plain)
-        self.assertEqual('535', reply.code)
-        self.assertEqual('5.0.0 Nope!', reply.message)
-        self.assertEqual('AUTH', reply.command)
+        assert_equal('535', reply.code)
+        assert_equal('5.0.0 Nope!', reply.message)
+        assert_equal('AUTH', reply.command)
 
     def test_mailfrom(self):
         self.sock.sendall('MAIL FROM:<test>\r\n')
@@ -118,9 +118,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.mailfrom('test')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('MAIL', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('MAIL', reply.command)
 
     def test_mailfrom_pipelining(self):
         self.sock.sendall('MAIL FROM:<test>\r\n')
@@ -129,12 +129,12 @@ class TestSmtpClient(MoxTestBase):
         client = Client(self.sock)
         client.extensions.add('PIPELINING')
         reply = client.mailfrom('test')
-        self.assertEqual(None, reply.code)
-        self.assertEqual(None, reply.message)
-        self.assertEqual('MAIL', reply.command)
+        assert_equal(None, reply.code)
+        assert_equal(None, reply.message)
+        assert_equal('MAIL', reply.command)
         client._flush_pipeline()
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
 
     def test_mailfrom_size(self):
         self.sock.sendall('MAIL FROM:<test> SIZE=10\r\n')
@@ -143,9 +143,9 @@ class TestSmtpClient(MoxTestBase):
         client = Client(self.sock)
         client.extensions.add('SIZE', 100)
         reply = client.mailfrom('test', 10)
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('MAIL', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('MAIL', reply.command)
 
     def test_rcptto(self):
         self.sock.sendall('RCPT TO:<test>\r\n')
@@ -153,9 +153,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.rcptto('test')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('RCPT', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('RCPT', reply.command)
 
     def test_rcptto_pipelining(self):
         self.sock.sendall('RCPT TO:<test>\r\n')
@@ -164,12 +164,12 @@ class TestSmtpClient(MoxTestBase):
         client = Client(self.sock)
         client.extensions.add('PIPELINING')
         reply = client.rcptto('test')
-        self.assertEqual(None, reply.code)
-        self.assertEqual(None, reply.message)
-        self.assertEqual('RCPT', reply.command)
+        assert_equal(None, reply.code)
+        assert_equal(None, reply.message)
+        assert_equal('RCPT', reply.command)
         client._flush_pipeline()
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
 
     def test_data(self):
         self.sock.sendall('DATA\r\n')
@@ -177,9 +177,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.data()
-        self.assertEqual('354', reply.code)
-        self.assertEqual('Go ahead', reply.message)
-        self.assertEqual('DATA', reply.command)
+        assert_equal('354', reply.code)
+        assert_equal('Go ahead', reply.message)
+        assert_equal('DATA', reply.command)
 
     def test_send_empty_data(self):
         self.sock.sendall('.\r\n')
@@ -187,9 +187,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.send_empty_data()
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Done', reply.message)
-        self.assertEqual('[SEND_DATA]', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Done', reply.message)
+        assert_equal('[SEND_DATA]', reply.command)
 
     def test_send_data(self):
         self.sock.sendall('One\r\nTwo\r\n..Three\r\n.\r\n')
@@ -197,9 +197,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.send_data('One\r\nTwo\r\n.Three')
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Done', reply.message)
-        self.assertEqual('[SEND_DATA]', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Done', reply.message)
+        assert_equal('[SEND_DATA]', reply.command)
 
     def test_rset(self):
         self.sock.sendall('RSET\r\n')
@@ -207,9 +207,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.rset()
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual('RSET', reply.command)
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('RSET', reply.command)
 
     def test_quit(self):
         self.sock.sendall('QUIT\r\n')
@@ -217,9 +217,9 @@ class TestSmtpClient(MoxTestBase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.quit()
-        self.assertEqual('221', reply.code)
-        self.assertEqual('2.0.0 Bye', reply.message)
-        self.assertEqual('QUIT', reply.command)
+        assert_equal('221', reply.code)
+        assert_equal('2.0.0 Bye', reply.message)
+        assert_equal('QUIT', reply.command)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

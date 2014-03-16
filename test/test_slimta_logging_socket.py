@@ -2,6 +2,8 @@
 import unittest
 import socket
 
+from assertions import *
+
 from testfixtures import log_capture
 
 from slimta.logging import getSocketLogger

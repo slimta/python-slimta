@@ -1,8 +1,8 @@
 
-import unittest
+from assertions import *
 
 from mox import MoxTestBase, IsA
-from gevent.coros import Semaphore
+from gevent.lock import Semaphore
 
 from slimta.util.deque import BlockingDeque
 
@@ -58,7 +58,7 @@ class TestBlockingDeque(MoxTestBase):
         self.mox.ReplayAll()
         self.deque.append(4)
         self.deque.append(5)
-        self.assertEqual(5, self.deque.pop())
+        assert_equal(5, self.deque.pop())
 
     def test_popleft(self):
         self.deque.sema.release()
@@ -67,7 +67,7 @@ class TestBlockingDeque(MoxTestBase):
         self.mox.ReplayAll()
         self.deque.append(4)
         self.deque.append(5)
-        self.assertEqual(4, self.deque.popleft())
+        assert_equal(4, self.deque.popleft())
 
     def test_remove(self):
         self.deque.sema.release()
@@ -84,7 +84,7 @@ class TestBlockingDeque(MoxTestBase):
         self.mox.ReplayAll()
         self.deque.append(4)
         self.deque.append(5)
-        with self.assertRaises(ValueError):
+        with assert_raises(ValueError):
             self.deque.remove(6)
 
 

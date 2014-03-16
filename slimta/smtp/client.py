@@ -80,6 +80,8 @@ class Client(object):
 
         """
         sock_fd = self.io.socket.fileno()
+        if sock_fd < 0:
+            return False
         try:
             wait_read(sock_fd, 0.1, Timeout())
         except Timeout:

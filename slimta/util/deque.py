@@ -23,7 +23,7 @@ from __future__ import absolute_import
 
 from collections import deque
 
-from gevent.coros import Semaphore
+from gevent.lock import Semaphore
 
 __all__ = ['BlockingDeque']
 

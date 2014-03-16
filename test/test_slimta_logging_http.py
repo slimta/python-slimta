@@ -1,6 +1,8 @@
 
 import unittest
 
+from assertions import *
+
 from testfixtures import log_capture
 
 from slimta.logging import getHttpLogger

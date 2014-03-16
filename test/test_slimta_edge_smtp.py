@@ -1,5 +1,5 @@
 
-import unittest
+from assertions import *
 
 from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
@@ -26,29 +26,15 @@ class TestEdgeSmtp(MoxTestBase):
         h = SmtpSession(None, mock, None)
         h._call_validator('test', 'arg')
 
-    def test_ptr_lookup(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(NXDOMAIN)
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
-        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
-        self.mox.ReplayAll()
-        h = SmtpSession(('1.2.3.4', None), None, None)
-        h._ptr_lookup()
-        self.assertIsNone(h.reverse_address)
-        h._ptr_lookup()
-        self.assertIsNone(h.reverse_address)
-        h._ptr_lookup()
-        self.assertEqual('example.com', h.reverse_address)
-
     def test_protocol_attribute(self):
         h = SmtpSession(None, None, None)
-        self.assertEqual('SMTP', h.protocol)
+        assert_equal('SMTP', h.protocol)
         h.extended_smtp = True
-        self.assertEqual('ESMTP', h.protocol)
+        assert_equal('ESMTP', h.protocol)
         h.security = 'TLS'
-        self.assertEqual('ESMTPS', h.protocol)
+        assert_equal('ESMTPS', h.protocol)
         h.auth_result = 'test'
-        self.assertEqual('ESMTPSA', h.protocol)
+        assert_equal('ESMTPSA', h.protocol)
 
     def test_simple_handshake(self):
         mock = self.mox.CreateMockAnything()
@@ -59,8 +45,8 @@ class TestEdgeSmtp(MoxTestBase):
         h = SmtpSession(('127.0.0.1', 0), mock, None)
         h.BANNER_(Reply('220'))
         h.HELO(Reply('250'), 'there')
-        self.assertEqual('there', h.ehlo_as)
-        self.assertFalse(h.extended_smtp)
+        assert_equal('there', h.ehlo_as)
+        assert_false(h.extended_smtp)
 
     def test_extended_handshake(self):
         mock = self.mox.CreateMockAnything()
@@ -74,11 +60,11 @@ class TestEdgeSmtp(MoxTestBase):
         h.EHLO(Reply('250'), 'there')
         h.TLSHANDSHAKE()
         h.AUTH(Reply('250'), 'testauth')
-        self.assertEqual('there', h.ehlo_as)
-        self.assertTrue(h.extended_smtp)
-        self.assertEqual('TLS', h.security)
-        self.assertEqual('testauth', h.auth_result)
-        self.assertEqual('ESMTPSA', h.protocol)
+        assert_equal('there', h.ehlo_as)
+        assert_true(h.extended_smtp)
+        assert_equal('TLS', h.security)
+        assert_equal('testauth', h.auth_result)
+        assert_equal('ESMTPSA', h.protocol)
 
     def test_mail_rcpt_data_rset(self):
         mock = self.mox.CreateMockAnything()
@@ -90,18 +76,18 @@ class TestEdgeSmtp(MoxTestBase):
         h = SmtpSession(None, mock, None)
         h.MAIL(Reply('250'), 'sender@example.com', {})
         h.RCPT(Reply('250'), 'rcpt@example.com', {})
-        self.assertEqual('sender@example.com', h.envelope.sender)
-        self.assertEqual(['rcpt@example.com'], h.envelope.recipients)
+        assert_equal('sender@example.com', h.envelope.sender)
+        assert_equal(['rcpt@example.com'], h.envelope.recipients)
         h.DATA(Reply('550'))
         h.RSET(Reply('250'))
-        self.assertFalse(h.envelope)
+        assert_false(h.envelope)
 
     def test_have_data_errors(self):
         h = SmtpSession(None, None, None)
         reply = Reply('250')
         h.HAVE_DATA(reply, None, MessageTooBig())
-        self.assertEqual('552', reply.code)
-        with self.assertRaises(ValueError):
+        assert_equal('552', reply.code)
+        with assert_raises(ValueError):
             h.HAVE_DATA(reply, None, ValueError())
 
     def test_have_data(self):
@@ -113,8 +99,8 @@ class TestEdgeSmtp(MoxTestBase):
         h.envelope = env
         reply = Reply('250')
         h.HAVE_DATA(reply, '', None)
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.6.0 Message accepted for delivery', reply.message)
+        assert_equal('250', reply.code)
+        assert_equal('2.6.0 Message accepted for delivery', reply.message)
 
     def test_have_data_queueerror(self):
         env = Envelope()
@@ -125,8 +111,8 @@ class TestEdgeSmtp(MoxTestBase):
         h.envelope = env
         reply = Reply('250')
         h.HAVE_DATA(reply, '', None)
-        self.assertEqual('550', reply.code)
-        self.assertEqual('5.6.0 Error queuing message', reply.message)
+        assert_equal('550', reply.code)
+        assert_equal('5.6.0 Error queuing message', reply.message)
 
     def test_smtp_edge(self):
         queue = self.mox.CreateMockAnything()
