@@ -236,7 +236,8 @@ class SmtpRelayClient(RelayPoolClient):
             if not result:
                 return
             if not result.ready():
-                reply = Reply('451', '4.3.0 {0!s}'.format(e))
+                msg = '4.3.0 {0!s}'.format(e)
+                reply = Reply('450', msg)
                 raise TransientRelayError(msg, reply)
         except Exception as e:
             if not result.ready():
