@@ -33,7 +33,7 @@ from slimta.smtp.reply import Reply
 from slimta.smtp.client import Client
 from slimta import logging
 from ..pool import RelayPoolClient
-from . import SmtpRelayError
+from . import SmtpRelayError, TransientRelayError
 
 __all__ = ['SmtpRelayClient']
 
@@ -232,6 +232,12 @@ class SmtpRelayClient(RelayPoolClient):
                 reply = Reply('421', '4.3.0 {0!s}'.format(e))
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
+        except Timeout as e:
+            if not result:
+                return
+            if not result.ready():
+                reply = Reply('451', '4.3.0 {0!s}'.format(e))
+                raise TransientRelayError(msg, reply)
         except Exception as e:
             if not result.ready():
                 result.set_exception(e)
