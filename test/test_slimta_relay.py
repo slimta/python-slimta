@@ -3,12 +3,18 @@ from assertions import *
 
 from mox import MoxTestBase, IsA
 
-from slimta.relay import Relay
+from slimta.relay import Relay, PermanentRelayError, TransientRelayError
 from slimta.policy import RelayPolicy
 from slimta.envelope import Envelope
 
 
 class TestRelay(MoxTestBase):
+
+    def test_default_replies(self):
+        perm = PermanentRelayError('test msg')
+        transient = TransientRelayError('test msg')
+        self.assertEqual('550 5.0.0 test msg', str(perm.reply))
+        self.assertEqual('450 4.0.0 test msg', str(transient.reply))
 
     def test_policies(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])

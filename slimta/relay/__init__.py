@@ -27,6 +27,7 @@ be another SMTP hop, or it could be implemented as a final delivery mechanism.
 from __future__ import absolute_import
 
 from slimta.core import SlimtaError
+from slimta.smtp.reply import Reply
 from slimta.policy import RelayPolicy
 
 __all__ = ['PermanentRelayError', 'TransientRelayError', 'Relay']
@@ -37,6 +38,9 @@ class RelayError(SlimtaError):
         super(RelayError, self).__init__(msg)
         if reply:
             self.reply = reply
+        else:
+            reply_msg = self._default_esc + ' ' + msg
+            self.reply = Reply(self._default_code, reply_msg)
 
 
 class PermanentRelayError(RelayError):
@@ -44,7 +48,9 @@ class PermanentRelayError(RelayError):
     be successfully delivered no matter how many times delivery is attempted.
 
     """
-    pass
+
+    _default_code = '550'
+    _default_esc = '5.0.0'
 
 
 class TransientRelayError(RelayError):
@@ -52,7 +58,9 @@ class TransientRelayError(RelayError):
     successful if tried again later.
 
     """
-    pass
+
+    _default_code = '450'
+    _default_esc = '4.0.0'
 
 
 class Relay(object):
