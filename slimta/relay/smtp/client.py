@@ -203,6 +203,8 @@ class SmtpRelayClient(RelayPoolClient):
         try:
             with Timeout(self.command_timeout):
                 self.client.quit()
+        except Timeout as e:
+            pass
         except Exception:
             pass
         finally:
