@@ -126,29 +126,22 @@ class Server(object):
         self.data_timeout = data_timeout or command_timeout
 
     def _recv_command(self):
-        timeout = Timeout(self.command_timeout)
-        timeout.start()
-        try:
+        with Timeout(self.command_timeout):
             return self.io.recv_command()
-        finally:
-            timeout.cancel()
 
     def _get_message_data(self):
         max_size = self.extensions.getparam('SIZE', filter=int)
         reader = DataReader(self.io, max_size)
 
         err = None
-        timeout = Timeout(self.data_timeout)
-        timeout.start()
-        try:
-            data = reader.recv()
-        except ConnectionLost:
-            raise
-        except SmtpError as e:
-            data = None
-            err = e
-        finally:
-            timeout.cancel()
+        with Timeout(self.data_timeout):
+            try:
+                data = reader.recv()
+            except ConnectionLost:
+                raise
+            except SmtpError as e:
+                data = None
+                err = e
 
         reply = Reply('250', '2.6.0 Message Accepted for Delivery')
         self._call_custom_handler('HAVE_DATA', reply, data, err)
