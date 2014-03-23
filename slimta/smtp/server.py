@@ -32,7 +32,6 @@ import re
 from gevent.ssl import SSLError
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
-from gevent.timeout import Timeout as TimeoutHappened
 
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
@@ -201,7 +200,7 @@ class Server(object):
                 break
             except ConnectionLost:
                 raise
-            except TimeoutHappened:
+            except Timeout:
                 timed_out.send(self.io)
                 self.io.flush_send()
                 break
@@ -213,7 +212,7 @@ class Server(object):
 
             try:
                 command, arg = self._recv_command()
-            except TimeoutHappened:
+            except Timeout:
                 timed_out.send(self.io)
                 self.io.flush_send()
                 break
