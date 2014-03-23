@@ -3,8 +3,9 @@ from assertions import *
 
 from mox import MoxTestBase, IsA
 import dns.resolver
+from dns.exception import Timeout as DNSTimeout
 
-from slimta.relay import PermanentRelayError
+from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.mx import MxSmtpRelay, MxRecord, NoDomainError
 from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.util import dns_resolver
@@ -142,6 +143,16 @@ class TestMxSmtpRelay(MoxTestBase):
         dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
         self.mox.ReplayAll()
         with assert_raises(PermanentRelayError):
+            mx.attempt(env, 0)
+
+    def test_attempt_no_answer(self):
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        mx = MxSmtpRelay()
+        self.mox.StubOutWithMock(mx, 'new_static_relay')
+        self.mox.StubOutWithMock(dns_resolver, 'query')
+        dns_resolver.query('example.com', 'MX').AndRaise(DNSTimeout)
+        self.mox.ReplayAll()
+        with assert_raises(TransientRelayError):
             mx.attempt(env, 0)
 
 

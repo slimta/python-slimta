@@ -32,10 +32,12 @@ from __future__ import absolute_import
 import time
 
 from dns.resolver import NXDOMAIN, NoAnswer
+from dns.exception import DNSException
 
+from slimta.logging import log_exception
 from slimta.smtp.reply import Reply
 from slimta.util import dns_resolver
-from .. import PermanentRelayError, Relay
+from .. import TransientRelayError, PermanentRelayError, Relay
 from .static import StaticSmtpRelay
 
 __all__ = ['MxSmtpRelay']
@@ -204,6 +206,11 @@ class MxSmtpRelay(Relay):
                 msg = str(exc)
                 reply = Reply('550', '5.1.2 '+msg)
                 raise PermanentRelayError(msg, reply)
+            except DNSException:
+                log_exception(__name__)
+                msg = 'DNS lookup failed'
+                reply = Reply('451', '4.4.3 '+msg)
+                raise TransientRelayError(msg, reply)
             port = 25
         try:
             relayer = self._relayers[(dest, port)]
