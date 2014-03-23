@@ -33,7 +33,7 @@ from slimta.smtp.reply import Reply
 from slimta.smtp.client import Client
 from slimta import logging
 from ..pool import RelayPoolClient
-from . import SmtpRelayError, TransientRelayError
+from . import SmtpRelayError
 
 __all__ = ['SmtpRelayClient']
 
