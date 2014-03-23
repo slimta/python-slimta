@@ -227,14 +227,9 @@ class SmtpRelayClient(RelayPoolClient):
                 result, envelope = self.poll()
         except SmtpRelayError as e:
             result.set_exception(e)
-        except SmtpError as e:
+        except (SmtpError, Timeout) as e:
             if not result.ready():
                 reply = Reply('421', '4.3.0 {0!s}'.format(e))
-                relay_error = SmtpRelayError.factory(reply)
-                result.set_exception(relay_error)
-        except Timeout as e:
-            if not result.ready():
-                reply = Reply('450', '4.3.0 {0!s}'.format(e))
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Exception as e:
