@@ -185,30 +185,26 @@ class Server(object):
         command, arg = 'BANNER_', None
         while True:
             try:
-                if command:
-                    self._handle_command(command, arg)
-                else:
-                    unknown_command.send(self.io)
-            except StopIteration:
-                break
-            except ConnectionLost:
-                raise
-            except Timeout:
-                timed_out.send(self.io)
-                self.io.flush_send()
-                break
-            except Exception as e:
-                unhandled_error.send(self.io)
-                raise
-            finally:
-                self.io.flush_send()
+                try:
+                    if command:
+                        self._handle_command(command, arg)
+                    else:
+                        unknown_command.send(self.io)
+                except StopIteration:
+                    break
+                except ConnectionLost:
+                    raise
+                except Exception as e:
+                    unhandled_error.send(self.io)
+                    raise
+                finally:
+                    self.io.flush_send()
 
-            try:
                 command, arg = self._recv_command()
             except Timeout:
                 timed_out.send(self.io)
                 self.io.flush_send()
-                break
+                raise ConnectionLost()
 
     def _gather_params(self, remaining):
         params = {}
