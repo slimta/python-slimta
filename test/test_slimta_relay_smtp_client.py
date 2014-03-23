@@ -3,6 +3,7 @@ from assertions import *
 from email.encoders import encode_base64
 
 from mox import MoxTestBase, IsA
+from gevent import Timeout
 from gevent.socket import socket, error as socket_error
 from gevent.event import AsyncResult
 
@@ -417,6 +418,22 @@ class TestSmtpRelayClient(MoxTestBase):
         queue = BlockingDeque()
         queue.append((result, env))
         self.sock.recv(IsA(int)).AndRaise(SmtpError('test error'))
+        result.ready().AndReturn(False)
+        result.set_exception(IsA(TransientRelayError))
+        self.sock.sendall('QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn('221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
+        client._run()
+
+    def test_run_timeout(self):
+        result = self.mox.CreateMock(AsyncResult)
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        queue = BlockingDeque()
+        queue.append((result, env))
+        self.sock.recv(IsA(int)).AndRaise(Timeout(0.0))
         result.ready().AndReturn(False)
         result.set_exception(IsA(TransientRelayError))
         self.sock.sendall('QUIT\r\n')

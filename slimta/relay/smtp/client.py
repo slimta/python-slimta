@@ -29,7 +29,7 @@ from gevent import Timeout, Greenlet
 from gevent.socket import create_connection
 
 from slimta.smtp import SmtpError
-from slimta.smtp.reply import Reply
+from slimta.smtp.reply import Reply, timed_out
 from slimta.smtp.client import Client
 from slimta import logging
 from ..pool import RelayPoolClient
@@ -227,10 +227,14 @@ class SmtpRelayClient(RelayPoolClient):
                 result, envelope = self.poll()
         except SmtpRelayError as e:
             result.set_exception(e)
-        except (SmtpError, Timeout) as e:
+        except SmtpError as e:
             if not result.ready():
                 reply = Reply('421', '4.3.0 {0!s}'.format(e))
                 relay_error = SmtpRelayError.factory(reply)
+                result.set_exception(relay_error)
+        except Timeout:
+            if not result.ready():
+                relay_error = SmtpRelayError.factory(timed_out)
                 result.set_exception(relay_error)
         except Exception as e:
             if not result.ready():
