@@ -103,6 +103,13 @@ Subject: important things
         assert_equal('important things', env.headers['subject'])
         assert_equal('', env.message)
 
+    def test_parse_onlybody(self):
+        env = Envelope()
+        env.parse("""\
+important things
+""")
+        assert_equal('important things\n', env.message)
+
     def test_parse_message_object(self):
         data = Message()
         data['From'] = 'sender@example.com'

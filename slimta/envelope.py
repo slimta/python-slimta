@@ -35,7 +35,7 @@ from email.parser import Parser, FeedParser
 
 __all__ = ['Envelope']
 
-_HEADER_BOUNDARY = re.compile(r'\r?\n\r?\n')
+_HEADER_BOUNDARY = re.compile(r'\r?\n\s*?\n')
 _LINE_BREAK = re.compile(r'\r?\n')
 
 
@@ -170,9 +170,9 @@ class Envelope(object):
         else:
             header_data = data[:match.end(0)]
             payload = data[match.end(0):]
-        headers = Parser().parsestr(header_data, True)
-        self.headers = headers
-        self.message = payload
+        self.headers = Parser().parsestr(header_data, True)
+        self.message = self.headers.get_payload() + payload
+        self.headers.set_payload('')
 
     def __repr__(self):
         template = '<Envelope at {0}, sender={1!r}>'

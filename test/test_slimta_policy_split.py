@@ -68,7 +68,7 @@ test test\r
         env = Envelope('sender@example.com', ['rcpt1@example.com',
                                               'rcpt2@example.com',
                                               'rcpt@test.com'])
-        env.parse("""\r\n\r\ntest test\r\n""")
+        env.parse("""\r\ntest test\r\n""")
         policy = RecipientDomainSplit()
         env1, env2 = policy.apply(env)
 
@@ -82,7 +82,7 @@ test test\r
 
     def test_recipientdomainsplit_apply_allbadrcpts(self):
         env = Envelope('sender@example.com', ['rcpt1', 'rcpt2@'])
-        env.parse("""\r\n\r\ntest test\r\n""")
+        env.parse("""\r\ntest test\r\n""")
         policy = RecipientDomainSplit()
         env1, env2 = policy.apply(env)
 
