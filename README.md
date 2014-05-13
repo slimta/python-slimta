@@ -1,5 +1,5 @@
-#### [Project Homepage][5]
-#### [API Documentation and Manual][6]
+
+#### [API Documentation and Manual][5]
 
 --------------------
 
@@ -69,5 +69,3 @@ Please see in the in-line example documentation by running:
 [3]: http://en.wikipedia.org/wiki/Open_mail_relay
 [4]: http://opensource.org/licenses/MIT
 [5]: http://slimta.org/
-[6]: http://docs.slimta.org/
-
