@@ -11,9 +11,9 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 # {{{ _start_inbound_relay()
 def _start_inbound_relay(args):
-    from slimta.maildroprelay import MaildropRelay
+    from slimta.relay.pipe import MaildropRelay
 
-    relay = MaildropRelay(executable='/usr/bin/maildrop')
+    relay = MaildropRelay()
     return relay
 # }}}
 
@@ -48,11 +48,11 @@ def _start_inbound_edge(args, queue):
     from site_data import inbound_banner, deliverable_addresses
 
     class EdgeValidators(SmtpValidators):
-    
+
         @check_dnsbl('zen.spamhaus.org', match_code='520')
         def handle_banner(self, reply, address):
             reply.message = inbound_banner
-    
+
         def handle_rcpt(self, reply, recipient):
             if recipient not in deliverable_addresses:
                 reply.code = '550'
@@ -132,7 +132,7 @@ def _start_outbound_edge(args, queue):
         @check_dnsbl('zen.spamhaus.org')
         def handle_banner(self, reply, address):
             reply.message = outbound_banner
-    
+
         def handle_mail(self, reply, sender):
             print self.session.auth_result
             if not self.session.auth_result:
