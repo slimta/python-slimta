@@ -96,7 +96,7 @@ def build_auth_from_dict(dict, lower_case=False, only_verify=True):
     """
     class CustomAuth(Auth):
 
-        def verify_secret(self, authcid, secret, authzid):
+        def verify_secret(self, authcid, secret, authzid=None):
             username = authcid.lower() if lower_case else authcid
             try:
                 assert dict[username] == secret
@@ -104,7 +104,7 @@ def build_auth_from_dict(dict, lower_case=False, only_verify=True):
                 raise CredentialsInvalidError()
             return username
 
-        def get_secret(self, authcid, authzid):
+        def get_secret(self, authcid, authzid=None):
             username = authcid.lower() if lower_case else authcid
             try:
                 return dict[username], username
