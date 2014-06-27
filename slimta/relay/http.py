@@ -81,13 +81,14 @@ class HttpRelayClient(RelayPoolClient):
         return headers
 
     def _handle_request(self, result, envelope):
+        method = self.relay.http_verb
         if not self.conn:
             self.conn = get_connection(self.url, self.relay.tls)
         with gevent.Timeout(self.relay.timeout):
             msg_headers, msg_body = envelope.flatten()
             headers = self._build_headers(envelope, msg_headers, msg_body)
-            log.request(self.conn, 'POST', self.url.path, headers)
-            self.conn.putrequest('POST', self.url.path)
+            log.request(self.conn, method, self.url.path, headers)
+            self.conn.putrequest(method, self.url.path)
             for name, value in headers:
                 self.conn.putheader(name, value)
             self.conn.endheaders(msg_headers)
@@ -173,6 +174,9 @@ class HttpRelay(RelayPool):
                          reused.
 
     """
+
+    #: The HTTP verb to use with the requests.
+    http_verb = 'POST'
 
     #: The header name used to send the base64-encoded sender address.
     sender_header = 'X-Envelope-Sender'

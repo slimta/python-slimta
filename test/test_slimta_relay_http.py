@@ -30,6 +30,7 @@ class TestHttpRelayClient(MoxTestBase):
             idle_timeout = None
             url = 'http://testurl:8025/path/info'
             tls = None
+            http_verb = 'POST'
             sender_header = 'X-Envelope-Sender'
             rcpt_header = 'X-Envelope-Recipient'
             ehlo_header = 'X-Ehlo'
