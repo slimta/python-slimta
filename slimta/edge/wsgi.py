@@ -138,6 +138,10 @@ class WsgiEdge(Edge, WsgiServer):
 
     split_pattern = re.compile(r'\s*[,;]\s*')
 
+    #: The HTTP verb that clients will use with the requests. This may be
+    #: changed with caution.
+    http_verb = 'POST'
+
     #: The header name that clients will use to provide the envelope sender
     #: address.
     sender_header = 'X-Envelope-Sender'
@@ -185,8 +189,8 @@ class WsgiEdge(Edge, WsgiServer):
             if not re.match(self.uri_pattern, path):
                 raise WsgiResponse('404 Not Found')
         method = environ['REQUEST_METHOD'].upper()
-        if method != 'POST':
-            headers = [('Allow', 'POST')]
+        if method != self.http_verb:
+            headers = [('Allow', self.http_verb)]
             raise WsgiResponse('405 Method Not Allowed', headers)
         ctype = environ.get('CONTENT_TYPE', 'message/rfc822')
         if ctype != 'message/rfc822':
