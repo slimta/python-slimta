@@ -112,7 +112,7 @@ def build_auth_from_dict(dict, lower_case=False, only_verify=True):
                 raise CredentialsInvalidError()
 
     if only_verify:
-        CustomAuth.get_secret = Auth.get_secret
+        CustomAuth.get_secret = None
 
     return CustomAuth
 

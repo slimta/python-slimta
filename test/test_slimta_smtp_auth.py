@@ -5,8 +5,9 @@ from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
 from slimta.smtp.io import IO
-from slimta.smtp.auth import Auth, CredentialsInvalidError, ServerAuthError, \
-                             InvalidMechanismError, AuthenticationCanceled
+from slimta.smtp.auth import Auth, AuthSession, CredentialsInvalidError, \
+                             ServerAuthError, InvalidMechanismError, \
+                             AuthenticationCanceled
 from slimta.smtp.auth.standard import *
 from slimta.smtp.auth.oauth import OAuth2
 
@@ -48,8 +49,9 @@ class FakeAuthNoSecure(Auth):
 
 class FakeAuthWithGetSecret(Auth):
 
-    def get_secret(self):
-        pass
+    def get_secret(self, *args):
+        raise CredentialsInvalidError()
+
 
 class FakeSession(object):
 
@@ -65,37 +67,37 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.fileno = lambda: -1
 
     def test_get_available_mechanisms(self):
-        auth1 = Auth(None)
-        auth2 = FakeAuthWithGetSecret(None)
+        auth1 = Auth()
+        auth2 = FakeAuthWithGetSecret()
         assert_equal([], auth1.get_available_mechanisms())
         assert_equal([Plain, Login],
-                         auth1.get_available_mechanisms(True))
+                     auth1.get_available_mechanisms(True))
         assert_equal([CramMd5], auth2.get_available_mechanisms())
         assert_equal([CramMd5, Plain, Login],
-                         auth2.get_available_mechanisms(True))
+                     auth2.get_available_mechanisms(True))
 
     def test_str(self):
-        auth = FakeAuthWithGetSecret(FakeSession(False))
+        auth = AuthSession(FakeAuthWithGetSecret(), FakeSession(False))
         assert_equal('CRAM-MD5', str(auth))
-        auth = Auth(FakeSession(True))
+        auth = AuthSession(Auth(), FakeSession(True))
         assert_equal('PLAIN LOGIN', str(auth))
 
     def test_str_no_secure_mechanisms(self):
-        auth = FakeAuthNoSecure(FakeSession(True))
+        auth = AuthSession(FakeAuthNoSecure(), FakeSession(True))
         assert_equal('PLAIN LOGIN', str(auth))
-        auth = FakeAuthNoSecure(FakeSession(False))
+        auth = AuthSession(FakeAuthNoSecure(), FakeSession(False))
         with assert_raises(ValueError):
             str(auth)
 
     def test_unimplemented_means_invalid(self):
-        auth = Auth(None)
+        auth = FakeAuthWithGetSecret()
         with assert_raises(CredentialsInvalidError):
             auth.verify_secret('user', 'pass')
         with assert_raises(CredentialsInvalidError):
             auth.get_secret('user')
 
     def test_invalid_mechanism(self):
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         with assert_raises(InvalidMechanismError):
             auth.server_attempt(None, 'TEST')
         with assert_raises(InvalidMechanismError):
@@ -106,21 +108,21 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'PLAIN')
         assert_equal('testidentity', identity)
 
     def test_plain(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
         assert_equal('testidentity', identity)
 
     def test_plain_badcreds(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         with assert_raises(CredentialsInvalidError):
             auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgBiYWRwYXNzd29yZA==')
         with assert_raises(ServerAuthError):
@@ -131,7 +133,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('*\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         with assert_raises(AuthenticationCanceled):
             auth.server_attempt(io, 'PLAIN')
         with assert_raises(AuthenticationCanceled):
@@ -144,7 +146,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'LOGIN')
         assert_equal('testidentity', identity)
 
@@ -153,7 +155,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'LOGIN dGVzdHVzZXI=')
         assert_equal('testidentity', identity)
 
@@ -162,7 +164,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
         assert_equal('testidentity', identity)
 
@@ -171,7 +173,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgMTIzNDU2Nzg5MA==\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         with assert_raises(CredentialsInvalidError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
 
@@ -180,7 +182,7 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('bWFsZm9ybWVk\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        auth = FakeAuth(FakeSession(True))
+        auth = AuthSession(FakeAuth(), FakeSession(True))
         with assert_raises(ServerAuthError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
 

@@ -6,12 +6,12 @@ from gevent.socket import socket
 from gevent.ssl import SSLError
 
 from slimta.smtp.server import Server
-from slimta.smtp.auth import Auth, CredentialsInvalidError
+from slimta.smtp.auth import AuthSession, CredentialsInvalidError
 from slimta.smtp.auth.standard import Plain
 from slimta.smtp import ConnectionLost
 
 
-class FakeAuth(Auth):
+class FakeAuth(object):
 
     def verify_secret(self, cid, secret, zid=None):
         if cid != 'testuser' or secret != 'testpassword':
@@ -193,7 +193,7 @@ class TestSmtpServer(MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add('AUTH', FakeAuth(s))
+        s.extensions.add('AUTH', AuthSession(FakeAuth(), s))
         s.handle()
         assert_equal(('testuser', 'testzid'), s.auth_result)
 

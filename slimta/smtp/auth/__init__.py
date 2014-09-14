@@ -81,60 +81,117 @@ class CredentialsInvalidError(ServerAuthError):
         super(CredentialsInvalidError, self).__init__(msg, reply)
 
 
+class AuthSession(object):
+
+    def __init__(self, auth_obj, session):
+        super(AuthSession, self).__init__()
+        self.session = session
+        self.auth_obj = auth_obj
+
+    def _get_available(self):
+        encrypted = self.session.encrypted
+        available = self.auth_obj.get_available_mechanisms(encrypted)
+        if not hasattr(self.auth_obj, 'get_secret'):
+            available = [mech for mech in available
+                         if not mech.requires_get_secret]
+        return available
+
+    def __str__(self):
+        available = self._get_available()
+        if available:
+            return ' '.join([mech.name for mech in available])
+        else:
+            raise ValueError('No mechanisms available')
+
+    def _parse_arg(self, arg):
+        match = noarg_pattern.match(arg)
+        if match:
+            return match.group(1).upper(), None
+        match = witharg_pattern.match(arg)
+        if match:
+            return match.group(1).upper(), match.group(2)
+        raise InvalidMechanismError(arg)
+
+    def server_attempt(self, io, arg):
+        verify_secret = self.auth_obj.verify_secret
+        get_secret = getattr(self.auth_obj, 'get_secret', None)
+        mechanism_name, mechanism_arg = self._parse_arg(arg)
+        for mechanism in self._get_available():
+            if mechanism.name == mechanism_name:
+                mech_obj = mechanism(verify_secret, get_secret)
+                if mechanism_arg == '*':
+                    raise AuthenticationCanceled()
+                identity = mech_obj.server_attempt(io, mechanism_arg)
+                if not identity:
+                    msg = 'Invalid identity returned from authentication'
+                    raise ValueError(msg)
+                return identity
+        raise InvalidMechanismError(arg)
+
+
 class Auth(object):
     """Base class that handles the authentication for an SMTP server session.
-    This class should be inherited with its methods overridden as necessary.
+    This class must be inherited to define either or both of the
+    ``verify_secret`` or ``get_secret`` methods.
 
-    :param session: An active server session object.
-    :type session: :class:`~slimta.smtp.server.Server`
+    :param session: This argument is maintained for backwards-compatibility.
+    :type session: unused
+
+    .. meth:: verify_secret(self, authcid, secret, authzid=None)
+
+       For SMTP server authentication, this must should be overriden to
+       verify the given secret for mechanisms that have access to it.  If
+       ``secret`` is invalid for the given identities,
+       :class:`CredentialsInvalidError` should be thrown.
+
+        If this method is not implemented by an inheriting class,
+        ``get_secret`` will be used to verify given auth secrets.
+
+       :param authcid: The authentication identity, usually the username.
+       :param secret: The secret (i.e. password) string to verify for the
+                      given authentication and authorization identities.
+       :param authzid: The authorization identity, if applicable.
+       :returns: A representation of the identity that was successfully
+                 authenticated. This may be ``authcid``, ``authzid``, a tuple
+                 of both, or any alternative.
+       :raises: :class:`CredentialsInvalidError`
+
+    .. meth:: get_secret(self, authcid, authzid=None)
+
+       For SMTP server authentication mechanisms such as ``CRAM-MD5``, the
+       client provides a hash of their secret credentials, and thus the server
+       must also have access to the secret credentials in plain-text. This
+       method should retrieve and return the secret string assocated with the
+       given identities. This method should raise
+       :class:`CredentialsInvalidError` only if the given identities did not
+       exist.
+
+       If this method is not implemented by an inheriting class, auth
+       mechanisms that require (such as ``CRAM-MD5``) it will be automatically
+       disabled.
+
+       :param authcid: The authentication identity, usually the username.
+       :param authzid: The authorization identity, if applicable.
+       :returns: A tuple of the retrieved secret string followed by a
+                 representation of the identity that was authenticated. This
+                 may be ``authcid``, ``authzid``, a tuple of both, or any
+                 desired alternative.
+       :raises: :class:`CredentialsInvalidError`
 
     """
 
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, session=None):
+        super(Auth, self).__init__()
         from .standard import standard_mechanisms
         self.server_mechanisms = standard_mechanisms
-        if id(Auth.get_secret.__func__) == id(self.get_secret.__func__):
-            self.server_mechanisms = [mech for mech in self.server_mechanisms
-                                      if not mech.requires_get_secret]
+        if not hasattr(self, 'verify_secret'):
+            self.verify_secret = self._fallback_verify_secret
 
-    def verify_secret(self, authcid, secret, authzid=None):
-        """For SMTP server authentication, this method should be overriden
-        to verify the given secret for mechanisms that have access to it.
-        If ``secret`` is invalid for the given identities,
-        :class:`CredentialsInvalidError` should be thrown.
-
-        :param authcid: The authentication identity, usually the username.
-        :param secret: The secret (i.e. password) string to verify for the
-                       given authentication and authorization identities.
-        :param authzid: The authorization identity, if applicable.
-        :returns: A representation of the identity that was successfully
-                  authenticated. This may be ``authcid``, ``authzid``, a tuple
-                  of both, or any alternative.
-        :raises: :class:`CredentialsInvalidError`
-
-        """
-        raise CredentialsInvalidError()
-
-    def get_secret(self, authcid, authzid=None):
-        """For SMTP server authentication mechanisms such as ``CRAM-MD5``, the
-        client provides a hash of their secret credentials, and thus the server
-        must also have access to the secret credentials in plain-text. This
-        method should retrieve and return the secret string assocated with the
-        given identities. This method should raise
-        :class:`CredentialsInvalidError` only if the given identities did not
-        exist.
-
-        :param authcid: The authentication identity, usually the username.
-        :param authzid: The authorization identity, if applicable.
-        :returns: A tuple of the retrieved secret string followed by a
-                  representation of the identity that was authenticated. This
-                  may be ``authcid``, ``authzid``, a tuple of both, or any
-                  desired alternative.
-        :raises: :class:`CredentialsInvalidError`
-
-        """
-        raise CredentialsInvalidError()
+    def _fallback_verify_secret(self, authcid, secret, authzid=None):
+        expected_secret, identity = self.get_secret(authcid, authzid)
+        if expected_secret != secret:
+            raise CredentialsInvalidError()
+        return identity
 
     def get_available_mechanisms(self, connection_secure=False):
         """Returns a list of mechanism classes that inherit
@@ -157,36 +214,6 @@ class Auth(object):
             return self.server_mechanisms
         else:
             return [mech for mech in self.server_mechanisms if mech.secure]
-
-    def __str__(self):
-        available = self.get_available_mechanisms(self.session.encrypted)
-        if available:
-            return ' '.join([mech.name for mech in available])
-        else:
-            raise ValueError('No mechanisms available')
-
-    def _parse_arg(self, arg):
-        match = noarg_pattern.match(arg)
-        if match:
-            return match.group(1).upper(), None
-        match = witharg_pattern.match(arg)
-        if match:
-            return match.group(1).upper(), match.group(2)
-        raise InvalidMechanismError(arg)
-
-    def server_attempt(self, io, arg):
-        mechanism_name, mechanism_arg = self._parse_arg(arg)
-        for mechanism in self.get_available_mechanisms(self.session.encrypted):
-            if mechanism.name == mechanism_name:
-                mech_obj = mechanism(self.verify_secret, self.get_secret)
-                if mechanism_arg == '*':
-                    raise AuthenticationCanceled()
-                identity = mech_obj.server_attempt(io, mechanism_arg)
-                if not identity:
-                    msg = 'Invalid identity returned from authentication'
-                    raise ValueError(msg)
-                return identity
-        raise InvalidMechanismError(arg)
 
 
 class ServerMechanism(object):
@@ -222,6 +249,8 @@ class ServerMechanism(object):
     def __init__(self, verify_secret, get_secret):
         self.verify_secret = verify_secret
         self.get_secret = get_secret
+        if self.requires_get_secret and not get_secret:
+            raise ValueError('Mechanism requires get_secret().')
 
     def send_challenge_get_response(self, io, challenge_str):
         """This method can be used in :meth:`server_attempt` implementations to

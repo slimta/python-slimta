@@ -211,8 +211,9 @@ class SmtpEdge(EdgeServer):
     :param max_size: Maximum size of incoming messages.
     :param validator_class: :class:`SmtpValidators` sub-class to validate
                             commands and alter replies.
-    :param auth_class: Optional |Auth| sub-class to enable server
-                       authentication.
+    :param auth_class: Optional |Auth| sub-class to enable authentication.
+                       This argument is deprecated in favor of ``auth_obj``,
+                       but is still available for backwards-compatibility.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, connections will be encrypted
@@ -224,6 +225,8 @@ class SmtpEdge(EdgeServer):
                          is not tricked by the client sending data.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
+    :param auth_obj: Optional object implementing the |Auth| interface to
+                     enable authentication.
 
     """
 
@@ -231,30 +234,34 @@ class SmtpEdge(EdgeServer):
                  validator_class=None, auth_class=None,
                  tls=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None,
-                 hostname=None):
+                 hostname=None, auth_obj=None):
         super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
         self.max_size = max_size
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validator_class = validator_class
         self.auth_class = auth_class
+        self.auth_obj = auth_obj
         self.tls = tls
         self.tls_immediately = tls_immediately
 
     def handle(self, socket, address):
+        smtp_server = None
         try:
             handlers = SmtpSession(address, self.validator_class, self.handoff)
             smtp_server = Server(socket, handlers, self.auth_class,
                                  self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,
-                                 data_timeout=self.data_timeout)
+                                 data_timeout=self.data_timeout,
+                                 auth_obj=self.auth_obj)
             if self.max_size:
                 smtp_server.extensions.add('SIZE', self.max_size)
             smtp_server.handle()
         except ConnectionLost:
             pass
         finally:
-            smtp_server.io.close()
+            if smtp_server:
+                smtp_server.io.close()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

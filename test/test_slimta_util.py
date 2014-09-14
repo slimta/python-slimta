@@ -24,7 +24,7 @@ class TestUtil(MoxTestBase):
             auth1.verify_secret('user@example.com', 'derp', None)
         with assert_raises(CredentialsInvalidError):
             auth1.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        with assert_raises(CredentialsInvalidError):
+        with assert_raises(TypeError):
             auth1.get_secret('user@example.com', None)
         auth2.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
         assert_equal(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))

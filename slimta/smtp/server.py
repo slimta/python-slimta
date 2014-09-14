@@ -37,7 +37,7 @@ from . import SmtpError, ConnectionLost
 from .datareader import DataReader
 from .io import IO
 from .extensions import Extensions
-from .auth import ServerAuthError
+from .auth import ServerAuthError, AuthSession
 from .reply import *
 
 __all__ = ['Server']
@@ -77,6 +77,8 @@ class Server(object):
                      can modify the |Reply| before the command response is
                      sent.
     :param auth_class: Optional |Auth| sub-class to enable authentication.
+                       This argument is deprecated in favor of ``auth_obj``,
+                       but is still available for backwards-compatibility.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
@@ -90,12 +92,14 @@ class Server(object):
                             sent from the client.
     :param data_timeout: Optional timeout waiting for data to be sent from
                          the client.
+    :param auth_obj: Optional object implementing the |Auth| interface to
+                     enable authentication.
 
     """
 
     def __init__(self, socket, handlers, auth_class=None,
                  tls=None, tls_immediately=False, tls_wrapper=None,
-                 command_timeout=None, data_timeout=None):
+                 command_timeout=None, data_timeout=None, auth_obj=None):
         self.handlers = handlers
         self.extensions = Extensions()
 
@@ -110,8 +114,10 @@ class Server(object):
         self.extensions.add('ENHANCEDSTATUSCODES')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
-        if auth_class:
-            self.extensions.add('AUTH', auth_class(self))
+        if auth_obj or auth_class:
+            auth_obj = auth_obj or auth_class(self)
+            auth_session = AuthSession(auth_obj, self)
+            self.extensions.add('AUTH', auth_session)
 
         self.io = IO(socket, tls_wrapper)
 
