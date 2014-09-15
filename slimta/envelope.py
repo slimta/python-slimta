@@ -85,6 +85,14 @@ class Envelope(object):
         #: Timestamp when the message was received.
         self.timestamp = None
 
+    def prepend_header(self, name, value):
+        """This method allows prepending a header to the message. The
+        :attr:`.headers` object does not directly support header prepending
+        because the Python implementation only provides appending.
+
+        """
+        self.headers._headers.insert(0, (name, value))
+
     def copy(self):
         """Builds and returns an exact copy if the current object. This method
         uses a deep-copying so internal datastructures are not shared.
