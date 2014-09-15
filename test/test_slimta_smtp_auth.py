@@ -67,14 +67,10 @@ class TestSmtpAuth(MoxTestBase):
         self.sock.fileno = lambda: -1
 
     def test_get_available_mechanisms(self):
-        auth1 = Auth()
-        auth2 = FakeAuthWithGetSecret()
-        assert_equal([], auth1.get_available_mechanisms())
-        assert_equal([Plain, Login],
-                     auth1.get_available_mechanisms(True))
-        assert_equal([CramMd5], auth2.get_available_mechanisms())
+        auth = Auth()
+        assert_equal([CramMd5], auth.get_available_mechanisms())
         assert_equal([CramMd5, Plain, Login],
-                     auth2.get_available_mechanisms(True))
+                     auth.get_available_mechanisms(True))
 
     def test_str(self):
         auth = AuthSession(FakeAuthWithGetSecret(), FakeSession(False))
