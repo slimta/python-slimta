@@ -46,7 +46,8 @@ This is a multi-part message in MIME format.
 --{boundary}
 Content-Type: text/plain
 
-Delivery failed.
+Delivery failed for:
+- {recipients}
 
 Destination host responded:
 {code} {message}
@@ -94,6 +95,8 @@ class Bounce(Envelope):
     #:
     #: * ``boundary`` -- A randomly generated MIME boundary string.
     #: * ``sender`` -- The sender of the original message.
+    #: * ``recipients`` -- The recipients list, rendered by joining the
+    #:                     recipients list with :attr:`.recipient_join`.
     #: * ``client_name`` -- The hostname of the original message sending
     #:                      client.
     #: * ``client_ip`` -- The IP address of the original message sending
@@ -102,6 +105,11 @@ class Bounce(Envelope):
     #: * ``code`` -- The SMTP reply code that caused the message failure.
     #: * ``message`` -- The SMTP reply message that caused the message failure.
     header_template = default_header_template
+
+    #: When bouncing a message that was going to multiple recipients, this
+    #: string is used to join the list of recipients for the ``{recipients}``
+    #: template key.
+    recipient_join = '\r\n- '
 
     #: Template used to add text below the original message data. This template
     #: is processed the same way as ``header_template``.
@@ -128,8 +136,10 @@ class Bounce(Envelope):
         self.receiver = Bounce.receiver or envelope.receiver
 
     def _get_substitution_table(self, envelope, reply):
+        rendered_rcpts = self.recipient_join.join(envelope.recipients)
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
+                'recipients': rendered_rcpts,
                 'client_name': 'unknown',
                 'client_ip': 'unknown',
                 'dest_host': 'unknown',
