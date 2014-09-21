@@ -46,8 +46,7 @@ class RecipientSplit(QueuePolicy):
             return
         ret = []
         for rcpt in envelope.recipients:
-            new_env = envelope.copy()
-            new_env.recipients = [rcpt]
+            new_env = envelope.copy([rcpt])
             ret.append(new_env)
         return ret
 
@@ -83,8 +82,7 @@ class RecipientDomainSplit(QueuePolicy):
         return groups, bad_rcpts
 
     def _append_envelope_copy(self, envelope, copies, rcpts):
-        new_env = envelope.copy()
-        new_env.recipients = rcpts
+        new_env = envelope.copy(rcpts)
         copies.append(new_env)
 
     def apply(self, envelope):

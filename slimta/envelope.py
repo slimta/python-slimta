@@ -93,14 +93,19 @@ class Envelope(object):
         """
         self.headers._headers.insert(0, (name, value))
 
-    def copy(self):
+    def copy(self, new_rcpts=None):
         """Builds and returns an exact copy if the current object. This method
         uses a deep-copying so internal datastructures are not shared.
 
+        :param new_rcpts: If given, overwrite the :attr:`.recipients` list with
+                          this value inthe new object.
         :returns: An exact, deep copy of the current object.
 
         """
-        return copy.deepcopy(self)
+        new_env = copy.deepcopy(self)
+        if new_rcpts:
+            new_env.recipients = new_rcpts
+        return new_env
 
     def flatten(self):
         """Produces two strings representing the headers and message body.
