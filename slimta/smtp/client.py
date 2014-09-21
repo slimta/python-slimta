@@ -361,4 +361,93 @@ class Client(object):
         return self.custom_command('QUIT')
 
 
+class LmtpClient(Client):
+    """This sub-class has been modified to implement the LMTP protocol instead.
+    The first primary difference is the :meth:`.ehlo` and :meth:`.helo` are no
+    longer allowed and have been replaced with :meth:.`lhlo`. The second
+    primary difference is that the :meth:`.send_data` and
+    :meth:`.send_empty_data` methods now return a list of tuples containing the
+    address from a successful :meth:`.rcptto` and a |Reply| object. This list
+    is in the same order as the calls to :meth:`.rcptto`.
+
+    """
+
+    def __init__(self, socket, tls_wrapper=None):
+        super(LmtpClient, self).__init__(socket, tls_wrapper)
+        self.rcpttos = []
+
+    def ehlo(self, ehlo_as):
+        raise NotImplementedError()
+
+    def helo(self, helo_as):
+        raise NotImplementedError()
+
+    def lhlo(self, lhlo_as):
+        """Sends the LHLO command with identifier string and waits for the
+        reply. When this method returns, the ``self.extensions`` object will
+        also be populated with the SMTP extensions the server supports.
+
+        :param lhlo_as: LHLO identifier string, usually an FQDN.
+        :returns: |Reply| object populated with the response.
+
+        """
+        lhlo = Reply(command='LHLO')
+        lhlo.enhanced_status_code = False
+        self.reply_queue.append(lhlo)
+
+        command = 'LHLO '+lhlo_as
+        self.io.send_command(command)
+
+        self._flush_pipeline()
+        if lhlo.code == '250':
+            self.rcpttos = []
+            self.extensions.reset()
+            lhlo.message = self.extensions.parse_string(lhlo.message)
+
+        return lhlo
+
+    def rcptto(self, address):
+        reply = super(LmtpClient, self).rcptto(address)
+        self.rcpttos.append((address, reply))
+        return reply
+
+    def send_data(self, *data):
+        ret = []
+        for address, rcptto_reply in self.rcpttos:
+            if rcptto_reply.code.startswith('2'):
+                data_reply = Reply(command='[SEND_DATA]')
+                self.reply_queue.append(data_reply)
+                ret.append((address, data_reply))
+        self.rcpttos = []
+
+        data_sender = DataSender(*data)
+        data_sender.send(self.io)
+
+        if 'PIPELINING' not in self.extensions:
+            self._flush_pipeline()
+
+        return ret
+
+    def send_empty_data(self):
+        ret = []
+        for address, rcptto_reply in self.rcpttos:
+            if rcptto_reply.code.startswith('2'):
+                data_reply = Reply(command='[SEND_DATA]')
+                self.reply_queue.append(data_reply)
+                ret.append((address, data_reply))
+        self.rcpttos = []
+
+        self.io.send_command('.')
+
+        if 'PIPELINING' not in self.extensions:
+            self._flush_pipeline()
+
+        return ret
+
+    def rset(self):
+        reply = super(LmtpClient, self).rset()
+        self.rcpttos = []
+        return reply
+
+
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -4,7 +4,8 @@ from assertions import *
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
-from slimta.smtp.client import Client
+from slimta.smtp.client import Client, LmtpClient
+from slimta.smtp.reply import Reply
 from slimta.smtp.auth.standard import Plain
 
 
@@ -220,6 +221,100 @@ class TestSmtpClient(MoxTestBase):
         assert_equal('221', reply.code)
         assert_equal('2.0.0 Bye', reply.message)
         assert_equal('QUIT', reply.command)
+
+
+class TestLmtpClient(MoxTestBase):
+
+    def setUp(self):
+        super(TestLmtpClient, self).setUp()
+        self.sock = self.mox.CreateMock(socket)
+        self.sock.fileno = lambda: -1
+        self.tls_args = {'test': 'test'}
+
+    def test_ehlo_invalid(self):
+        client = LmtpClient(self.sock)
+        assert_raises(NotImplementedError, client.ehlo, 'there')
+
+    def test_helo_invalid(self):
+        client = LmtpClient(self.sock)
+        assert_raises(NotImplementedError, client.helo, 'there')
+
+    def test_lhlo(self):
+        self.sock.sendall('LHLO there\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250-Hello there\r\n250-TEST arg\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 EXTEN\r\n')
+        self.mox.ReplayAll()
+        client = LmtpClient(self.sock)
+        reply = client.lhlo('there')
+        assert_equal('250', reply.code)
+        assert_equal('Hello there', reply.message)
+        assert_equal('LHLO', reply.command)
+        assert_true('TEST' in client.extensions)
+        assert_true('EXTEN' in client.extensions)
+        assert_equal('arg', client.extensions.getparam('TEST'))
+
+    def test_rcptto(self):
+        self.sock.sendall('RCPT TO:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.mox.ReplayAll()
+        client = LmtpClient(self.sock)
+        reply = client.rcptto('test')
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('RCPT', reply.command)
+        assert_equal([('test', reply)], client.rcpttos)
+
+    def test_rset(self):
+        self.sock.sendall('RSET\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        self.mox.ReplayAll()
+        client = LmtpClient(self.sock)
+        client.rcpttos = 'testing'
+        reply = client.rset()
+        assert_equal('250', reply.code)
+        assert_equal('2.0.0 Ok', reply.message)
+        assert_equal('RSET', reply.command)
+        assert_equal([], client.rcpttos)
+
+    def test_send_data(self):
+        self.sock.sendall('One\r\nTwo\r\n..Three\r\n.\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n'
+                                           '550 5.0.0 Not Ok\r\n')
+        self.mox.ReplayAll()
+        client = LmtpClient(self.sock)
+        client.rcpttos = [('test1', Reply('250')),
+                          ('test2', Reply('250')),
+                          ('test3', Reply('550'))]
+        replies = client.send_data('One\r\nTwo\r\n.Three')
+        assert_equal(2, len(replies))
+        assert_equal('test1', replies[0][0])
+        assert_equal('250', replies[0][1].code)
+        assert_equal('2.0.0 Ok', replies[0][1].message)
+        assert_equal('[SEND_DATA]', replies[0][1].command)
+        assert_equal('test2', replies[1][0])
+        assert_equal('550', replies[1][1].code)
+        assert_equal('5.0.0 Not Ok', replies[1][1].message)
+        assert_equal('[SEND_DATA]', replies[1][1].command)
+
+    def test_send_empty_data(self):
+        self.sock.sendall('.\r\n')
+        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n'
+                                           '550 5.0.0 Not Ok\r\n')
+        self.mox.ReplayAll()
+        client = LmtpClient(self.sock)
+        client.rcpttos = [('test1', Reply('250')),
+                          ('test2', Reply('250')),
+                          ('test3', Reply('550'))]
+        replies = client.send_empty_data()
+        assert_equal(2, len(replies))
+        assert_equal('test1', replies[0][0])
+        assert_equal('250', replies[0][1].code)
+        assert_equal('2.0.0 Ok', replies[0][1].message)
+        assert_equal('[SEND_DATA]', replies[0][1].command)
+        assert_equal('test2', replies[1][0])
+        assert_equal('550', replies[1][1].code)
+        assert_equal('5.0.0 Not Ok', replies[1][1].message)
+        assert_equal('[SEND_DATA]', replies[1][1].command)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
