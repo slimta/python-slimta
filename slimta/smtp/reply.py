@@ -72,6 +72,9 @@ class Reply(object):
         #: which is useful for asynchronous replies such as timeouts.
         self.newline_first = False
 
+    def __eq__(self, other):
+        return self.code == other.code and self.message == other.message
+
     def __repr__(self):
         """Converts the reply into a string that shows appropriate internals of
         the object.

@@ -17,6 +17,21 @@ class TestSmtpReply(unittest.TestCase):
         assert_false(r)
         assert_equal('SOMECOMMAND', r.command)
 
+    def test_eq(self):
+        r1 = Reply('250', '2.1.0 Ok')
+        r2 = Reply('250', '2.1.0 Ok')
+        r3 = Reply('251', '2.1.0 Ok')
+        r4 = Reply('250', '2.1.1 Ok')
+        assert_equal(r1, r2)
+        assert_not_equal(r1, r3)
+        assert_not_equal(r1, r4)
+        assert_not_equal(r3, r4)
+
+    def test_repr(self):
+        r = Reply('250', '2.1.0 Ok')
+        expected = '<Reply code={0!r} message={1!r}>'.format(r.code, r.message)
+        assert_equal(expected, repr(r))
+
     def test_str(self):
         r = Reply('250', '2.1.0 Ok')
         assert_equal('250 2.1.0 Ok', str(r))
