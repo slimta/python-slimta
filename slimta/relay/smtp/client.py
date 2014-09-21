@@ -43,6 +43,8 @@ hostname = getfqdn()
 
 class SmtpRelayClient(RelayPoolClient):
 
+    _client_class = Client
+
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
                  tls=None, tls_immediately=False,
                  tls_required=False, tls_wrapper=None,
@@ -78,7 +80,7 @@ class SmtpRelayClient(RelayPoolClient):
         except socket_error as (err, msg):
             reply = Reply('451', '4.3.0 Connection failed')
             raise SmtpRelayError.factory(reply)
-        self.client = Client(self.socket, self.tls_wrapper)
+        self.client = self._client_class(self.socket, self.tls_wrapper)
 
     def _banner(self):
         with Timeout(self.command_timeout):

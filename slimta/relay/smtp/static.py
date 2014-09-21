@@ -28,9 +28,10 @@ out.
 from __future__ import absolute_import
 
 from .client import SmtpRelayClient
+from .lmtpclient import LmtpRelayClient
 from ..pool import RelayPool
 
-__all__ = ['StaticSmtpRelay']
+__all__ = ['StaticSmtpRelay', 'StaticLmtpRelay']
 
 
 class StaticSmtpRelay(RelayPool):
@@ -73,10 +74,12 @@ class StaticSmtpRelay(RelayPool):
 
     """
 
+    _default_class = SmtpRelayClient
+
     def __init__(self, host, port=25, pool_size=None, client_class=None,
                  **client_kwargs):
         super(StaticSmtpRelay, self).__init__(pool_size)
-        self.client_class = client_class or SmtpRelayClient
+        self.client_class = client_class or self._default_class
         self.host = host
         self.port = port
         self.client_kwargs = client_kwargs
@@ -84,6 +87,17 @@ class StaticSmtpRelay(RelayPool):
     def add_client(self):
         return self.client_class((self.host, self.port), self.queue,
                                  **self.client_kwargs)
+
+
+class StaticLmtpRelay(StaticSmtpRelay):
+    """Exactly like :class:`StaticSmtpRelay`, except that the LMTP protocol is
+    used by default instead.
+
+    .. seealso:: :class:`slimta.smtp.client.LmtpClient`
+
+    """
+
+    _default_class = LmtpRelayClient
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
