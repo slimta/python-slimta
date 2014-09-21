@@ -41,6 +41,7 @@ class TestQueue(MoxTestBase):
         assert_raises(NotImplementedError, qs.write, self.env, 1234567890)
         assert_raises(NotImplementedError, qs.set_timestamp, '1234', 1234567890)
         assert_raises(NotImplementedError, qs.increment_attempts, '1234')
+        assert_raises(NotImplementedError, qs.set_recipients_delivered, '1234', []))
         assert_raises(NotImplementedError, qs.load)
         assert_raises(NotImplementedError, qs.get, '1234')
         assert_raises(NotImplementedError, qs.remove, '1234')

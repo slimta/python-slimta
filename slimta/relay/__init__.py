@@ -97,6 +97,13 @@ class Relay(object):
         """This method must be overriden by sub-classes in order to be passed
         in to the |Queue| constructor.
 
+        Implementations may return ``None`` or raise a :class:`RelayError` to
+        apply the result to all recipients in the envelope. Alternatively, they
+        may return an iterable where each item corresponds to
+        :attr:`~slimta.envelope.Envelope.recipients` and is ``None`` on
+        successful delivery, or an instance of :class:`PermanentRelayError` or
+        :class:`TransientRelayError` on failure.
+
         :param envelope: |Envelope| to attempt delivery for.
         :param attempts: Number of times the envelope has attempted delivery.
         :raises: :class:`PermanentRelayError`, :class:`TransientRelayError`

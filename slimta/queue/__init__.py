@@ -95,6 +95,22 @@ class QueueStorage(object):
         """
         raise NotImplementedError()
 
+    def set_recipients_delivered(self, id, rcpt_indexes):
+        """.. versionadded:: 1.1.0
+
+        Marks the given recipients from the original envelope as
+        already-delivered, meaning they will be skipped by future relay
+        attempts.
+
+        :param id: The unique identifier string for the message.
+        :param rcpt_indexes: List of indexes in the original envelope's
+                             :attr:`~slimta.envelope.Envelope.recipients` list
+                             to mark as delivered.
+        :raises: :class:`QueueError`
+
+        """
+        raise NotImplementedError()
+
     def load(self):
         """Loads all queued messages from the storage engine, such that the
         :class:`Queue` can be aware of all upcoming delivery attempts.
@@ -109,6 +125,9 @@ class QueueStorage(object):
     def get(self, id):
         """Returns the |Envelope| object associated with the given unique
         identifier sring.
+
+        The envelope's :attr:`~slimta.envelope.Envelope.recipients` should not
+        include those marked as delivered by :meth:`.set_recipients_delivered`.
 
         :param id: The unique identifier string of the requested |Envelope|.
         :returns: Tuple with the |Envelope| object and number of attempts.
@@ -311,7 +330,8 @@ class Queue(Greenlet):
             return self.enqueue(bounce)
 
     def _perm_fail(self, id, envelope, reply):
-        self._pool_spawn('store', self._remove, id)
+        if id is not None:
+            self._pool_spawn('store', self._remove, id)
         if envelope.sender:  # Can't bounce to null-sender.
             self._pool_spawn('bounce', self._bounce, envelope, reply)
 
@@ -329,7 +349,7 @@ class Queue(Greenlet):
 
     def _attempt(self, id, envelope, attempts):
         try:
-            self.relay._attempt(envelope, attempts)
+            results = self.relay._attempt(envelope, attempts)
         except TransientRelayError as e:
             self._pool_spawn('store', self._retry_later, id, envelope, e.reply)
         except PermanentRelayError as e:
@@ -340,7 +360,19 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            self._pool_spawn('store', self._remove, id)
+            if not results:
+                self._pool_spawn('store', self._remove, id)
+            self._handle_partial_relay(id, envelope, attempts, results)
+
+    def _handle_partial_relay(self, id, envelope, attempts, results):
+        for i, rcpt in enumerate(envelope.recipients):
+            rcpt_res = results[i]
+            if not rcpt_res:
+                pass
+            elif isinstance(rcpt_res, PermanentRelayError):
+                pass
+            elif isinstance(rcpt_res, TransientRelayError):
+                pass
 
     def _dequeue(self, id):
         try:
