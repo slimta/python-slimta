@@ -76,10 +76,7 @@ class StaticSmtpRelay(RelayPool):
     def __init__(self, host, port=25, pool_size=None, client_class=None,
                  **client_kwargs):
         super(StaticSmtpRelay, self).__init__(pool_size)
-        if client_class:
-            self.client_class = client_class
-        else:
-            self.client_class = SmtpRelayClient
+        self.client_class = client_class or SmtpRelayClient
         self.host = host
         self.port = port
         self.client_kwargs = client_kwargs
