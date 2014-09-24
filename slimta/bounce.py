@@ -59,7 +59,7 @@ Remote-MTA: dns; {client_name} [{client_ip}]
 Diagnostic-Code: {protocol}; {code} {message}
 
 --{boundary}
-Content-Type: message/rfc822
+Content-Type: {content_type}
 
 """)
 # }}}
@@ -135,8 +135,9 @@ class Bounce(Envelope):
         self.client = Bounce.client
         self.receiver = Bounce.receiver or envelope.receiver
 
-    def _get_substitution_table(self, envelope, reply):
+    def _get_substitution_table(self, envelope, reply, headers_only):
         rendered_rcpts = self.recipient_join.join(envelope.recipients)
+        ctype = 'text/rfc822-headers' if headers_only else 'message/rfc822'
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
                 'recipients': rendered_rcpts,
@@ -145,11 +146,12 @@ class Bounce(Envelope):
                 'dest_host': 'unknown',
                 'dest_port': 'unknown',
                 'protocol': 'SMTP',
+                'content_type': ctype,
                 'code': reply.code,
                 'message': reply.message}
 
     def _build_message(self, envelope, reply, headers_only):
-        sub_table = self._get_substitution_table(envelope, reply)
+        sub_table = self._get_substitution_table(envelope, reply, headers_only)
         new_payload = cStringIO.StringIO()
         new_payload.write(self.header_template.format(**sub_table))
         header_data, message_data = envelope.flatten()
