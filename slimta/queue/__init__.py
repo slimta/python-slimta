@@ -320,7 +320,7 @@ class Queue(Greenlet):
             self._add_queued(entry)
 
     def _remove(self, id):
-        self.store.remove(id)
+        self._pool_spawn('store', self.store.remove, id)
         self.queued_ids.discard(id)
         self.active_ids.discard(id)
 
@@ -331,21 +331,39 @@ class Queue(Greenlet):
 
     def _perm_fail(self, id, envelope, reply):
         if id is not None:
-            self._pool_spawn('store', self._remove, id)
+            self._remove(id)
         if envelope.sender:  # Can't bounce to null-sender.
             self._pool_spawn('bounce', self._bounce, envelope, reply)
 
-    def _retry_later(self, id, envelope, reply):
+    def _split_by_reply(self, envelope, replies):
+        if isinstance(replies, Reply):
+            return [(replies, envelope)]
+        groups = []
+        for i, rcpt in enumerate(envelope.recipients):
+            for reply, group_env in groups:
+                if replies[i] == reply:
+                    group_env.recipients.append(rcpt)
+                    break
+            else:
+                group_env = envelope.copy([rcpt])
+                groups.append((replies[i], group_env))
+        return groups
+
+    def _retry_later(self, id, envelope, replies):
         attempts = self.store.increment_attempts(id)
         wait = self.backoff(envelope, attempts)
         if wait is None:
-            reply.message += ' (Too many retries)'
-            self._perm_fail(id, envelope, reply)
+            for reply, group_env in self._split_by_reply(envelope, replies):
+                reply.message += ' (Too many retries)'
+                self._perm_fail(None, group_env, reply)
+            self._remove(id)
+            return False
         else:
             when = time.time() + wait
             self.store.set_timestamp(id, when)
             self.active_ids.discard(id)
             self._add_queued((when, id))
+            return True
 
     def _attempt(self, id, envelope, attempts):
         try:
@@ -360,19 +378,38 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            if not results:
-                self._pool_spawn('store', self._remove, id)
-            self._handle_partial_relay(id, envelope, attempts, results)
+            if results:
+                self._handle_partial_relay(id, envelope, attempts, results)
+            else:
+                self._remove(id)
 
     def _handle_partial_relay(self, id, envelope, attempts, results):
+        delivered = []
+        tempfails = []
+        permfails = []
         for i, rcpt in enumerate(envelope.recipients):
             rcpt_res = results[i]
             if not rcpt_res:
-                pass
+                delivered.append(i)
             elif isinstance(rcpt_res, PermanentRelayError):
-                pass
+                delivered.append(i)
+                permfails.append((rcpt, rcpt_res.reply))
             elif isinstance(rcpt_res, TransientRelayError):
-                pass
+                tempfails.append((rcpt, rcpt_res.reply))
+        if permfails:
+            rcpts, replies = zip(*permfails)
+            fail_env = envelope.copy(rcpts)
+            for reply, group_env in self._split_by_reply(fail_env, replies):
+                self._perm_fail(None, group_env, reply)
+        if tempfails:
+            rcpts, replies = zip(*tempfails)
+            fail_env = envelope.copy(rcpts)
+            if not self._retry_later(id, fail_env, replies):
+                return
+        else:
+            self.store.remove(id)
+            return
+        self.store.set_recipients_delivered(id, delivered)
 
     def _dequeue(self, id):
         try:

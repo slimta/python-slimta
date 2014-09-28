@@ -185,6 +185,44 @@ class TestQueue(MoxTestBase):
         queue.enqueue(self.env)
         queue.relay_pool.join()
 
+    def test_enqueue_wait_partial_relay(self):
+        env = Envelope('sender@example.com', ['rcpt1@example.com',
+                                              'rcpt2@example.com',
+                                              'rcpt3@example.com'])
+        self.store.write(env, IsA(float)).AndReturn('1234')
+        self.relay._attempt(env, 0).AndReturn([None,
+                                               TransientRelayError('transient', Reply('450', 'transient')),
+                                               PermanentRelayError('permanent', Reply('550', 'permanent'))])
+        self.store.increment_attempts('1234')
+        self.store.set_timestamp('1234', IsA(float))
+        self.store.set_recipients_delivered('1234', [0, 2])
+        self.mox.ReplayAll()
+        def backoff(envelope, attempts):
+            return 0
+        def no_bounce(envelope, reply):
+            return None
+        queue = Queue(self.store, self.relay, backoff=backoff, bounce_factory=no_bounce, relay_pool=5)
+        queue.enqueue(env)
+        queue.relay_pool.join()
+
+    def test_enqueue_wait_partial_relay_expired(self):
+        env = Envelope('sender@example.com', ['rcpt1@example.com',
+                                              'rcpt2@example.com',
+                                              'rcpt3@example.com'])
+        bounce_mock = self.mox.CreateMockAnything()
+        bounce_mock(IsA(Envelope), IsA(Reply)).AndReturn(None)
+        bounce_mock(IsA(Envelope), IsA(Reply)).AndReturn(None)
+        self.store.write(env, IsA(float)).AndReturn('1234')
+        self.relay._attempt(env, 0).AndReturn([TransientRelayError('transient', Reply('450', 'transient 1')),
+                                               TransientRelayError('transient', Reply('450', 'transient 1')),
+                                               TransientRelayError('transient', Reply('450', 'transient 2'))])
+        self.store.increment_attempts('1234')
+        self.store.remove('1234')
+        self.mox.ReplayAll()
+        queue = Queue(self.store, self.relay, bounce_factory=bounce_mock, relay_pool=5)
+        queue.enqueue(env)
+        queue.relay_pool.join()
+
     def test_check_ready(self):
         self.store.get('1234').AndReturn((self.env, 0))
         self.relay._attempt(self.env, 0)
