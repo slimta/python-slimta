@@ -80,6 +80,11 @@ class DictStorage(QueueStorage):
         log.update_meta(id, attempts=new_attempts)
         return new_attempts
 
+    def set_recipients_delivered(self, id, rcpt_indexes):
+        recipients = self.env_db[id].recipients
+        for index in sorted(rcpt_indexes, reverse=True):
+            del recipients[index]
+
     def load(self):
         for key in self.meta_db.keys():
             meta = self.meta_db[key]

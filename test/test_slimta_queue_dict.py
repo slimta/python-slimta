@@ -46,6 +46,13 @@ class TestDictStorage(unittest.TestCase):
         assert_equal(env, self.env[id])
         assert_equal(2, self.meta[id]['attempts'])
 
+    def test_set_recipients_delivered(self):
+        id, env = self._write_test_envelope(['one', 'two', 'three'])
+        self.dict.set_recipients_delivered(id, [1])
+        assert_equal(['one', 'three'], env.recipients)
+        self.dict.set_recipients_delivered(id, [0, 1])
+        assert_equal([], env.recipients)
+
     def test_load(self):
         queued = [self._write_test_envelope(),
                   self._write_test_envelope()]
