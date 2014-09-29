@@ -61,6 +61,10 @@ class QueueStorage(object):
     def __init__(self):
         pass
 
+    def _remove_delivered_rcpts(self, envelope, rcpt_indexes):
+        for index in sorted(rcpt_indexes, reverse=True):
+            del envelope.recipients[index]
+
     def write(self, envelope, timestamp):
         """Writes the given envelope to storage, along with the timestamp of
         its next delivery attempt. The number of delivery attempts asociated

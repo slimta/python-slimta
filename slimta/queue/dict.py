@@ -81,9 +81,7 @@ class DictStorage(QueueStorage):
         return new_attempts
 
     def set_recipients_delivered(self, id, rcpt_indexes):
-        recipients = self.env_db[id].recipients
-        for index in sorted(rcpt_indexes, reverse=True):
-            del recipients[index]
+        self._remove_delivered_rcpts(self.env_db[id], rcpt_indexes)
         log.update_meta(id, delivered_indexes=rcpt_indexes)
 
     def load(self):
