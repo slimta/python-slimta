@@ -84,6 +84,7 @@ class DictStorage(QueueStorage):
         recipients = self.env_db[id].recipients
         for index in sorted(rcpt_indexes, reverse=True):
             del recipients[index]
+        log.update_meta(id, delivered_indexes=rcpt_indexes)
 
     def load(self):
         for key in self.meta_db.keys():
