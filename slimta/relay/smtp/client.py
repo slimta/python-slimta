@@ -134,10 +134,7 @@ class SmtpRelayClient(RelayPoolClient):
 
     def _rcptto(self, rcpt):
         with Timeout(self.command_timeout):
-            rcptto = self.client.rcptto(rcpt)
-        if rcptto and rcptto.is_error():
-            raise SmtpRelayError.factory(rcptto)
-        return rcptto
+            return self.client.rcptto(rcpt)
 
     def _check_replies(self, mailfrom, rcpttos, data):
         if mailfrom.is_error():
@@ -155,45 +152,46 @@ class SmtpRelayClient(RelayPoolClient):
         with Timeout(self.data_timeout):
             send_data = self.client.send_data(header_data, message_data)
         self.client._flush_pipeline()
-        if send_data.is_error():
+        if isinstance(send_data, Reply) and send_data.is_error():
             raise SmtpRelayError.factory(send_data)
         return send_data
 
-    def _handle_encoding(self, result, envelope):
+    def _handle_encoding(self, envelope):
         if '8BITMIME' not in self.client.extensions:
             try:
                 envelope.encode_7bit(self.binary_encoder)
             except UnicodeDecodeError:
                 reply = Reply('554', '5.6.3 Conversion not allowed')
-                e = SmtpRelayError.factory(reply)
-                result.set_exception(e)
-                return False
-        return True
+                raise SmtpRelayError.factory(reply)
 
-    def _send_envelope(self, result, envelope):
+    def _send_envelope(self, rcpt_results, envelope):
         data = None
-        if not self._handle_encoding(result, envelope):
-            return False
+        mailfrom = self._mailfrom(envelope.sender)
+        rcpttos = [self._rcptto(rcpt) for rcpt in envelope.recipients]
         try:
-            mailfrom = self._mailfrom(envelope.sender)
-            rcpttos = [self._rcptto(rcpt) for rcpt in envelope.recipients]
             with Timeout(self.command_timeout):
                 data = self.client.data()
             self._check_replies(mailfrom, rcpttos, data)
-        except SmtpRelayError as e:
+        except SmtpRelayError:
             if data and not data.is_error():
                 with Timeout(self.data_timeout):
                     self.client.send_empty_data()
-            result.set_exception(e)
-            self._rset()
-            return False
+            raise
+        for i, rcpt_reply in enumerate(rcpttos):
+            if rcpt_reply.is_error():
+                rcpt_results[i] =  SmtpRelayError.factory(rcpt_reply)
+
+    def _deliver(self, result, envelope):
+        rcpt_results = [None] * len(envelope.recipients)
         try:
+            self._handle_encoding(envelope)
+            self._send_envelope(rcpt_results, envelope)
             self._send_message_data(envelope)
         except SmtpRelayError as e:
             result.set_exception(e)
             self._rset()
-            return False
-        return True
+        else:
+            result.set(rcpt_results)
 
     def _check_server_timeout(self):
         if self.client.has_reply_waiting():
@@ -222,8 +220,7 @@ class SmtpRelayClient(RelayPoolClient):
                 if self._check_server_timeout():
                     self.queue.appendleft((result, envelope))
                     break
-                if self._send_envelope(result, envelope):
-                    result.set(True)
+                self._deliver(result, envelope)
                 if self.idle_timeout is None:
                     break
                 result, envelope = self.poll()

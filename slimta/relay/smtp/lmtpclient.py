@@ -21,10 +21,17 @@
 
 from __future__ import absolute_import
 
+from socket import getfqdn
+
+from gevent import Timeout
+
 from slimta.smtp.client import LmtpClient
 from .client import SmtpRelayClient
+from . import SmtpRelayError
 
 __all__ = ['LmtpRelayClient']
+
+hostname = getfqdn()
 
 
 class LmtpRelayClient(SmtpRelayClient):
@@ -60,48 +67,25 @@ class LmtpRelayClient(SmtpRelayClient):
         if lhlo.is_error():
             raise SmtpRelayError.factory(lhlo)
 
-    def _send_message_data(self, envelope):
-        header_data, message_data = envelope.flatten()
-        with Timeout(self.data_timeout):
-            send_data = self.client.send_data(header_data, message_data)
-        self.client._flush_pipeline()
-        if send_data.is_error():
-            raise SmtpRelayError.factory(send_data)
-        return send_data
-
-    def _run(self):
-        result, envelope = self.poll()
-        if not result:
-            return
+    def _deliver(self, result, envelope):
+        rcpt_results = [None] * len(envelope.recipients)
         try:
-            self._connect()
-            self._handshake()
-            while result:
-                if self._check_server_timeout():
-                    self.queue.appendleft((result, envelope))
-                    break
-                if self._send_envelope(result, envelope):
-                    result.set(True)
-                if self.idle_timeout is None:
-                    break
-                result, envelope = self.poll()
+            self._handle_encoding(envelope)
+            self._send_envelope(rcpt_results, envelope)
+            data_results = self._send_message_data(envelope)
         except SmtpRelayError as e:
             result.set_exception(e)
-        except SmtpError as e:
-            if not result.ready():
-                reply = Reply('421', '4.3.0 {0!s}'.format(e))
-                relay_error = SmtpRelayError.factory(reply)
-                result.set_exception(relay_error)
-        except Timeout:
-            if not result.ready():
-                relay_error = SmtpRelayError.factory(timed_out)
-                result.set_exception(relay_error)
-        except Exception as e:
-            if not result.ready():
-                result.set_exception(e)
-            raise
-        finally:
-            self._disconnect()
+            self._rset()
+            return
+        had_errors = False
+        for rcpt, reply in data_results:
+            if reply.is_error():
+                i = envelope.recipients.index(rcpt)
+                rcpt_results[i] = SmtpRelayError.factory(reply)
+                had_errors = True
+        result.set(rcpt_results)
+        if had_errors:
+            self._rset()
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

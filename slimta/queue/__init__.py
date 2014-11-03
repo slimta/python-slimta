@@ -30,6 +30,7 @@ from __future__ import absolute_import
 
 import time
 import bisect
+import collections
 from itertools import imap, izip, repeat, chain
 
 import gevent
@@ -382,7 +383,7 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            if results:
+            if isinstance(results, collections.Sequence):
                 self._handle_partial_relay(id, envelope, attempts, results)
             else:
                 self._remove(id)
