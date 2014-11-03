@@ -38,29 +38,6 @@ class LmtpRelayClient(SmtpRelayClient):
 
     _client_class = LmtpClient
 
-    def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
-                 tls=None, tls_immediately=False,
-                 tls_required=False, tls_wrapper=None,
-                 connect_timeout=10.0, command_timeout=10.0,
-                 data_timeout=None, idle_timeout=None,
-                 credentials=None, binary_encoder=None):
-        super(SmtpRelayClient, self).__init__(queue, idle_timeout)
-        self.address = address
-        if socket_creator:
-            self._socket_creator = socket_creator
-        self.socket = None
-        self.client = None
-        self.ehlo_as = ehlo_as or hostname
-        self.tls = tls
-        self.tls_immediately = tls_immediately
-        self.tls_required = tls_required
-        self.tls_wrapper = tls_wrapper
-        self.connect_timeout = connect_timeout
-        self.command_timeout = command_timeout
-        self.data_timeout = data_timeout or command_timeout
-        self.credentials = credentials
-        self.binary_encoder = binary_encoder
-
     def _ehlo(self):
         with Timeout(self.command_timeout):
             lhlo = self.client.lhlo(self.ehlo_as)
