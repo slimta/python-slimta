@@ -33,7 +33,7 @@ from .reply import Reply
 from .datasender import DataSender
 from .auth import ClientMechanism
 
-__all__ = ['Client']
+__all__ = ['Client', 'LmtpClient']
 
 
 class Client(object):
