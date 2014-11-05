@@ -364,7 +364,7 @@ class Client(object):
 class LmtpClient(Client):
     """This sub-class has been modified to implement the LMTP protocol instead.
     The first primary difference is the :meth:`.ehlo` and :meth:`.helo` are no
-    longer allowed and have been replaced with :meth:.`lhlo`. The second
+    longer allowed and have been replaced with :meth:`.lhlo`. The second
     primary difference is that the :meth:`.send_data` and
     :meth:`.send_empty_data` methods now return a list of tuples containing the
     address from a successful :meth:`.rcptto` and a |Reply| object. This list
