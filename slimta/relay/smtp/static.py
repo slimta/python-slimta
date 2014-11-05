@@ -99,5 +99,10 @@ class StaticLmtpRelay(StaticSmtpRelay):
 
     _default_class = LmtpRelayClient
 
+    def __init__(self, host='localhost', port=24, pool_size=None,
+                 **client_kwargs):
+        super(StaticLmtpRelay, self).__init__(host, port, pool_size,
+                                              **client_kwargs)
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
