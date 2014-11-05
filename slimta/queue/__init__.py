@@ -201,6 +201,8 @@ class Queue(Greenlet):
                            same parameters as the |Bounce| constructor. If the
                            function returns ``None``, no bounce is delivered.
                            By default, a new |Bounce| is created in every case.
+    :param bounce_queue: |Queue| object that will be used for delivering bounce
+                         messages. The default is ``self``.
     :param store_pool: Number of simultaneous operations performable against
                        the ``store`` object. Default is unlimited.
     :param relay_pool: Number of simultaneous operations performable against
@@ -209,12 +211,13 @@ class Queue(Greenlet):
     """
 
     def __init__(self, store, relay=None, backoff=None, bounce_factory=None,
-                 store_pool=None, relay_pool=None):
+                 bounce_queue=None, store_pool=None, relay_pool=None):
         super(Queue, self).__init__()
         self.store = store
         self.relay = relay
         self.backoff = backoff or self._default_backoff
         self.bounce_factory = bounce_factory or Bounce
+        self.bounce_queue = bounce_queue or self
         self.wake = Event()
         self.queued = []
         self.active_ids = set()
@@ -332,7 +335,7 @@ class Queue(Greenlet):
     def _bounce(self, envelope, reply):
         bounce = self.bounce_factory(envelope, reply)
         if bounce:
-            return self.enqueue(bounce)
+            return self.bounce_queue.enqueue(bounce)
 
     def _perm_fail(self, id, envelope, reply):
         if id is not None:
