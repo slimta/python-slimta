@@ -137,7 +137,7 @@ class Auth(object):
     :param session: This argument is maintained for backwards-compatibility.
     :type session: unused
 
-    .. meth:: verify_secret(self, authcid, secret, authzid=None)
+    .. method:: verify_secret(self, authcid, secret, authzid=None)
 
        For SMTP server authentication, this must should be overriden to
        verify the given secret for mechanisms that have access to it.  If
@@ -156,7 +156,7 @@ class Auth(object):
                  of both, or any alternative.
        :raises: :class:`CredentialsInvalidError`
 
-    .. meth:: get_secret(self, authcid, authzid=None)
+    .. method:: get_secret(self, authcid, authzid=None)
 
        For SMTP server authentication mechanisms such as ``CRAM-MD5``, the
        client provides a hash of their secret credentials, and thus the server
