@@ -11,9 +11,9 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 # {{{ _start_inbound_relay()
 def _start_inbound_relay(args):
-    from slimta.relay.pipe import MaildropRelay
+    from slimta.relay.pipe import PipeRelay
 
-    relay = MaildropRelay()
+    relay = PipeRelay(['tee', '{message_id}.eml'])
     return relay
 # }}}
 
@@ -36,7 +36,8 @@ def _start_inbound_queue(args, relay):
     queue.add_policy(AddDateHeader())
     queue.add_policy(AddMessageIdHeader())
     queue.add_policy(AddReceivedHeader())
-    queue.add_policy(SpamAssassin())
+    if args.spamassassin:
+        queue.add_policy(SpamAssassin())
 
     return queue
 # }}}
@@ -177,7 +178,8 @@ def _daemonize(args):
         system.redirect_stdio(args.logfile, args.errorfile)
         system.daemonize()
     sleep(0.1)
-    system.drop_privileges(args.user, args.group)
+    if args.user:
+        system.drop_privileges(args.user, args.group)
 # }}}
 
 # {{{ main()
@@ -189,9 +191,9 @@ def main():
     parser.add_argument('-d', '--daemon', dest='daemon', action='store_true',
                         help='Daemonize the process.')
     parser.add_argument('--user', dest='user', type=str, metavar='USR',
-                        default='slimta', help='Drop privileges down to USR')
+                        default=None, help='Drop privileges down to USR')
     parser.add_argument('--group', dest='group', type=str, metavar='GRP',
-                        default='slimta', help='Drop privileges down to GRP')
+                        default=None, help='Drop privileges down to GRP')
 
     group = parser.add_argument_group('Queue Configuration')
     group.add_argument('--envelope-db', dest='envelope_db', metavar='FILE',
@@ -203,11 +205,11 @@ def main():
 
     group = parser.add_argument_group('Port Configuration')
     group.add_argument('--inbound-port', dest='inbound_port', type=int,
-                       metavar='PORT', default=25, help='Listening port number for inbound mail')
+                       metavar='PORT', default=1025, help='Listening port number for inbound mail')
     group.add_argument('--outbound-port', dest='outbound_port', type=int,
-                       metavar='PORT', default=587, help='Listening port number for outbound mail')
+                       metavar='PORT', default=1587, help='Listening port number for outbound mail')
     group.add_argument('--outbound-ssl-port', dest='outbound_ssl_port', type=int,
-                       metavar='PORT', default=465, help='Listening SSL-only port number for outbound mail')
+                       metavar='PORT', default=1465, help='Listening SSL-only port number for outbound mail')
 
     group = parser.add_argument_group('SSL/TLS Configuration')
     group.add_argument('--cert-file', dest='certfile', metavar='FILE',
@@ -224,6 +226,10 @@ def main():
     group.add_argument('--error-file', dest='errorfile', type=str,
                        metavar='FILE', default='error.log',
                        help='Write errors to FILE')
+
+    group = parser.add_argument_group('Other Configuration')
+    group.add_argument('--spamassassin', action='store_true', default=False,
+                       help='Scan messages with local SpamAssassin server')
 
     args = parser.parse_args()
 

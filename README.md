@@ -37,8 +37,10 @@ Running the Example
 ===================
 
 The example in [`examples/slimta-mail.py`](examples/slimta-mail.py) provides a
-fully functional mail server for inbound and outbound email. It needs several
-things to run:
+fully functional mail server for inbound and outbound email. To avoid needing
+to run as superuser, the example uses ports `1025`, `1465` and `1587` instead.
+
+It needs several things to run:
 
 * An activated `virtualenv` as created above in *Getting Started*.
 
@@ -48,21 +50,15 @@ things to run:
 openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout cert.pem -out cert.pem
 ```
     
-* Superuser privileges at startup.
-
-  The example starts services on ports 25, 587, and 465 by default, which are
-  privileged ports on Linux machines.
-
-* A user and group to run as.
-
-  Once the privileged ports are open, the example attempts to drop down to a
-  non-privileged user and group for security purposes.
-  
 * A populated [`examples/site_data.py`](examples/site_data.py) config file.
   
-Please see in the in-line example documentation by running:
+Check out the in-line documentation with `--help`, and then run:
 
-    (.venv)$ ./slimta-mail.py --help
+    (.venv)$ ./slimta-mail.py
+
+Manually or with a mail client, you should now be able to deliver messages. On
+port `1025`, messages will go to unique files in the current directory. On port
+`1587`, messages will be delivered to others using MX records!
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
