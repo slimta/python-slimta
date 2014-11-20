@@ -58,6 +58,7 @@ class PipeRelay(Relay):
 
     * ``{sender}``: The sender address.
     * ``{recipient}``: The first address in the recipient last.
+    * ``{message_id}``: The ``Message-Id`` header.
     * ``{client_ip}``: The client IP address string.
     * ``{client_host}``: The reverse-lookup hostname of the client IP.
     * ``{client_ehlo}``: The EHLO string given by the client.
@@ -86,6 +87,7 @@ class PipeRelay(Relay):
     def _process_args(self, env):
         macros = {'sender': env.sender,
                   'recipient': env.recipients[0],
+                  'message_id': env.headers.get('Message-Id', ''),
                   'client_ip': env.client.get('ip', ''),
                   'client_host': env.client.get('host', ''),
                   'client_ehlo': env.client.get('name', ''),
