@@ -32,7 +32,7 @@ class TestHttpRelayClient(MoxTestBase):
             tls = None
             http_verb = 'POST'
             sender_header = 'X-Envelope-Sender'
-            rcpt_header = 'X-Envelope-Recipient'
+            recipient_header = 'X-Envelope-Recipient'
             ehlo_header = 'X-Ehlo'
             ehlo_as = 'test'
             timeout = 10.0

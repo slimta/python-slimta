@@ -77,7 +77,7 @@ class HttpRelayClient(RelayPoolClient):
                    (self.relay.ehlo_header, self.relay.ehlo_as),
                    (self.relay.sender_header, b64encode(envelope.sender))]
         for rcpt in envelope.recipients:
-            headers.append((self.relay.rcpt_header, b64encode(rcpt)))
+            headers.append((self.relay.recipient_header, b64encode(rcpt)))
         return headers
 
     def _handle_request(self, result, envelope):
