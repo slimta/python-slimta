@@ -17,6 +17,9 @@ The `python-slimta` project is released under the [MIT License][4]. It requires
 Python 2.6+ and is **not** currently compatible with 3.x.
 
 [![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
+[![Latest Version](https://pypip.in/version/python-slimta/badge.svg)](https://pypi.python.org/pypi/python-slimta/)
+[![Supported Python Versions](https://pypip.in/py_versions/python-slimta/badge.svg)](https://pypi.python.org/pypi/python-slimta/)
+[![License](https://pypip.in/license/python-slimta/badge.svg)](https://pypi.python.org/pypi/python-slimta/)
 
 Getting Started
 ===============
@@ -49,9 +52,9 @@ It needs several things to run:
 ```
 openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout cert.pem -out cert.pem
 ```
-    
+
 * A populated [`examples/site_data.py`](examples/site_data.py) config file.
-  
+
 Check out the in-line documentation with `--help`, and then run:
 
     (.venv)$ ./slimta-mail.py
