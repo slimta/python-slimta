@@ -1,7 +1,5 @@
 
-import unittest
-
-from assertions import *
+import unittest2 as unittest
 
 from testfixtures import log_capture
 

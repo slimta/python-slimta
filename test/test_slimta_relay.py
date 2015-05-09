@@ -1,6 +1,5 @@
 
-from assertions import *
-
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 
 from slimta.relay import Relay, PermanentRelayError, TransientRelayError
@@ -8,7 +7,7 @@ from slimta.policy import RelayPolicy
 from slimta.envelope import Envelope
 
 
-class TestRelay(MoxTestBase):
+class TestRelay(unittest.TestCase, MoxTestBase):
 
     def test_default_replies(self):
         perm = PermanentRelayError('test msg')
@@ -26,7 +25,7 @@ class TestRelay(MoxTestBase):
         relay = Relay()
         relay.add_policy(p1)
         relay.add_policy(p2)
-        assert_raises(TypeError, relay.add_policy, None)
+        self.assertRaises(TypeError, relay.add_policy, None)
         relay._run_policies(env)
 
     def test_private_attempt(self):
@@ -42,7 +41,7 @@ class TestRelay(MoxTestBase):
     def test_public_attempt(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         relay = Relay()
-        assert_raises(NotImplementedError, relay.attempt, env, 0)
+        self.assertRaises(NotImplementedError, relay.attempt, env, 0)
 
     def test_kill(self):
         relay = Relay()

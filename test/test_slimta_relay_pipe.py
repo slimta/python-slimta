@@ -1,6 +1,5 @@
 
-from assertions import *
-
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent import subprocess
@@ -10,7 +9,7 @@ from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestPipeRelay(MoxTestBase):
+class TestPipeRelay(unittest.TestCase, MoxTestBase):
 
     def test_exec_process(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -27,9 +26,9 @@ class TestPipeRelay(MoxTestBase):
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
         status, stdout, stderr = m._exec_process(env)
-        assert_equal(0, status)
-        assert_equal('testout', stdout)
-        assert_equal('testerr', stderr)
+        self.assertEqual(0, status)
+        self.assertEqual('testout', stdout)
+        self.assertEqual('testerr', stderr)
 
     def test_exec_process_error(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -46,9 +45,9 @@ class TestPipeRelay(MoxTestBase):
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
         status, stdout, stderr = m._exec_process(env)
-        assert_equal(1337, status)
-        assert_equal('', stdout)
-        assert_equal('', stderr)
+        self.assertEqual(1337, status)
+        self.assertEqual('', stdout)
+        self.assertEqual('', stderr)
 
     def test_attempt(self):
         env = Envelope()
@@ -64,7 +63,7 @@ class TestPipeRelay(MoxTestBase):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndReturn((1337, 'transient failure', ''))
         self.mox.ReplayAll()
-        with assert_raises(TransientRelayError):
+        with self.assertRaises(TransientRelayError):
             m.attempt(env, 0)
 
     def test_attempt_timeout(self):
@@ -73,7 +72,7 @@ class TestPipeRelay(MoxTestBase):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndRaise(Timeout)
         self.mox.ReplayAll()
-        with assert_raises(TransientRelayError):
+        with self.assertRaises(TransientRelayError):
             m.attempt(env, 0)
 
     def test_attempt_permanentfail(self):
@@ -82,35 +81,35 @@ class TestPipeRelay(MoxTestBase):
         self.mox.StubOutWithMock(m, '_exec_process')
         m._exec_process(env).AndReturn((13, '5.0.0 permanent failure', ''))
         self.mox.ReplayAll()
-        with assert_raises(PermanentRelayError):
+        with self.assertRaises(PermanentRelayError):
             m.attempt(env, 0)
 
 
-class TestMaildropRelay(MoxTestBase):
+class TestMaildropRelay(unittest.TestCase, MoxTestBase):
 
     def test_extra_args(self):
         m = MaildropRelay(extra_args=['-t', 'test'])
-        assert_equals(['-t', 'test'], m.args[-2:])
+        self.assertEquals(['-t', 'test'], m.args[-2:])
 
     def test_raise_error(self):
         m = MaildropRelay()
-        with assert_raises(TransientRelayError):
+        with self.assertRaises(TransientRelayError):
             m.raise_error(m.EX_TEMPFAIL, 'message', '')
-        with assert_raises(PermanentRelayError):
+        with self.assertRaises(PermanentRelayError):
             m.raise_error(13, 'message', '')
 
 
-class TestDovecotLdaRelay(MoxTestBase):
+class TestDovecotLdaRelay(unittest.TestCase, MoxTestBase):
 
     def test_extra_args(self):
         m = DovecotLdaRelay(extra_args=['-t', 'test'])
-        assert_equals(['-t', 'test'], m.args[-2:])
+        self.assertEquals(['-t', 'test'], m.args[-2:])
 
     def test_raise_error(self):
         m = DovecotLdaRelay()
-        with assert_raises(TransientRelayError):
+        with self.assertRaises(TransientRelayError):
             m.raise_error(m.EX_TEMPFAIL, 'message', '')
-        with assert_raises(PermanentRelayError):
+        with self.assertRaises(PermanentRelayError):
             m.raise_error(13, 'message', '')
 
 

@@ -1,7 +1,7 @@
 
-from assertions import *
 from email.encoders import encode_base64
 
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent.socket import socket, error as socket_error
@@ -14,7 +14,7 @@ from slimta.relay.smtp.lmtpclient import LmtpRelayClient
 from slimta.envelope import Envelope
 
 
-class TestLmtpRelayClient(MoxTestBase):
+class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestLmtpRelayClient, self).setUp()
@@ -35,7 +35,7 @@ class TestLmtpRelayClient(MoxTestBase):
         client = LmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._connect()
         client._ehlo()
-        with assert_raises(TransientRelayError):
+        with self.assertRaises(TransientRelayError):
             client._ehlo()
 
     def test_deliver(self):
@@ -127,7 +127,7 @@ class TestLmtpRelayClient(MoxTestBase):
         client = LmtpRelayClient(None, self.queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._connect()
         client._ehlo()
-        with assert_raises(ConnectionLost):
+        with self.assertRaises(ConnectionLost):
             client._deliver(result, env)
 
     def test_deliver_conversion(self):

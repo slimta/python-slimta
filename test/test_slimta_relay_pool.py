@@ -1,7 +1,5 @@
 
-import unittest
-
-from assertions import *
+import unittest2 as unittest
 
 import gevent
 
@@ -34,7 +32,7 @@ class TestRelayPool(unittest.TestCase):
         for client in pool_copy:
             client.join()
         gevent.sleep(0)
-        assert_false(pool.pool)
+        self.assertFalse(pool.pool)
 
     def test_add_remove_client_morequeued(self):
         pool = TestPool()
@@ -44,18 +42,18 @@ class TestRelayPool(unittest.TestCase):
         pool_copy = pool.pool.copy()
         for client in pool_copy:
             client.join()
-        assert_true(pool.pool)
+        self.assertTrue(pool.pool)
         pool_copy = pool.pool.copy()
         for client in pool_copy:
             client.join()
         gevent.sleep(0)
-        assert_false(pool.pool)
+        self.assertFalse(pool.pool)
 
     def test_attempt(self):
         env = Envelope()
         pool = TestPool()
         ret = pool.attempt(env, 0)
-        assert_equal('test', ret)
+        self.assertEqual('test', ret)
 
     def test_kill(self):
         pool = RelayPool()
@@ -63,10 +61,10 @@ class TestRelayPool(unittest.TestCase):
         pool.pool.add(RelayPoolClient(None))
         pool.pool.add(RelayPoolClient(None))
         for client in pool.pool:
-            assert_false(client.ready())
+            self.assertFalse(client.ready())
         pool.kill()
         for client in pool.pool:
-            assert_true(client.ready())
+            self.assertTrue(client.ready())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

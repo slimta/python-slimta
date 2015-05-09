@@ -1,8 +1,6 @@
 
-import unittest
+import unittest2 as unittest
 import re
-
-from assertions import *
 
 from slimta.queue.dict import DictStorage
 from slimta.envelope import Envelope
@@ -25,44 +23,44 @@ class TestDictStorage(unittest.TestCase):
 
     def test_write(self):
         id, env = self._write_test_envelope()
-        assert_true(self.id_pattern.match(id))
-        assert_equal(env, self.env[id])
-        assert_equal(1234567890, self.meta[id]['timestamp'])
-        assert_equal(0, self.meta[id]['attempts'])
-        assert_equal('sender@example.com', self.env[id].sender)
-        assert_equal(['rcpt@example.com'], self.env[id].recipients)
-        assert_equal(9876543210, self.env[id].timestamp)
+        self.assertTrue(self.id_pattern.match(id))
+        self.assertEqual(env, self.env[id])
+        self.assertEqual(1234567890, self.meta[id]['timestamp'])
+        self.assertEqual(0, self.meta[id]['attempts'])
+        self.assertEqual('sender@example.com', self.env[id].sender)
+        self.assertEqual(['rcpt@example.com'], self.env[id].recipients)
+        self.assertEqual(9876543210, self.env[id].timestamp)
 
     def test_set_timestamp(self):
         id, env = self._write_test_envelope()
         self.dict.set_timestamp(id, 1111)
-        assert_equal(env, self.env[id])
-        assert_equal(1111, self.meta[id]['timestamp'])
+        self.assertEqual(env, self.env[id])
+        self.assertEqual(1111, self.meta[id]['timestamp'])
 
     def test_increment_attempts(self):
         id, env = self._write_test_envelope()
-        assert_equal(1, self.dict.increment_attempts(id))
-        assert_equal(2, self.dict.increment_attempts(id))
-        assert_equal(env, self.env[id])
-        assert_equal(2, self.meta[id]['attempts'])
+        self.assertEqual(1, self.dict.increment_attempts(id))
+        self.assertEqual(2, self.dict.increment_attempts(id))
+        self.assertEqual(env, self.env[id])
+        self.assertEqual(2, self.meta[id]['attempts'])
 
     def test_set_recipients_delivered(self):
         id, env = self._write_test_envelope(['one', 'two', 'three'])
         self.dict.set_recipients_delivered(id, [1])
-        assert_equal(['one', 'three'], env.recipients)
+        self.assertEqual(['one', 'three'], env.recipients)
         self.dict.set_recipients_delivered(id, [0, 1])
-        assert_equal([], env.recipients)
+        self.assertEqual([], env.recipients)
 
     def test_load(self):
         queued = [self._write_test_envelope(),
                   self._write_test_envelope()]
         loaded = [info for info in self.dict.load()]
-        assert_equal(len(queued), len(loaded))
+        self.assertEqual(len(queued), len(loaded))
         for timestamp, loaded_id in loaded:
             for queued_id, env in queued:
                 if loaded_id == queued_id:
-                    assert_equal(env, self.env[loaded_id])
-                    assert_equal(timestamp, self.meta[queued_id]['timestamp'])
+                    self.assertEqual(env, self.env[loaded_id])
+                    self.assertEqual(timestamp, self.meta[queued_id]['timestamp'])
                     break
             else:
                 raise ValueError('Queued does not match loaded')
@@ -71,8 +69,8 @@ class TestDictStorage(unittest.TestCase):
         id, env = self._write_test_envelope()
         self.dict.increment_attempts(id)
         get_env, get_attempts = self.dict.get(id)
-        assert_equal(env, get_env)
-        assert_equal(1, get_attempts)
+        self.assertEqual(env, get_env)
+        self.assertEqual(1, get_attempts)
 
     def test_remove(self):
         id, env = self._write_test_envelope()
@@ -90,8 +88,8 @@ class TestDictStorage(unittest.TestCase):
         id3, _ = self._write_test_envelope()
         self.dict.remove(id2)
         info = self.dict.get_info()
-        assert_equal(2, info['size'])
-        assert_equal(2, info['meta_size'])
+        self.assertEqual(2, info['size'])
+        self.assertEqual(2, info['meta_size'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -1,34 +1,35 @@
 
-from assertions import *
+import unittest2 as unittest
+
 from mox import MoxTestBase, IsA
 
 from slimta.util import build_auth_from_dict
 from slimta.smtp.auth import Auth, CredentialsInvalidError
 
 
-class TestUtil(MoxTestBase):
+class TestUtil(unittest.TestCase, MoxTestBase):
 
     def test_build_auth_from_dict(self):
         test = {'user@example.com': 'asdftest'}
         Auth1 = build_auth_from_dict(test)
         Auth2 = build_auth_from_dict(test, lower_case=True)
         Auth3 = build_auth_from_dict(test, only_verify=False)
-        assert_true(issubclass(Auth1, Auth))
-        assert_true(issubclass(Auth2, Auth))
-        assert_true(issubclass(Auth3, Auth))
+        self.assertTrue(issubclass(Auth1, Auth))
+        self.assertTrue(issubclass(Auth2, Auth))
+        self.assertTrue(issubclass(Auth3, Auth))
         auth1 = Auth1(None)
         auth2 = Auth2(None)
         auth3 = Auth3(None)
-        assert_equal('user@example.com', auth1.verify_secret('user@example.com', 'asdftest', None))
-        with assert_raises(CredentialsInvalidError):
+        self.assertEqual('user@example.com', auth1.verify_secret('user@example.com', 'asdftest', None))
+        with self.assertRaises(CredentialsInvalidError):
             auth1.verify_secret('user@example.com', 'derp', None)
-        with assert_raises(CredentialsInvalidError):
+        with self.assertRaises(CredentialsInvalidError):
             auth1.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        with assert_raises(TypeError):
+        with self.assertRaises(TypeError):
             auth1.get_secret('user@example.com', None)
         auth2.verify_secret('USER@EXAMPLE.COM', 'asdftest', None)
-        assert_equal(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))
-        with assert_raises(CredentialsInvalidError):
+        self.assertEqual(('asdftest', 'user@example.com'), auth3.get_secret('user@example.com', None))
+        with self.assertRaises(CredentialsInvalidError):
             auth3.get_secret('bad@example.com', None)
 
 

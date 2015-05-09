@@ -1,6 +1,5 @@
 
-from assertions import *
-
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 
 from slimta.queue.proxy import ProxyQueue
@@ -9,7 +8,7 @@ from slimta.relay import Relay, TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestProxyQueue(MoxTestBase):
+class TestProxyQueue(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestProxyQueue, self).setUp()
@@ -21,10 +20,10 @@ class TestProxyQueue(MoxTestBase):
         self.mox.ReplayAll()
         q = ProxyQueue(self.relay)
         ret = q.enqueue(self.env)
-        assert_equal(1, len(ret))
-        assert_equal(2, len(ret[0]))
-        assert_equal(self.env, ret[0][0])
-        assert_regexp_matches(ret[0][1], r'[0-9a-fA-F]{32}')
+        self.assertEqual(1, len(ret))
+        self.assertEqual(2, len(ret[0]))
+        self.assertEqual(self.env, ret[0][0])
+        self.assertRegexpMatches(ret[0][1], r'[0-9a-fA-F]{32}')
 
     def test_enqueue_relayerror(self):
         err = PermanentRelayError('msg failure', Reply('550', 'Not Ok'))
@@ -32,10 +31,10 @@ class TestProxyQueue(MoxTestBase):
         self.mox.ReplayAll()
         q = ProxyQueue(self.relay)
         ret = q.enqueue(self.env)
-        assert_equal(1, len(ret))
-        assert_equal(2, len(ret[0]))
-        assert_equal(self.env, ret[0][0])
-        assert_equal(err, ret[0][1])
+        self.assertEqual(1, len(ret))
+        self.assertEqual(2, len(ret[0]))
+        self.assertEqual(self.env, ret[0][0])
+        self.assertEqual(err, ret[0][1])
 
     def test_start_noop(self):
         self.mox.ReplayAll()
@@ -55,7 +54,7 @@ class TestProxyQueue(MoxTestBase):
     def test_add_policy_error(self):
         self.mox.ReplayAll()
         q = ProxyQueue(self.relay)
-        with assert_raises(NotImplementedError):
+        with self.assertRaises(NotImplementedError):
             q.add_policy('test')
 
 

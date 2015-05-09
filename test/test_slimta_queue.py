@@ -1,8 +1,8 @@
 
 import sys
-from assertions import *
 from functools import wraps
 
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 import gevent
 from gevent.pool import Pool
@@ -28,7 +28,7 @@ def _redirect_stderr(f):
     return wrapper
 
 
-class TestQueue(MoxTestBase):
+class TestQueue(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestQueue, self).setUp()
@@ -38,15 +38,15 @@ class TestQueue(MoxTestBase):
 
     def test_queuestorage_interface(self):
         qs = QueueStorage()
-        assert_raises(NotImplementedError, qs.write, self.env, 1234567890)
-        assert_raises(NotImplementedError, qs.set_timestamp, '1234', 1234567890)
-        assert_raises(NotImplementedError, qs.increment_attempts, '1234')
-        assert_raises(NotImplementedError, qs.set_recipients_delivered, '1234', [])
-        assert_raises(NotImplementedError, qs.load)
-        assert_raises(NotImplementedError, qs.get, '1234')
-        assert_raises(NotImplementedError, qs.remove, '1234')
-        assert_raises(NotImplementedError, qs.wait)
-        assert_raises(NotImplementedError, qs.get_info)
+        self.assertRaises(NotImplementedError, qs.write, self.env, 1234567890)
+        self.assertRaises(NotImplementedError, qs.set_timestamp, '1234', 1234567890)
+        self.assertRaises(NotImplementedError, qs.increment_attempts, '1234')
+        self.assertRaises(NotImplementedError, qs.set_recipients_delivered, '1234', [])
+        self.assertRaises(NotImplementedError, qs.load)
+        self.assertRaises(NotImplementedError, qs.get, '1234')
+        self.assertRaises(NotImplementedError, qs.remove, '1234')
+        self.assertRaises(NotImplementedError, qs.wait)
+        self.assertRaises(NotImplementedError, qs.get_info)
 
     def test_policies(self):
         p1 = self.mox.CreateMock(QueuePolicy)
@@ -57,7 +57,7 @@ class TestQueue(MoxTestBase):
         queue = Queue(self.store, self.relay)
         queue.add_policy(p1)
         queue.add_policy(p2)
-        assert_raises(TypeError, queue.add_policy, None)
+        self.assertRaises(TypeError, queue.add_policy, None)
         queue._run_policies(self.env)
 
     def test_add_queued(self):
@@ -66,24 +66,24 @@ class TestQueue(MoxTestBase):
         queue._add_queued((5, 'two'))
         queue._add_queued((99, 'one'))
         queue._add_queued((7, 'three'))
-        assert_equal([(5, 'two'), (7, 'three'), (10, 'one')], queue.queued)
-        assert_true(queue.wake.isSet())
+        self.assertEqual([(5, 'two'), (7, 'three'), (10, 'one')], queue.queued)
+        self.assertTrue(queue.wake.isSet())
 
     def test_load_all(self):
         self.store.load().AndReturn([(3, 'one'), (5, 'two'), (1, 'three')])
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
         queue._load_all()
-        assert_equal([(1, 'three'), (3, 'one'), (5, 'two')], queue.queued)
-        assert_true(queue.wake.isSet())
+        self.assertEqual([(1, 'three'), (3, 'one'), (5, 'two')], queue.queued)
+        self.assertTrue(queue.wake.isSet())
 
     def test_load_all_empty(self):
         self.store.load().AndReturn([])
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
         queue._load_all()
-        assert_equal([], queue.queued)
-        assert_false(queue.wake.isSet())
+        self.assertEqual([], queue.queued)
+        self.assertFalse(queue.wake.isSet())
 
     def test_enqueue_wait(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
@@ -91,14 +91,14 @@ class TestQueue(MoxTestBase):
         self.store.remove('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
-        assert_equal([(self.env, '1234')], queue.enqueue(self.env))
+        self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
         queue.relay_pool.join()
 
     def test_enqueue_wait_norelay(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
         self.mox.ReplayAll()
         queue = Queue(self.store, relay_pool=5)
-        assert_equal([(self.env, '1234')], queue.enqueue(self.env))
+        self.assertEqual([(self.env, '1234')], queue.enqueue(self.env))
         queue.relay_pool.join()
 
     def test_enqueue_wait_splitpolicy(self):
@@ -127,7 +127,7 @@ class TestQueue(MoxTestBase):
         queue.add_policy(splitpolicy1)
         queue.add_policy(regpolicy)
         queue.add_policy(splitpolicy2)
-        assert_equal([(env1, '1234'), (env2, '5678'), (env3, '90AB')],
+        self.assertEqual([(env1, '1234'), (env2, '5678'), (env3, '90AB')],
                          queue.enqueue(self.env))
         queue.relay_pool.join()
 
@@ -135,7 +135,7 @@ class TestQueue(MoxTestBase):
         self.store.write(self.env, IsA(float)).AndRaise(gevent.GreenletExit)
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay, relay_pool=5)
-        assert_raises(gevent.GreenletExit, queue.enqueue, self.env)
+        self.assertRaises(gevent.GreenletExit, queue.enqueue, self.env)
 
     def test_enqueue_wait_transientfail(self):
         self.store.write(self.env, IsA(float)).AndReturn('1234')
@@ -266,10 +266,10 @@ class TestQueue(MoxTestBase):
             queue._wait_ready(20)
         thread = gevent.spawn(wait_func)
         gevent.sleep(0)
-        assert_false(thread.ready())
+        self.assertFalse(thread.ready())
         queue._add_queued((10, '1234'))
         gevent.sleep(0)
-        assert_true(thread.ready())
+        self.assertTrue(thread.ready())
 
     def test_wait_ready_noneready(self):
         queue = Queue(self.store, self.relay)
@@ -279,10 +279,10 @@ class TestQueue(MoxTestBase):
             queue._wait_ready(10)
         thread = gevent.spawn(wait_func)
         gevent.sleep(0)
-        assert_false(thread.ready())
+        self.assertFalse(thread.ready())
         queue._add_queued((5, '5678'))
         gevent.sleep(0)
-        assert_true(thread.ready())
+        self.assertTrue(thread.ready())
 
     def test_wait_ready_nowait(self):
         queue = Queue(self.store, self.relay)
@@ -312,9 +312,9 @@ class TestQueue(MoxTestBase):
     def test_kill(self):
         self.mox.ReplayAll()
         queue = Queue(self.store, self.relay)
-        assert_false(queue.ready())
+        self.assertFalse(queue.ready())
         queue.kill()
-        assert_true(queue.ready())
+        self.assertTrue(queue.ready())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

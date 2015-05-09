@@ -1,6 +1,5 @@
 
-from assertions import *
-
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
@@ -59,7 +58,7 @@ class FakeSession(object):
         self.encrypted = encrypted
 
 
-class TestSmtpAuth(MoxTestBase):
+class TestSmtpAuth(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestSmtpAuth, self).setUp()
@@ -68,35 +67,35 @@ class TestSmtpAuth(MoxTestBase):
 
     def test_get_available_mechanisms(self):
         auth = Auth()
-        assert_equal([CramMd5], auth.get_available_mechanisms())
-        assert_equal([CramMd5, Plain, Login],
+        self.assertEqual([CramMd5], auth.get_available_mechanisms())
+        self.assertEqual([CramMd5, Plain, Login],
                      auth.get_available_mechanisms(True))
 
     def test_str(self):
         auth = AuthSession(FakeAuthWithGetSecret(), FakeSession(False))
-        assert_equal('CRAM-MD5', str(auth))
+        self.assertEqual('CRAM-MD5', str(auth))
         auth = AuthSession(Auth(), FakeSession(True))
-        assert_equal('PLAIN LOGIN', str(auth))
+        self.assertEqual('PLAIN LOGIN', str(auth))
 
     def test_str_no_secure_mechanisms(self):
         auth = AuthSession(FakeAuthNoSecure(), FakeSession(True))
-        assert_equal('PLAIN LOGIN', str(auth))
+        self.assertEqual('PLAIN LOGIN', str(auth))
         auth = AuthSession(FakeAuthNoSecure(), FakeSession(False))
-        with assert_raises(ValueError):
+        with self.assertRaises(ValueError):
             str(auth)
 
     def test_unimplemented_means_invalid(self):
         auth = FakeAuthWithGetSecret()
-        with assert_raises(CredentialsInvalidError):
+        with self.assertRaises(CredentialsInvalidError):
             auth.verify_secret('user', 'pass')
-        with assert_raises(CredentialsInvalidError):
+        with self.assertRaises(CredentialsInvalidError):
             auth.get_secret('user')
 
     def test_invalid_mechanism(self):
         auth = AuthSession(FakeAuth(), FakeSession(True))
-        with assert_raises(InvalidMechanismError):
+        with self.assertRaises(InvalidMechanismError):
             auth.server_attempt(None, 'TEST')
-        with assert_raises(InvalidMechanismError):
+        with self.assertRaises(InvalidMechanismError):
             auth.server_attempt(None, 'B@D')
 
     def test_plain_noarg(self):
@@ -106,22 +105,22 @@ class TestSmtpAuth(MoxTestBase):
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'PLAIN')
-        assert_equal('testidentity', identity)
+        self.assertEqual('testidentity', identity)
 
     def test_plain(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
-        assert_equal('testidentity', identity)
+        self.assertEqual('testidentity', identity)
 
     def test_plain_badcreds(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
-        with assert_raises(CredentialsInvalidError):
+        with self.assertRaises(CredentialsInvalidError):
             auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgBiYWRwYXNzd29yZA==')
-        with assert_raises(ServerAuthError):
+        with self.assertRaises(ServerAuthError):
             auth.server_attempt(io, 'PLAIN dGVzdGluZw==')
 
     def test_plain_canceled(self):
@@ -130,9 +129,9 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
-        with assert_raises(AuthenticationCanceled):
+        with self.assertRaises(AuthenticationCanceled):
             auth.server_attempt(io, 'PLAIN')
-        with assert_raises(AuthenticationCanceled):
+        with self.assertRaises(AuthenticationCanceled):
             auth.server_attempt(io, 'PLAIN *')
 
     def test_login_noarg(self):
@@ -144,7 +143,7 @@ class TestSmtpAuth(MoxTestBase):
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'LOGIN')
-        assert_equal('testidentity', identity)
+        self.assertEqual('testidentity', identity)
 
     def test_login(self):
         self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
@@ -153,7 +152,7 @@ class TestSmtpAuth(MoxTestBase):
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'LOGIN dGVzdHVzZXI=')
-        assert_equal('testidentity', identity)
+        self.assertEqual('testidentity', identity)
 
     def test_crammd5(self):
         self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
@@ -162,7 +161,7 @@ class TestSmtpAuth(MoxTestBase):
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
         identity = auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
-        assert_equal('testidentity', identity)
+        self.assertEqual('testidentity', identity)
 
     def test_crammd5_badcreds(self):
         self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
@@ -170,7 +169,7 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
-        with assert_raises(CredentialsInvalidError):
+        with self.assertRaises(CredentialsInvalidError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
 
     def test_crammd5_malformed(self):
@@ -179,7 +178,7 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         auth = AuthSession(FakeAuth(), FakeSession(True))
-        with assert_raises(ServerAuthError):
+        with self.assertRaises(ServerAuthError):
             auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
 
     def test_client_plain(self):
@@ -188,8 +187,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = Plain.client_attempt(io, 'test@example.com', 'asdf', 'jkl')
-        assert_equal('235', reply.code)
-        assert_equal('2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -201,8 +200,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('235', reply.code)
-        assert_equal('2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login_bad_mech(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -210,8 +209,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('535', reply.code)
-        assert_equal('5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_login_bad_username(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -221,8 +220,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('535', reply.code)
-        assert_equal('5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_crammd5(self):
         self.sock.sendall('AUTH CRAM-MD5\r\n')
@@ -232,8 +231,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('235', reply.code)
-        assert_equal('2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_crammd5_bad_mech(self):
         self.sock.sendall('AUTH CRAM-MD5\r\n')
@@ -241,8 +240,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('535', reply.code)
-        assert_equal('5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_xoauth2(self):
         self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
@@ -250,8 +249,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('235', reply.code)
-        assert_equal('2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_xoauth2_error(self):
         self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
@@ -261,8 +260,8 @@ class TestSmtpAuth(MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
-        assert_equal('535', reply.code)
-        assert_equal('5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

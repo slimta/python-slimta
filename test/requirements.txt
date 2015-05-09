@@ -1,6 +1,7 @@
 nose
+unittest2
 mox
 testfixtures
 coverage
 nosexcover
-pep8
+flake8

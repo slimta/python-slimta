@@ -1,13 +1,12 @@
 
-from assertions import *
-
+import unittest2 as unittest
 from mox import MoxTestBase, IsA
 from gevent import socket, ssl
 
 from slimta.http import HTTPConnection, HTTPSConnection, get_connection
 
 
-class TestHTTPConnection(MoxTestBase):
+class TestHTTPConnection(unittest.TestCase, MoxTestBase):
 
     def test_connect(self):
         self.mox.StubOutWithMock(socket, 'create_connection')
@@ -15,10 +14,10 @@ class TestHTTPConnection(MoxTestBase):
         self.mox.ReplayAll()
         conn = HTTPConnection('testhost', 8025, True, 7)
         conn.connect()
-        assert_equal(9, conn.sock)
+        self.assertEqual(9, conn.sock)
 
 
-class TestHTTPSConnection(MoxTestBase):
+class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
 
     def test_connect(self):
         self.mox.StubOutWithMock(socket, 'create_connection')
@@ -30,7 +29,7 @@ class TestHTTPSConnection(MoxTestBase):
         self.mox.ReplayAll()
         conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
         conn.connect()
-        assert_equal(sslsock, conn.sock)
+        self.assertEqual(sslsock, conn.sock)
 
     def test_close(self):
         conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
@@ -41,13 +40,13 @@ class TestHTTPSConnection(MoxTestBase):
         conn.close()
 
 
-class TestGetConnection(MoxTestBase):
+class TestGetConnection(unittest.TestCase, MoxTestBase):
 
     def test_get_connection(self):
         conn = get_connection('http://localhost')
-        assert_is_instance(conn, HTTPConnection)
+        self.assertIsInstance(conn, HTTPConnection)
         conn = get_connection('https://localhost')
-        assert_is_instance(conn, HTTPSConnection)
+        self.assertIsInstance(conn, HTTPSConnection)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
