@@ -50,7 +50,7 @@ class OAuth2(ClientMechanism):
     #: This mechanism identifies itself as ``XOAUTH2``.
     name = 'XOAUTH2'
 
-    response_tmpl = 'user={user}\001auth=Bearer{token}\001\001'
+    response_tmpl = 'user={user}\x01auth=Bearer{token}\x01\x01'
 
     @classmethod
     def client_attempt(cls, io, authcid, secret, authzid):

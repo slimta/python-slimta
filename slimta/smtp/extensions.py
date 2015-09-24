@@ -91,6 +91,7 @@ class Extensions(object):
     def drop(self, ext):
         """Drops the given extension, if it exists.
 
+        :param ext: The extension name.
         :returns: True if the extension existed, False otherwise.
 
         """
