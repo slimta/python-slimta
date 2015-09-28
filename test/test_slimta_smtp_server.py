@@ -180,9 +180,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.extensions.reset()
         s.extensions.add('AUTH', AuthSession(SASLAuth(['PLAIN']), s.io))
         s.handle()
-        self.assertEqual(u'testuser', s.auth_result.authcid)
-        self.assertEqual(u'testpassword', s.auth_result.secret)
-        self.assertEqual(u'testzid', s.auth_result.authzid)
+        self.assertTrue(s.authed)
 
     def test_mailfrom(self):
         self.sock.sendall('220 ESMTP server\r\n')

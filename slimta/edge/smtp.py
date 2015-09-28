@@ -56,6 +56,8 @@ class SmtpValidators(object):
       sending the SMTP banner.
     - ``handle_ehlo(reply, ehlo_as)``: Validate the EHLO string.
     - ``handle_helo(reply, helo_as)``: Validate the HELO string.
+    - ``handle_auth(reply, creds)``: Validate an authentication attempt, given
+      a :class:`~pysasl.AuthenticationCredentials` object.
     - ``handle_mail(reply, sender, params)``: Validate the sender address.
     - ``handle_rcpt(reply, recipient, params)``: Validate one recipient
                                                  address.
@@ -79,9 +81,8 @@ class SmtpValidators(object):
         #:  - ``extended_smtp``: The client used EHLO instead of HELO.
         #:  - ``security``: Security of connection, ``None`` or ``'TLS'``.
         #:  - ``ehlo_as``: The EHLO or HELO string given by the client.
-        #:  - ``auth_result``: The authentication result returned by |Auth|
-        #:                     after successful authentication, or ``None`` if
-        #:                     the client has not authenticated.
+        #:  - ``auth``: A tuple of the form ``(authcid, authzid)`` if the
+        #:              client has authenticated.
         #:  - ``envelope``: The |Envelope| being pieced together to send by the
         #:                  connecting client.
         self.session = session
@@ -99,7 +100,7 @@ class SmtpSession(object):
 
         self.envelope = None
         self.ehlo_as = None
-        self.auth_result = None
+        self.auth = None
 
     def _call_validator(self, command, *args):
         method = 'handle_'+command
@@ -113,7 +114,7 @@ class SmtpSession(object):
             proto = 'ESMTP'
         if self.security == 'TLS':
             proto += 'S'
-        if self.auth_result is not None:
+        if self.auth:
             proto += 'A'
         return proto
 
@@ -139,8 +140,10 @@ class SmtpSession(object):
         self._call_validator('tls')
         self.security = 'TLS'
 
-    def AUTH(self, reply, result):
-        self.auth_result = result
+    def AUTH(self, reply, creds):
+        self._call_validator('auth', reply, creds)
+        if reply.code == '235':
+            self.auth = (creds.authcid, creds.authzid)
 
     def RSET(self, reply):
         self.envelope = None
@@ -182,7 +185,7 @@ class SmtpSession(object):
         self.envelope.client['host'] = self.reverse_address
         self.envelope.client['name'] = self.ehlo_as
         self.envelope.client['protocol'] = self.protocol
-        self.envelope.client['auth'] = self.auth_result
+        self.envelope.client['auth'] = self.auth
 
         self.envelope.parse(data)
 

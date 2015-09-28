@@ -32,7 +32,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         self.assertEqual('ESMTP', h.protocol)
         h.security = 'TLS'
         self.assertEqual('ESMTPS', h.protocol)
-        h.auth_result = 'test'
+        h.auth = 'test'
         self.assertEqual('ESMTPSA', h.protocol)
 
     def test_simple_handshake(self):
@@ -48,21 +48,25 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         self.assertFalse(h.extended_smtp)
 
     def test_extended_handshake(self):
+        creds = self.mox.CreateMockAnything()
+        creds.authcid = 'testuser'
+        creds.authzid = 'testzid'
         mock = self.mox.CreateMockAnything()
         mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_banner(IsA(Reply), ('127.0.0.1', 0))
         mock.handle_ehlo(IsA(Reply), 'there')
         mock.handle_tls()
+        mock.handle_auth(IsA(Reply), creds)
         self.mox.ReplayAll()
         h = SmtpSession(('127.0.0.1', 0), mock, None)
         h.BANNER_(Reply('220'))
         h.EHLO(Reply('250'), 'there')
         h.TLSHANDSHAKE()
-        h.AUTH(Reply('250'), 'testauth')
+        h.AUTH(Reply('235'), creds)
         self.assertEqual('there', h.ehlo_as)
         self.assertTrue(h.extended_smtp)
         self.assertEqual('TLS', h.security)
-        self.assertEqual('testauth', h.auth_result)
+        self.assertEqual(('testuser', 'testzid'), h.auth)
         self.assertEqual('ESMTPSA', h.protocol)
 
     def test_mail_rcpt_data_rset(self):
