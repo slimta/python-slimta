@@ -32,6 +32,7 @@ import re
 from gevent.ssl import SSLError
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
+from pysasl import SASLAuth
 
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
@@ -76,9 +77,9 @@ class Server(object):
                      corresponding SMTP commands are received. These methods
                      can modify the |Reply| before the command response is
                      sent.
-    :param auth_class: Optional |Auth| sub-class to enable authentication.
-                       This argument is deprecated in favor of ``auth_obj``,
-                       but is still available for backwards-compatibility.
+    :param auth: If True, enable authentication with default mechanisms. May
+                 also be given as a list of SASL mechanism names to support,
+                 e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
@@ -92,14 +93,12 @@ class Server(object):
                             sent from the client.
     :param data_timeout: Optional timeout waiting for data to be sent from
                          the client.
-    :param auth_obj: Optional object implementing the |Auth| interface to
-                     enable authentication.
 
     """
 
-    def __init__(self, socket, handlers, auth_class=None,
+    def __init__(self, socket, handlers, auth=False,
                  tls=None, tls_immediately=False, tls_wrapper=None,
-                 command_timeout=None, data_timeout=None, auth_obj=None):
+                 command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
 
@@ -115,8 +114,11 @@ class Server(object):
         self.extensions.add('ENHANCEDSTATUSCODES')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
-        if auth_obj or auth_class:
-            auth_obj = auth_obj or auth_class(self)
+        if auth:
+            if isinstance(auth, list):
+                auth_obj = SASLAuth(auth)
+            else:
+                auth_obj = SASLAuth()
             auth_session = AuthSession(auth_obj, self.io)
             self.extensions.add('AUTH', auth_session)
 

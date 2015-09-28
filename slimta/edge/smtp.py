@@ -211,9 +211,9 @@ class SmtpEdge(EdgeServer):
     :param max_size: Maximum size of incoming messages.
     :param validator_class: :class:`SmtpValidators` sub-class to validate
                             commands and alter replies.
-    :param auth_class: Optional |Auth| sub-class to enable authentication.
-                       This argument is deprecated in favor of ``auth_obj``,
-                       but is still available for backwards-compatibility.
+    :param auth: If True, enable authentication with default mechanisms. May
+                 also be given as a list of SASL mechanism names to support,
+                 e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
     :param tls: Optional dictionary of TLS settings passed directly as
                 keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, connections will be encrypted
@@ -225,23 +225,20 @@ class SmtpEdge(EdgeServer):
                          is not tricked by the client sending data.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
-    :param auth_obj: Optional object implementing the |Auth| interface to
-                     enable authentication.
 
     """
 
     def __init__(self, listener, queue, pool=None, max_size=None,
-                 validator_class=None, auth_class=None,
+                 validator_class=None, auth=False,
                  tls=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None,
-                 hostname=None, auth_obj=None):
+                 hostname=None):
         super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
         self.max_size = max_size
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout
         self.validator_class = validator_class
-        self.auth_class = auth_class
-        self.auth_obj = auth_obj
+        self.auth = auth
         self.tls = tls
         self.tls_immediately = tls_immediately
 
@@ -249,11 +246,10 @@ class SmtpEdge(EdgeServer):
         smtp_server = None
         try:
             handlers = SmtpSession(address, self.validator_class, self.handoff)
-            smtp_server = Server(socket, handlers, self.auth_class,
+            smtp_server = Server(socket, handlers, self.auth,
                                  self.tls, self.tls_immediately,
                                  command_timeout=self.command_timeout,
-                                 data_timeout=self.data_timeout,
-                                 auth_obj=self.auth_obj)
+                                 data_timeout=self.data_timeout)
             if self.max_size:
                 smtp_server.extensions.add('SIZE', self.max_size)
             smtp_server.handle()
