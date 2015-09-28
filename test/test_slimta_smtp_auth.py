@@ -1,138 +1,63 @@
 
+import email.utils
+
 import unittest2 as unittest
 from mox import MoxTestBase, IsA
-from gevent.socket import socket
+from gevent.ssl import SSLSocket
+from pysasl import SASLAuth
 
 from slimta.smtp.io import IO
-from slimta.smtp.auth import Auth, AuthSession, CredentialsInvalidError, \
-                             ServerAuthError, InvalidMechanismError, \
-                             AuthenticationCanceled
-from slimta.smtp.auth.standard import *
-from slimta.smtp.auth.oauth import OAuth2
-
-
-class StaticCramMd5(CramMd5):
-
-    def _build_initial_challenge(self):
-        return '<test@example.com>'
-
-
-class FakeAuth(Auth):
-
-    def verify_secret(self, cid, secret, zid=None):
-        if cid != 'testuser' or secret != 'testpassword':
-            raise CredentialsInvalidError()
-        if zid is not None and zid != 'testzid':
-            raise CredentialsInvalidError()
-        return 'testidentity'
-
-    def get_secret(self, cid, zid=None):
-        if cid != 'testuser':
-            raise CredentialsInvalidError()
-        if zid is not None and zid != 'testzid':
-            raise CredentialsInvalidError()
-        return 'testpassword', 'testidentity'
-
-    def get_available_mechanisms(self, encrypted):
-        return [Plain, Login, StaticCramMd5]
-
-
-class FakeAuthNoSecure(Auth):
-
-    def get_available_mechanisms(self, encrypted):
-        if encrypted:
-            return [Plain, Login]
-        else:
-            return []
-
-
-class FakeAuthWithGetSecret(Auth):
-
-    def get_secret(self, *args):
-        raise CredentialsInvalidError()
-
-
-class FakeSession(object):
-
-    def __init__(self, encrypted):
-        self.encrypted = encrypted
+from slimta.smtp.auth import AuthSession, ServerAuthError, \
+                             InvalidMechanismError, AuthenticationCanceled
 
 
 class TestSmtpAuth(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestSmtpAuth, self).setUp()
-        self.sock = self.mox.CreateMock(socket)
+        self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
-
-    def test_get_available_mechanisms(self):
-        auth = Auth()
-        self.assertEqual([CramMd5], auth.get_available_mechanisms())
-        self.assertEqual([CramMd5, Plain, Login],
-                     auth.get_available_mechanisms(True))
+        self.io = IO(self.sock)
+        self.make_msgid = email.utils.make_msgid = lambda: '<test@example.com>'
 
     def test_str(self):
-        auth = AuthSession(FakeAuthWithGetSecret(), FakeSession(False))
-        self.assertEqual('CRAM-MD5', str(auth))
-        auth = AuthSession(Auth(), FakeSession(True))
-        self.assertEqual('PLAIN LOGIN', str(auth))
-
-    def test_str_no_secure_mechanisms(self):
-        auth = AuthSession(FakeAuthNoSecure(), FakeSession(True))
-        self.assertEqual('PLAIN LOGIN', str(auth))
-        auth = AuthSession(FakeAuthNoSecure(), FakeSession(False))
-        with self.assertRaises(ValueError):
-            str(auth)
-
-    def test_unimplemented_means_invalid(self):
-        auth = FakeAuthWithGetSecret()
-        with self.assertRaises(CredentialsInvalidError):
-            auth.verify_secret('user', 'pass')
-        with self.assertRaises(CredentialsInvalidError):
-            auth.get_secret('user')
+        auth = AuthSession(SASLAuth(), self.io)
+        self.assertEqual('CRAM-MD5 LOGIN PLAIN', str(auth))
 
     def test_invalid_mechanism(self):
-        auth = AuthSession(FakeAuth(), FakeSession(True))
+        auth = AuthSession(SASLAuth(), self.io)
         with self.assertRaises(InvalidMechanismError):
-            auth.server_attempt(None, 'TEST')
+            auth.server_attempt('TEST')
         with self.assertRaises(InvalidMechanismError):
-            auth.server_attempt(None, 'B@D')
+            auth.server_attempt('B@D')
 
     def test_plain_noarg(self):
         self.sock.sendall('334 \r\n')
         self.sock.recv(IsA(int)).AndReturn('dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        identity = auth.server_attempt(io, 'PLAIN')
-        self.assertEqual('testidentity', identity)
+        auth = AuthSession(SASLAuth(), self.io)
+        result = auth.server_attempt('PLAIN')
+        self.assertEqual(u'testuser', result.authcid)
+        self.assertEqual(u'testpassword', result.secret)
+        self.assertEqual(u'testzid', result.authzid)
 
     def test_plain(self):
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        identity = auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
-        self.assertEqual('testidentity', identity)
-
-    def test_plain_badcreds(self):
-        self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        with self.assertRaises(CredentialsInvalidError):
-            auth.server_attempt(io, 'PLAIN dGVzdHppZAB0ZXN0dXNlcgBiYWRwYXNzd29yZA==')
-        with self.assertRaises(ServerAuthError):
-            auth.server_attempt(io, 'PLAIN dGVzdGluZw==')
+        auth = AuthSession(SASLAuth(), self.io)
+        result = auth.server_attempt('PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
+        self.assertEqual(u'testuser', result.authcid)
+        self.assertEqual(u'testpassword', result.secret)
+        self.assertEqual(u'testzid', result.authzid)
 
     def test_plain_canceled(self):
         self.sock.sendall('334 \r\n')
         self.sock.recv(IsA(int)).AndReturn('*\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
+        auth = AuthSession(SASLAuth(), self.io)
         with self.assertRaises(AuthenticationCanceled):
-            auth.server_attempt(io, 'PLAIN')
+            auth.server_attempt('PLAIN')
         with self.assertRaises(AuthenticationCanceled):
-            auth.server_attempt(io, 'PLAIN *')
+            auth.server_attempt('PLAIN *')
 
     def test_login_noarg(self):
         self.sock.sendall('334 VXNlcm5hbWU6\r\n')
@@ -140,53 +65,56 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
         self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        identity = auth.server_attempt(io, 'LOGIN')
-        self.assertEqual('testidentity', identity)
+        auth = AuthSession(SASLAuth(), self.io)
+        result = auth.server_attempt('LOGIN')
+        self.assertEqual(u'testuser', result.authcid)
+        self.assertEqual(u'testpassword', result.secret)
+        self.assertEqual(None, result.authzid)
 
     def test_login(self):
         self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
         self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        identity = auth.server_attempt(io, 'LOGIN dGVzdHVzZXI=')
-        self.assertEqual('testidentity', identity)
+        auth = AuthSession(SASLAuth(), self.io)
+        result = auth.server_attempt('LOGIN dGVzdHVzZXI=')
+        self.assertEqual(u'testuser', result.authcid)
+        self.assertEqual(u'testpassword', result.secret)
+        self.assertEqual(None, result.authzid)
 
     def test_crammd5(self):
         self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
         self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        identity = auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
-        self.assertEqual('testidentity', identity)
-
-    def test_crammd5_badcreds(self):
-        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgMTIzNDU2Nzg5MA==\r\n')
-        self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
-        with self.assertRaises(CredentialsInvalidError):
-            auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
+        auth = AuthSession(SASLAuth(), self.io)
+        result = auth.server_attempt('CRAM-MD5')
+        self.assertEqual(u'testuser', result.authcid)
+        self.assertTrue(result.check_secret(u'testpassword'))
+        self.assertFalse(result.check_secret(u'testwrong'))
+        self.assertEqual(None, result.authzid)
 
     def test_crammd5_malformed(self):
         self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
         self.sock.recv(IsA(int)).AndReturn('bWFsZm9ybWVk\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        auth = AuthSession(FakeAuth(), FakeSession(True))
+        auth = AuthSession(SASLAuth(), self.io)
         with self.assertRaises(ServerAuthError):
-            auth.server_attempt(io, 'CRAM-MD5 dGVzdHVzZXI=')
+            auth.server_attempt('CRAM-MD5')
+
+    def test_client_bad_mech(self):
+        self.sock.sendall('AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.mox.ReplayAll()
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_plain(self):
         self.sock.sendall('AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
         self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = Plain.client_attempt(io, 'test@example.com', 'asdf', 'jkl')
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', 'jkl', 'PLAIN')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
 
@@ -198,19 +126,10 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.sock.sendall('YXNkZg==\r\n')
         self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
-
-    def test_client_login_bad_mech(self):
-        self.sock.sendall('AUTH LOGIN\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
-        self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
-        self.assertEqual('535', reply.code)
-        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_login_bad_username(self):
         self.sock.sendall('AUTH LOGIN\r\n')
@@ -218,8 +137,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.sock.sendall('dGVzdEBleGFtcGxlLmNvbQ==\r\n')
         self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = Login.client_attempt(io, 'test@example.com', 'asdf', None)
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
 
@@ -229,26 +148,17 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.sock.sendall('dGVzdEBleGFtcGxlLmNvbSA1Yzk1OTBjZGE3ZTgxMDY5Mzk2ZjhiYjlkMzU1MzE1Yg==\r\n')
         self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'CRAM-MD5')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
-
-    def test_client_crammd5_bad_mech(self):
-        self.sock.sendall('AUTH CRAM-MD5\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
-        self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = CramMd5.client_attempt(io, 'test@example.com', 'asdf', None)
-        self.assertEqual('535', reply.code)
-        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_xoauth2(self):
         self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
         self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'XOAUTH2')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
 
@@ -258,8 +168,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.sock.sendall('\r\n')
         self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
         self.mox.ReplayAll()
-        io = IO(self.sock)
-        reply = OAuth2.client_attempt(io, 'test@example.com', 'asdf', None)
+        auth = AuthSession(SASLAuth(), self.io)
+        reply = auth.client_attempt('test@example.com', 'asdf', None, 'XOAUTH2')
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
 

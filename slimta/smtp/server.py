@@ -103,11 +103,12 @@ class Server(object):
         self.handlers = handlers
         self.extensions = Extensions()
 
+        self.io = IO(socket, tls_wrapper)
+
         self.have_mailfrom = None
         self.have_rcptto = None
         self.ehlo_as = None
         self.auth_result = None
-        self.encrypted = False
 
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
@@ -116,10 +117,8 @@ class Server(object):
             self.extensions.add('STARTTLS')
         if auth_obj or auth_class:
             auth_obj = auth_obj or auth_class(self)
-            auth_session = AuthSession(auth_obj, self)
+            auth_session = AuthSession(auth_obj, self.io)
             self.extensions.add('AUTH', auth_session)
-
-        self.io = IO(socket, tls_wrapper)
 
         if tls:
             self.tls = tls.copy()
@@ -130,6 +129,11 @@ class Server(object):
 
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
+
+    @property
+    def encrypted(self):
+        """True if the session transport is encrypted, False otherwise."""
+        return self.io.encrypted
 
     def _recv_command(self):
         with Timeout(self.command_timeout):
@@ -162,7 +166,6 @@ class Server(object):
         if not self.io.encrypt_socket(self.tls):
             return False
         self._call_custom_handler('TLSHANDSHAKE')
-        self.encrypted = True
         return True
 
     def _handle_command(self, which, arg):
@@ -303,15 +306,18 @@ class Server(object):
             return
         auth = self.extensions.getparam('AUTH')
 
-        reply = Reply('235', '2.7.0 Authentication successful')
         try:
-            result = auth.server_attempt(self.io, arg)
+            result = auth.server_attempt(arg)
+        except ValueError:
+            bad_arguments.send(self.io)
+            return
         except ServerAuthError as e:
-            reply.copy(e.reply)
-            result = None
-        reply.send(self.io)
+            e.reply.send(self.io)
+            return
 
+        reply = Reply('235', '2.7.0 Authentication successful')
         self._call_custom_handler('AUTH', reply, result)
+        reply.send(self.io)
 
         if reply.code == '235':
             self.auth_result = result

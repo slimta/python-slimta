@@ -32,7 +32,7 @@ import re
 
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
-                    'tls_failure']
+                    'tls_failure', 'invalid_credentials']
 
 message_esc_pattern = re.compile(r'^([245]\.\d\d?\d?\.\d\d?\d?)\s+')
 esc_pattern = re.compile(r'^([245])\.(\d\d?\d?)\.(\d\d?\d?)$')
@@ -232,6 +232,9 @@ tls_failure = Reply('421', '4.7.0 TLS negotiation failed')
 #: Reply sent when the server times out waiting for data from the client.
 timed_out = Reply('421', '4.4.2 Connection timed out')
 timed_out.newline_first = True
+
+#: Reply sent when an authentication attempt resulted in invalid credentials.
+invalid_credentials = Reply('535', '5.7.8 Authentication credentials invalid')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

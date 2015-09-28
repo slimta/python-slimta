@@ -53,9 +53,13 @@ class IO(object):
         self.send_buffer = cStringIO.StringIO()
         self.recv_buffer = ''
 
+    @property
+    def encrypted(self):
+        return isinstance(self.socket, SSLSocket)
+
     def close(self):
         log.close(self.socket)
-        if isinstance(self.socket, SSLSocket):
+        if self.encrypted:
             try:
                 self.socket.unwrap()
             except socket_error as (errno, message):

@@ -1,33 +1,19 @@
 
 import unittest2 as unittest
 from mox import MoxTestBase, IsA
-from gevent.socket import socket
-from gevent.ssl import SSLError
+from gevent.ssl import SSLSocket, SSLError
+from pysasl import SASLAuth
 
 from slimta.smtp.server import Server
-from slimta.smtp.auth import AuthSession, CredentialsInvalidError
-from slimta.smtp.auth.standard import Plain
+from slimta.smtp.auth import AuthSession
 from slimta.smtp import ConnectionLost
-
-
-class FakeAuth(object):
-
-    def verify_secret(self, cid, secret, zid=None):
-        if cid != 'testuser' or secret != 'testpassword':
-            raise CredentialsInvalidError()
-        if zid is not None and zid != 'testzid':
-            raise CredentialsInvalidError()
-        return (cid, zid)
-
-    def get_available_mechanisms(self, encrypted=False):
-        return [Plain]
 
 
 class TestSmtpServer(unittest.TestCase, MoxTestBase):
 
     def setUp(self):
         super(TestSmtpServer, self).setUp()
-        self.sock = self.mox.CreateMock(socket)
+        self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
         self.tls_args = {'server_side': True}
 
@@ -192,9 +178,11 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add('AUTH', AuthSession(FakeAuth(), s))
+        s.extensions.add('AUTH', AuthSession(SASLAuth(['PLAIN']), s.io))
         s.handle()
-        self.assertEqual(('testuser', 'testzid'), s.auth_result)
+        self.assertEqual(u'testuser', s.auth_result.authcid)
+        self.assertEqual(u'testpassword', s.auth_result.secret)
+        self.assertEqual(u'testzid', s.auth_result.authzid)
 
     def test_mailfrom(self):
         self.sock.sendall('220 ESMTP server\r\n')

@@ -6,6 +6,7 @@ from mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent.socket import socket, error as socket_error
 from gevent.event import AsyncResult
+from pysasl.plain import PlainMechanism
 
 from slimta.util.deque import BlockingDeque
 from slimta.smtp import ConnectionLost, SmtpError

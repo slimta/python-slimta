@@ -24,14 +24,15 @@
 from __future__ import absolute_import
 
 from gevent import Timeout
-from gevent.ssl import SSLSocket
 from gevent.socket import wait_read
 
+from pysasl import SASLAuth
+
 from .io import IO
+from .auth import AuthSession
 from .extensions import Extensions
 from .reply import Reply
 from .datasender import DataSender
-from .auth import ClientMechanism
 
 __all__ = ['Client', 'LmtpClient']
 
@@ -56,8 +57,6 @@ class Client(object):
     def __init__(self, socket, tls_wrapper=None):
         self.io = IO(socket, tls_wrapper)
         self.reply_queue = []
-        from .auth.standard import standard_mechanisms
-        self.client_mechanisms = standard_mechanisms
 
         #: :class:`Extensions` object of the client, populated once the EHLO
         #: command returns its response.
@@ -208,7 +207,7 @@ class Client(object):
             self.encrypt(tls)
         return reply
 
-    def auth(self, authcid, secret, authzid=None, mechanism=None):
+    def auth(self, authcid, secret, authzid=None, mechanism='PLAIN'):
         """Negotiates authentication for the current SMTP session. This
         transaction may involve several back-and-forth packets to the server,
         depending on the SASL mechanism used, and this function will only
@@ -218,23 +217,14 @@ class Client(object):
         :param secret: The secret (i.e. password) string to send for the given
                        authentication and authorization identities.
         :param authzid: The authorization identity, if applicable.
-        :param mechanism: Force the usage of the given SASL mechanism
-                          sub-class.  If not given, the best mechanism
-                          available is used.
-        :type mechanism: :class:`~slimta.smtp.auth.ClientMechanism`
+        :param mechanism: SASL mechanism name to use for authentication.
+        :type mechanism: str
         :returns: |Reply| object populated with the response.
 
         """
-        if not mechanism:
-            server_supports = self.extensions.getparam('AUTH') or []
-            for mech in self.client_mechanisms:
-                mechanism = mech
-                if mech.name in server_supports:
-                    break
-        elif not issubclass(mechanism, ClientMechanism):
-            raise TypeError(mechanism)
         self._flush_pipeline()
-        return mechanism.client_attempt(self.io, authcid, secret, authzid)
+        auth = AuthSession(SASLAuth(), self.io)
+        return auth.client_attempt(authcid, secret, authzid, mechanism)
 
     def mailfrom(self, address, data_size=None):
         """Sends the MAIL command with the ``address`` and possibly the message

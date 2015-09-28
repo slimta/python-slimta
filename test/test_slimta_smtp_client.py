@@ -5,7 +5,6 @@ from gevent.socket import socket
 
 from slimta.smtp.client import Client, LmtpClient
 from slimta.smtp.reply import Reply
-from slimta.smtp.auth.standard import Plain
 
 
 class TestSmtpClient(unittest.TestCase, MoxTestBase):
@@ -107,7 +106,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
-        reply = client.auth('test@example.com', 'asdf', mechanism=Plain)
+        reply = client.auth('test@example.com', 'asdf', mechanism='PLAIN')
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
         self.assertEqual('AUTH', reply.command)
