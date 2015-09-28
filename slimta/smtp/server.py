@@ -107,7 +107,7 @@ class Server(object):
         self.have_mailfrom = None
         self.have_rcptto = None
         self.ehlo_as = None
-        self.auth_result = None
+        self.authed = False
 
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
@@ -303,7 +303,7 @@ class Server(object):
         if 'AUTH' not in self.extensions:
             unknown_command.send(self.io)
             return
-        if not self.ehlo_as or self.auth_result or self.have_mailfrom:
+        if not self.ehlo_as or self.authed or self.have_mailfrom:
             bad_sequence.send(self.io)
             return
         auth = self.extensions.getparam('AUTH')
@@ -322,7 +322,7 @@ class Server(object):
         reply.send(self.io)
 
         if reply.code == '235':
-            self.auth_result = result
+            self.authed = True
 
     def _command_MAIL(self, arg):
         match = from_pattern.match(arg)
