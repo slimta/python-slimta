@@ -143,7 +143,7 @@ class SmtpSession(object):
     def AUTH(self, reply, creds):
         self._call_validator('auth', reply, creds)
         if reply.code == '235':
-            self.auth = (creds.authcid, creds.authzid)
+            self.auth = creds.authcid
 
     def RSET(self, reply):
         self.envelope = None

@@ -66,7 +66,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         self.assertEqual('there', h.ehlo_as)
         self.assertTrue(h.extended_smtp)
         self.assertEqual('TLS', h.security)
-        self.assertEqual(('testuser', 'testzid'), h.auth)
+        self.assertEqual('testuser', h.auth)
         self.assertEqual('ESMTPSA', h.protocol)
 
     def test_mail_rcpt_data_rset(self):
