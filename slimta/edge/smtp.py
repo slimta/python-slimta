@@ -149,20 +149,12 @@ class SmtpSession(object):
         self.envelope = None
 
     def MAIL(self, reply, address, params):
-        try:
-            self._call_validator('mail', reply, address, params)
-        except TypeError:
-            # XXX: Temporary for backwards-compatibility.
-            self._call_validator('mail', reply, address)
+        self._call_validator('mail', reply, address, params)
         if reply.code == '250':
             self.envelope = Envelope(sender=address)
 
     def RCPT(self, reply, address, params):
-        try:
-            self._call_validator('rcpt', reply, address, params)
-        except TypeError:
-            # XXX: Temporary for backwards-compatibility.
-            self._call_validator('rcpt', reply, address)
+        self._call_validator('rcpt', reply, address, params)
         if reply.code == '250':
             self.envelope.recipients.append(address)
 
