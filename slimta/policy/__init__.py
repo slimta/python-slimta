@@ -79,10 +79,23 @@ class RelayPolicy(object):
 
     def apply(self, envelope):
         """:class:`RelayPolicy` sub-classes must override this method, which
-        will be called by the |Relay| before delivery.
+        will be called by the |Relay| before delivery. Unlike
+        :meth:`QueuePolicy.apply`, the return value of this method is
+        discarded.
+
+        Much like :meth:`~slimta.relay.Relay.attempt`, these methods may raise
+        :class:`~slimta.relay.PermanentRelayError` or
+        :class:`~slimta.relay.TransientRelayError` to mark the relay attempt as
+        failed for the entire message.
+
+        Modifications to the ``envelope`` will be passed on to the
+        :class:`~slimta.relay.Relay`. However, it depends on the
+        :class:`~slimta.queue.QueueStorage` implementation to know if those
+        modifications will or will not persist between relay attempts!
 
         :param envelope: The |Envelope| object the policy execution should
                          apply any changes to.
+        :raises: :class:`PermanentRelayError`, :class:`TransientRelayError`
 
         """
         raise NotImplementedError()
