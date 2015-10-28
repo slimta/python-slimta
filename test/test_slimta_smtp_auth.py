@@ -2,7 +2,7 @@
 import email.utils
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA
+from mox3.mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket
 from pysasl import SASLAuth
 

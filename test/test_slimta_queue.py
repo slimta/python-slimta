@@ -3,7 +3,7 @@ import sys
 from functools import wraps
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA
+from mox3.mox import MoxTestBase, IsA
 import gevent
 from gevent.pool import Pool
 from gevent.event import AsyncResult

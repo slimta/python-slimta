@@ -1,6 +1,6 @@
 nose
 unittest2
-mox
+mox3
 testfixtures
 coverage
 nosexcover

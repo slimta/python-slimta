@@ -2,7 +2,7 @@
 from email.encoders import encode_base64
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA
+from mox3.mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent.socket import socket, error as socket_error
 from gevent.event import AsyncResult
