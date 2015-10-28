@@ -1,8 +1,7 @@
 build/
 dist/
 *.egg-info/
-.venv/
-.venv-2.6/
+.venv*/
 .coverage
 nosetests.xml
 coverage.xml
