@@ -1,6 +1,6 @@
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA, IgnoreArg
+from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
 from dns.resolver import NXDOMAIN

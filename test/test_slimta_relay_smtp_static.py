@@ -1,6 +1,6 @@
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA
+from mox3.mox import MoxTestBase, IsA
 
 from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.relay.smtp.client import SmtpRelayClient

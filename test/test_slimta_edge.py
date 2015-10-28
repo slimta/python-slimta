@@ -2,7 +2,7 @@
 import time
 
 import unittest2 as unittest
-from mox import MoxTestBase
+from mox3.mox import MoxTestBase
 
 from slimta.edge import Edge, EdgeServer
 

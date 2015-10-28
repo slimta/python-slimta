@@ -2,7 +2,7 @@
 import unittest2 as unittest
 
 import gevent
-from mox import MoxTestBase, IgnoreArg
+from mox3.mox import MoxTestBase, IgnoreArg
 from dns.resolver import NXDOMAIN
 from dns.exception import DNSException
 from dns.exception import SyntaxError as DnsSyntaxError

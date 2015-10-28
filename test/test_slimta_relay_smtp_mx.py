@@ -1,6 +1,6 @@
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA
+from mox3.mox import MoxTestBase, IsA
 import dns.resolver
 from dns.exception import Timeout as DNSTimeout
 

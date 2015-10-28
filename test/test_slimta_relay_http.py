@@ -1,6 +1,6 @@
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA, IgnoreArg
+from mox3.mox import MoxTestBase, IsA, IgnoreArg
 from gevent.event import AsyncResult
 from gevent import Timeout
 

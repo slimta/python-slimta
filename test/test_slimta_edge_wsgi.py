@@ -3,7 +3,7 @@ from StringIO import StringIO
 from base64 import b64encode
 
 import unittest2 as unittest
-from mox import MoxTestBase, IsA, IgnoreArg
+from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from dns.exception import DNSException
 
