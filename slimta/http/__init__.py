@@ -106,10 +106,17 @@ def get_connection(url, tls=None):
     host = url.netloc or 'localhost'
     host = host.rsplit(':', 1)[0]
     port = url.port
+    kwargs = {}
+
+    if six.PY2:
+        # strict is deprecated on Python3
+        # https://docs.python.org/3.2/library/http.client.html#httpconnection-objects
+        kwargs['strict'] = True
+
     if url.scheme == 'https':
-        conn = HTTPSConnection(host, port, strict=True, tls=tls)
+        conn = HTTPSConnection(host, tls=tls, **kwargs)
     else:
-        conn = HTTPConnection(host, port, strict=True)
+        conn = HTTPConnection(host, **kwargs)
     return conn
 
 
