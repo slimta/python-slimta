@@ -29,16 +29,15 @@ other data should have the prefixed ``.`` removed.
 from __future__ import absolute_import
 
 import re
-import cStringIO
 from pprint import pformat
 
 from . import ConnectionLost, MessageTooBig
 
 __all__ = ['DataReader']
 
-fullline_pattern = re.compile(r'.*\n')
-eod_pattern = re.compile(r'^\.\s*?\n$')
-endl_pattern = re.compile(r'\r?\n$')
+fullline_pattern = re.compile(br'.*\n')
+eod_pattern = re.compile(br'^\.\s*?\n$')
+endl_pattern = re.compile(br'\r?\n$')
 
 
 class DataReader(object):
@@ -57,7 +56,7 @@ class DataReader(object):
         self.max_size = max_size
 
         self.EOD = None
-        self.lines = ['']
+        self.lines = [b'']
         self.i = 0
 
     def _append_line(self, line):
@@ -68,7 +67,7 @@ class DataReader(object):
 
     def from_recv_buffer(self):
         self.add_lines(self.io.recv_buffer)
-        self.io.recv_buffer = ''
+        self.io.recv_buffer = b''
 
     def handle_finished_line(self):
         i = self.i
@@ -84,7 +83,7 @@ class DataReader(object):
                 self.EOD = i
 
             # Remove an initial period on non-EOD lines as per RFC 821 4.5.2.
-            elif line[0] == '.':
+            elif line[0:1] == b'.':  # line[0] is an integer
                 line = line[1:]
                 self.lines[i] = line
 
@@ -102,7 +101,7 @@ class DataReader(object):
             return False
 
         piece = self.io.raw_recv()
-        if piece == '':
+        if piece == b'':
             raise ConnectionLost()
 
         self.size += len(piece)
@@ -118,15 +117,15 @@ class DataReader(object):
         after_data_lines = self.lines[self.EOD+1:]
 
         # Save the extra lines back on the recv_buffer.
-        self.io.recv_buffer = ''.join(after_data_lines)
+        self.io.recv_buffer = b''.join(after_data_lines)
 
         # Return the data as one big string
-        return ''.join(data_lines)
+        return b''.join(data_lines)
 
     def recv(self):
         """Receives all message data from the session.
 
-        :rtype: str
+        :rtype: bytes
 
         """
         self.from_recv_buffer()

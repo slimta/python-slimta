@@ -22,12 +22,13 @@
 from __future__ import absolute_import
 
 import re
-import cStringIO
 from socket import error as socket_error
 from errno import ECONNRESET, EPIPE
 
 from gevent.ssl import SSLSocket, SSLError
 from gevent import socket
+import six
+from six import BytesIO
 
 from slimta import logging
 from . import ConnectionLost, BadReply
@@ -35,10 +36,10 @@ from .reply import Reply
 
 __all__ = ['IO']
 
-line_pattern = re.compile(r'(.*?)\r?\n')
-reply_line_pattern = re.compile(r'((\d\d\d)([ \t-])(.*?))\r?\n')
-command_pattern = re.compile(r'^([a-zA-Z]+)\s*$')
-command_arg_pattern = re.compile(r'^([a-zA-Z]+)\s+(.+?)\s*$')
+line_pattern = re.compile(br'(.*?)\r?\n')
+reply_line_pattern = re.compile(br'((\d\d\d)([ \t-])(.*?))\r?\n')
+command_pattern = re.compile(br'^([a-zA-Z]+)\s*$')
+command_arg_pattern = re.compile(br'^([a-zA-Z]+)\s+(.+?)\s*$')
 
 log = logging.getSocketLogger(__name__)
 
@@ -50,8 +51,8 @@ class IO(object):
         if tls_wrapper:
             self._tls_wrapper = tls_wrapper
 
-        self.send_buffer = cStringIO.StringIO()
-        self.recv_buffer = ''
+        self.send_buffer = BytesIO()
+        self.recv_buffer = b''
 
     @property
     def encrypted(self):
@@ -68,6 +69,10 @@ class IO(object):
         self.socket.close()
 
     def raw_send(self, data):
+        """
+
+        :type data: :py:obj:`bytes`
+        """
         try:
             self.socket.sendall(data)
         except socket_error as (errno, message):
@@ -84,7 +89,7 @@ class IO(object):
                 raise ConnectionLost()
             raise
         log.recv(self.socket, data)
-        if data == '':
+        if data == b'':
             raise ConnectionLost()
         return data
 
@@ -106,14 +111,17 @@ class IO(object):
         self.recv_buffer += received
 
     def buffered_send(self, data):
+        """
+        :type data: :py:obj:`bytes`
+        """
         self.send_buffer.write(data)
 
     def flush_send(self):
         send = self.send_buffer.getvalue()
-        if send == '':
+        if send == b'':
             return
         self.raw_send(send)
-        self.send_buffer = cStringIO.StringIO()
+        self.send_buffer = BytesIO()
 
     def recv_reply(self):
         code = None
@@ -132,7 +140,7 @@ class IO(object):
                     message_lines.append(match.group(4))
                     self.recv_buffer = input[match.end(0):]
 
-                    if match.group(3) != '-':
+                    if match.group(3) != b'-':
                         incomplete = False
                         start_i = None
                     else:
@@ -142,7 +150,7 @@ class IO(object):
                     if match:
                         self.recv_buffer = input[match.end(0):]
                         message_lines.append(match.group(1))
-                        raise BadReply('\r\n'.join(message_lines))
+                        raise BadReply(b'\r\n'.join(message_lines).decode())
                     else:
                         start_i = None
 
@@ -150,7 +158,7 @@ class IO(object):
                 self.buffered_recv()
                 input = self.recv_buffer
 
-        return code, '\r\n'.join(message_lines)
+        return code.decode(), b'\r\n'.join(message_lines).decode()
 
     def recv_line(self):
         while True:
@@ -162,30 +170,43 @@ class IO(object):
             self.buffered_recv()
 
     def recv_command(self):
+        """ Receive a SMTP command
+
+        :return: (command, arg)
+        :rtype: (:py:obj:`str`, :py:obj:`str`)
+        """
         line = self.recv_line()
-        match = command_pattern.match(line)
-        if match:
-            return match.group(1).upper(), None
-        match = command_arg_pattern.match(line)
-        if match:
-            return match.group(1).upper(), match.group(2)
+        cmd_match = command_pattern.match(line)
+
+        if cmd_match:
+            return cmd_match.group(1).upper().decode(), None
+        cmd_arg_match = command_arg_pattern.match(line)
+        if cmd_arg_match:
+            return (
+                cmd_arg_match.group(1).upper().decode(),
+                cmd_arg_match.group(2).decode())
+
         return None, None
 
     def send_reply(self, reply):
-        code, message = reply.code, reply.message
+        code = reply.code.encode('ascii')
+        message = reply.message.encode('ascii')
         lines = []
-        message = message+'\r\n'
+        message = message+b'\r\n'
         for match in line_pattern.finditer(message):
             lines.append(match.group(1))
 
-        to_send = cStringIO.StringIO()
+        to_send = BytesIO()
         for line in lines[:-1]:
-            to_send.write(''.join((code, '-', line, '\r\n')))
-        to_send.write(''.join((code, ' ', lines[-1], '\r\n')))
+            to_send.write(b''.join((code, b'-', line, b'\r\n')))
+        to_send.write(b''.join((code, b' ', lines[-1], b'\r\n')))
         return self.buffered_send(to_send.getvalue())
 
     def send_command(self, command):
-        return self.buffered_send(command+'\r\n')
+        """
+        :type command: :py:obj:`str`
+        """
+        return self.buffered_send(command.encode()+b'\r\n')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

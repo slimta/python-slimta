@@ -16,7 +16,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.tls_args = {'test': 'test'}
 
     def test_get_reply(self):
-        self.sock.recv(IsA(int)).AndReturn('421 Test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'421 Test\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.get_reply('[TEST]')
@@ -25,7 +25,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('[TEST]', reply.command)
 
     def test_get_banner(self):
-        self.sock.recv(IsA(int)).AndReturn('220 Go\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Go\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.get_banner()
@@ -34,8 +34,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('[BANNER]', reply.command)
 
     def test_custom_command(self):
-        self.sock.sendall('cmd arg\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        self.sock.sendall(b'cmd arg\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.custom_command('cmd', 'arg')
@@ -44,9 +44,9 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('CMD', reply.command)
 
     def test_ehlo(self):
-        self.sock.sendall('EHLO there\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250-Hello there\r\n250-TEST arg\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 EXTEN\r\n')
+        self.sock.sendall(b'EHLO there\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello there\r\n250-TEST arg\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 EXTEN\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.ehlo('there')
@@ -58,8 +58,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('arg', client.extensions.getparam('TEST'))
 
     def test_helo(self):
-        self.sock.sendall('HELO there\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 Hello\r\n')
+        self.sock.sendall(b'HELO there\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.helo('there')
@@ -70,8 +70,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
         sock.fileno = lambda: -1
-        sock.sendall('STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn('220 Go ahead\r\n')
+        sock.sendall(b'STARTTLS\r\n')
+        sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
         sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
         self.mox.ReplayAll()
         client = Client(sock, tls_wrapper=sock.tls_wrapper)
@@ -81,8 +81,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('STARTTLS', reply.command)
 
     def test_starttls_noencrypt(self):
-        self.sock.sendall('STARTTLS\r\n')
-        self.sock.recv(IsA(int)).AndReturn('420 Nope\r\n')
+        self.sock.sendall(b'STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'420 Nope\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.starttls({})
@@ -91,8 +91,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('STARTTLS', reply.command)
 
     def test_auth(self):
-        self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('AUTH', 'PLAIN')
@@ -102,8 +102,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('AUTH', reply.command)
 
     def test_auth_force_mechanism(self):
-        self.sock.sendall('AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.auth('test@example.com', 'asdf', mechanism='PLAIN')
@@ -112,8 +112,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('AUTH', reply.command)
 
     def test_mailfrom(self):
-        self.sock.sendall('MAIL FROM:<test>\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'MAIL FROM:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.mailfrom('test')
@@ -122,8 +122,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('MAIL', reply.command)
 
     def test_mailfrom_pipelining(self):
-        self.sock.sendall('MAIL FROM:<test>\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'MAIL FROM:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('PIPELINING')
@@ -136,8 +136,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_mailfrom_size(self):
-        self.sock.sendall('MAIL FROM:<test> SIZE=10\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'MAIL FROM:<test> SIZE=10\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('SIZE', 100)
@@ -147,8 +147,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('MAIL', reply.command)
 
     def test_rcptto(self):
-        self.sock.sendall('RCPT TO:<test>\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'RCPT TO:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.rcptto('test')
@@ -157,8 +157,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('RCPT', reply.command)
 
     def test_rcptto_pipelining(self):
-        self.sock.sendall('RCPT TO:<test>\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'RCPT TO:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('PIPELINING')
@@ -171,8 +171,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_data(self):
-        self.sock.sendall('DATA\r\n')
-        self.sock.recv(IsA(int)).AndReturn('354 Go ahead\r\n')
+        self.sock.sendall(b'DATA\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'354 Go ahead\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.data()
@@ -181,8 +181,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('DATA', reply.command)
 
     def test_send_empty_data(self):
-        self.sock.sendall('.\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Done\r\n')
+        self.sock.sendall(b'.\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Done\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.send_empty_data()
@@ -191,18 +191,18 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('[SEND_DATA]', reply.command)
 
     def test_send_data(self):
-        self.sock.sendall('One\r\nTwo\r\n..Three\r\n.\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Done\r\n')
+        self.sock.sendall(b'One\r\nTwo\r\n..Three\r\n.\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Done\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
-        reply = client.send_data('One\r\nTwo\r\n.Three')
+        reply = client.send_data(b'One\r\nTwo\r\n.Three')
         self.assertEqual('250', reply.code)
         self.assertEqual('2.0.0 Done', reply.message)
         self.assertEqual('[SEND_DATA]', reply.command)
 
     def test_rset(self):
-        self.sock.sendall('RSET\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        self.sock.sendall(b'RSET\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.rset()
@@ -211,8 +211,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('RSET', reply.command)
 
     def test_quit(self):
-        self.sock.sendall('QUIT\r\n')
-        self.sock.recv(IsA(int)).AndReturn('221 Bye\r\n')
+        self.sock.sendall(b'QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'221 Bye\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
         reply = client.quit()
@@ -238,9 +238,9 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.assertRaises(NotImplementedError, client.helo, 'there')
 
     def test_lhlo(self):
-        self.sock.sendall('LHLO there\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250-Hello there\r\n250-TEST arg\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 EXTEN\r\n')
+        self.sock.sendall(b'LHLO there\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello there\r\n250-TEST arg\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 EXTEN\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
         reply = client.lhlo('there')
@@ -252,8 +252,8 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('arg', client.extensions.getparam('TEST'))
 
     def test_rcptto(self):
-        self.sock.sendall('RCPT TO:<test>\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'RCPT TO:<test>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
         reply = client.rcptto('test')
@@ -263,8 +263,8 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual([('test', reply)], client.rcpttos)
 
     def test_rset(self):
-        self.sock.sendall('RSET\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 Ok\r\n')
+        self.sock.sendall(b'RSET\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
         client.rcpttos = 'testing'
@@ -275,15 +275,15 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual([], client.rcpttos)
 
     def test_send_data(self):
-        self.sock.sendall('One\r\nTwo\r\n..Three\r\n.\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n'
-                                           '550 5.0.0 Not Ok\r\n')
+        self.sock.sendall(b'One\r\nTwo\r\n..Three\r\n.\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n'
+                                           b'550 5.0.0 Not Ok\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
         client.rcpttos = [('test1', Reply('250')),
                           ('test2', Reply('250')),
                           ('test3', Reply('550'))]
-        replies = client.send_data('One\r\nTwo\r\n.Three')
+        replies = client.send_data(b'One\r\nTwo\r\n.Three')
         self.assertEqual(2, len(replies))
         self.assertEqual('test1', replies[0][0])
         self.assertEqual('250', replies[0][1].code)
@@ -295,9 +295,9 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual('[SEND_DATA]', replies[1][1].command)
 
     def test_send_empty_data(self):
-        self.sock.sendall('.\r\n')
-        self.sock.recv(IsA(int)).AndReturn('250 2.0.0 Ok\r\n'
-                                           '550 5.0.0 Not Ok\r\n')
+        self.sock.sendall(b'.\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n'
+                                           b'550 5.0.0 Not Ok\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
         client.rcpttos = [('test1', Reply('250')),

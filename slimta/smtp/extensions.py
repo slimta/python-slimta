@@ -25,6 +25,8 @@ from __future__ import absolute_import
 
 import re
 
+import six
+
 __all__ = ['Extensions']
 
 parse_pattern = re.compile(r'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')

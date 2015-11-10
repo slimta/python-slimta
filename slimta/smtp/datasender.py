@@ -24,6 +24,8 @@ from __future__ import absolute_import
 import re
 from itertools import chain
 
+import six
+
 __all__ = ['DataSender']
 
 
@@ -34,7 +36,7 @@ class DataSender(object):
         self._calc_end_marker()
 
     def _calc_last_two(self):
-        ret = ''
+        ret = b''
         for part in reversed(self.parts):
             ret = part[-2:] + ret
             if len(ret) >= 2:
@@ -44,24 +46,28 @@ class DataSender(object):
 
     def _calc_end_marker(self):
         last_two = self._calc_last_two()
-        if not last_two or last_two == '\r\n':
-            self.end_marker = '.\r\n'
+        if not last_two or last_two == b'\r\n':
+            self.end_marker = b'.\r\n'
         else:
-            self.end_marker = '\r\n.\r\n'
+            self.end_marker = b'\r\n.\r\n'
 
     def _process_part(self, part):
+        """
+        :type part: bytes
+        """
+        check_argtype(part, six.binary_type, 'part')
         part_len = len(part)
         i = 0
-        if part_len > 0 and part[0] == '.':
-            yield '.'
+        if part_len > 0 and part[0:1] == b'.':
+            yield b'.'
         while i < part_len:
-            index = part.find('\n.', i)
+            index = part.find(b'\n.', i)
             if index == -1:
                 yield part if i == 0 else part[i:]
                 i = part_len
             else:
                 yield part[i:index+2]
-                yield '.'
+                yield b'.'
                 i = index+2
 
     def __iter__(self):

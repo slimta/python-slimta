@@ -150,7 +150,8 @@ class SmtpRelayClient(RelayPoolClient):
     def _send_message_data(self, envelope):
         header_data, message_data = envelope.flatten()
         with Timeout(self.data_timeout):
-            send_data = self.client.send_data(header_data, message_data)
+            send_data = self.client.send_data(
+                header_data.encode('ascii'), message_data)
         self.client._flush_pipeline()
         if isinstance(send_data, Reply) and send_data.is_error():
             raise SmtpRelayError.factory(send_data)
@@ -160,7 +161,7 @@ class SmtpRelayClient(RelayPoolClient):
         if '8BITMIME' not in self.client.extensions:
             try:
                 envelope.encode_7bit(self.binary_encoder)
-            except UnicodeDecodeError:
+            except UnicodeError:
                 reply = Reply('554', '5.6.3 Conversion not allowed')
                 raise SmtpRelayError.factory(reply)
 

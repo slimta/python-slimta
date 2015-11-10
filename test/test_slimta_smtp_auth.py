@@ -32,8 +32,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
             auth.server_attempt('B@D')
 
     def test_plain_noarg(self):
-        self.sock.sendall('334 \r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
+        self.sock.sendall(b'334 \r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         result = auth.server_attempt('PLAIN')
@@ -50,8 +50,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual(u'testzid', result.authzid)
 
     def test_plain_canceled(self):
-        self.sock.sendall('334 \r\n')
-        self.sock.recv(IsA(int)).AndReturn('*\r\n')
+        self.sock.sendall(b'334 \r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'*\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         with self.assertRaises(AuthenticationCanceled):
@@ -60,10 +60,10 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
             auth.server_attempt('PLAIN *')
 
     def test_login_noarg(self):
-        self.sock.sendall('334 VXNlcm5hbWU6\r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXI=\r\n')
-        self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
+        self.sock.sendall(b'334 VXNlcm5hbWU6\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'dGVzdHVzZXI=\r\n')
+        self.sock.sendall(b'334 UGFzc3dvcmQ6\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         result = auth.server_attempt('LOGIN')
@@ -72,8 +72,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual(None, result.authzid)
 
     def test_login(self):
-        self.sock.sendall('334 UGFzc3dvcmQ6\r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHBhc3N3b3Jk\r\n')
+        self.sock.sendall(b'334 UGFzc3dvcmQ6\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         result = auth.server_attempt('LOGIN dGVzdHVzZXI=')
@@ -82,8 +82,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual(None, result.authzid)
 
     def test_crammd5(self):
-        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
-        self.sock.recv(IsA(int)).AndReturn('dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
+        self.sock.sendall(b'334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         result = auth.server_attempt('CRAM-MD5')
@@ -93,16 +93,16 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual(None, result.authzid)
 
     def test_crammd5_malformed(self):
-        self.sock.sendall('334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
-        self.sock.recv(IsA(int)).AndReturn('bWFsZm9ybWVk\r\n')
+        self.sock.sendall(b'334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'bWFsZm9ybWVk\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         with self.assertRaises(ServerAuthError):
             auth.server_attempt('CRAM-MD5')
 
     def test_client_bad_mech(self):
-        self.sock.sendall('AUTH LOGIN\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.sock.sendall(b'AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
@@ -110,8 +110,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_plain(self):
-        self.sock.sendall('AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.sock.sendall(b'AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', 'jkl', 'PLAIN')
@@ -119,12 +119,12 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login(self):
-        self.sock.sendall('AUTH LOGIN\r\n')
-        self.sock.recv(IsA(int)).AndReturn('334 VXNlcm5hbWU6\r\n')
-        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbQ==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('334 UGFzc3dvcmQ6\r\n')
-        self.sock.sendall('YXNkZg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.sock.sendall(b'AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'334 VXNlcm5hbWU6\r\n')
+        self.sock.sendall(b'dGVzdEBleGFtcGxlLmNvbQ==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'334 UGFzc3dvcmQ6\r\n')
+        self.sock.sendall(b'YXNkZg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
@@ -132,10 +132,10 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login_bad_username(self):
-        self.sock.sendall('AUTH LOGIN\r\n')
-        self.sock.recv(IsA(int)).AndReturn('334 VXNlcm5hbWU6\r\n')
-        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbQ==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.sock.sendall(b'AUTH LOGIN\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'334 VXNlcm5hbWU6\r\n')
+        self.sock.sendall(b'dGVzdEBleGFtcGxlLmNvbQ==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'LOGIN')
@@ -143,10 +143,10 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_crammd5(self):
-        self.sock.sendall('AUTH CRAM-MD5\r\n')
-        self.sock.recv(IsA(int)).AndReturn('334 dGVzdCBjaGFsbGVuZ2U=\r\n')
-        self.sock.sendall('dGVzdEBleGFtcGxlLmNvbSA1Yzk1OTBjZGE3ZTgxMDY5Mzk2ZjhiYjlkMzU1MzE1Yg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.sock.sendall(b'AUTH CRAM-MD5\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'334 dGVzdCBjaGFsbGVuZ2U=\r\n')
+        self.sock.sendall(b'dGVzdEBleGFtcGxlLmNvbSA1Yzk1OTBjZGE3ZTgxMDY5Mzk2ZjhiYjlkMzU1MzE1Yg==\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'CRAM-MD5')
@@ -154,8 +154,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_xoauth2(self):
-        self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
-        self.sock.recv(IsA(int)).AndReturn('235 Ok\r\n')
+        self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'XOAUTH2')
@@ -163,10 +163,10 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_xoauth2_error(self):
-        self.sock.sendall('AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
-        self.sock.recv(IsA(int)).AndReturn('334 eyJzdGF0dXMiOiI0MDEiLCJzY2hlbWVzIjoiYmVhcmVyIG1hYyIsInNjb3BlIjoiaHR0cHM6Ly9tYWlsLmdvb2dsZS5jb20vIn0K\r\n')
-        self.sock.sendall('\r\n')
-        self.sock.recv(IsA(int)).AndReturn('535 Nope!\r\n')
+        self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'334 eyJzdGF0dXMiOiI0MDEiLCJzY2hlbWVzIjoiYmVhcmVyIG1hYyIsInNjb3BlIjoiaHR0cHM6Ly9tYWlsLmdvb2dsZS5jb20vIn0K\r\n')
+        self.sock.sendall(b'\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt('test@example.com', 'asdf', None, 'XOAUTH2')

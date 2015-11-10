@@ -136,7 +136,7 @@ class Reply(object):
 
         """
         if self.newline_first:
-            io.buffered_send('\r\n')
+            io.buffered_send(b'\r\n')
         io.send_reply(self)
         if flush:
             io.flush_send()

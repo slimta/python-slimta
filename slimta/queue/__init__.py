@@ -38,6 +38,7 @@ from gevent import Greenlet
 from gevent.event import Event
 from gevent.lock import Semaphore
 from gevent.pool import Pool
+import six
 
 from slimta.logging import log_exception
 from slimta.core import SlimtaError

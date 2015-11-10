@@ -1,11 +1,12 @@
-
-from StringIO import StringIO
+from __future__ import unicode_literals
 from base64 import b64encode
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from dns.exception import DNSException
+import six
+
 
 from slimta.edge.wsgi import WsgiEdge, WsgiValidators
 from slimta.util import dns_resolver
@@ -20,16 +21,32 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
         super(TestEdgeWsgi, self).setUp()
         self.start_response = self.mox.CreateMockAnything()
         self.queue = self.mox.CreateMockAnything()
-        self.environ = {'REQUEST_METHOD': 'POST',
-                        'HTTP_X_EHLO': 'test',
-                        'HTTP_X_ENVELOPE_SENDER': b64encode('sender@example.com'),
-                        'HTTP_X_ENVELOPE_RECIPIENT': '{0}, {1}'.format(b64encode('rcpt1@example.com'), b64encode('rcpt2@example.com')),
-                        'HTTP_X_CUSTOM_HEADER': 'custom test',
-                        'wsgi.input': StringIO('')}
+        self.environ = {
+            b'REQUEST_METHOD': b'POST',
+            b'HTTP_X_EHLO': b'test',
+            b'HTTP_X_ENVELOPE_SENDER': b64encode(b'sender@example.com'),
+            b'HTTP_X_ENVELOPE_RECIPIENT': '{0}, {1}'.format(
+                b64encode(b'rcpt1@example.com').decode(),
+                b64encode(b'rcpt2@example.com').decode()).encode('ascii'),
+            b'HTTP_X_CUSTOM_HEADER': b'custom test',
+            b'wsgi.input': six.BytesIO(b'')
+        }
+
+        self.unicode_environ = {
+            'REQUEST_METHOD': 'POST',
+            'HTTP_X_EHLO': 'test',
+            'HTTP_X_ENVELOPE_SENDER': b64encode(b'sender@example.com').decode(),
+            'HTTP_X_ENVELOPE_RECIPIENT': '{0}, {1}'.format(
+                b64encode(b'rcpt1@example.com').decode(),
+                b64encode(b'rcpt2@example.com').decode()),
+            'HTTP_X_CUSTOM_HEADER': 'custom test',
+            'wsgi.input': six.BytesIO(b'')
+        }
+
 
     def test_ptr_lookup(self):
         environ = self.environ.copy()
-        environ['REMOTE_ADDR'] = '1.2.3.4'
+        environ[b'REMOTE_ADDR'] = b'1.2.3.4'
         self.mox.StubOutWithMock(dns_resolver, 'query')
         dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
         dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
@@ -43,7 +60,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
     def test_invalid_path(self):
         environ = self.environ.copy()
         valid_paths = r'/good'
-        environ['PATH_INFO'] = '/bad'
+        environ[b'PATH_INFO'] = b'/bad'
         self.start_response.__call__('404 Not Found', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue, uri_pattern=valid_paths)
@@ -51,7 +68,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
 
     def test_invalid_method(self):
         environ = self.environ.copy()
-        environ['REQUEST_METHOD'] = 'PUT'
+        environ[b'REQUEST_METHOD'] = b'PUT'
         self.start_response.__call__('405 Method Not Allowed', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
@@ -59,7 +76,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
 
     def test_invalid_content_type(self):
         environ = self.environ.copy()
-        environ['CONTENT_TYPE'] = 'text/plain'
+        environ[b'CONTENT_TYPE'] = b'text/plain'
         self.start_response.__call__('415 Unsupported Media Type', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
@@ -67,7 +84,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
 
     def test_unexpected_exception(self):
         environ = self.environ.copy()
-        environ['wsgi.input'] = None
+        environ[b'wsgi.input'] = None
         self.start_response.__call__('500 Internal Server Error', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
@@ -119,7 +136,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
                 self.assertEqual('custom test', value)
                 self.validated += 16
         w = WsgiEdge(None, validator_class=Validators)
-        w._run_validators(self.environ)
+        w._run_validators(self.unicode_environ)
         self.assertEqual(31, self.validated)
 
 

@@ -101,7 +101,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         h = SmtpSession(('127.0.0.1', 0), None, handoff)
         h.envelope = env
         reply = Reply('250')
-        h.HAVE_DATA(reply, '', None)
+        h.HAVE_DATA(reply, b'', None)
         self.assertEqual('250', reply.code)
         self.assertEqual('2.6.0 Message accepted for delivery', reply.message)
 
@@ -113,7 +113,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         h = SmtpSession(('127.0.0.1', 0), None, handoff)
         h.envelope = env
         reply = Reply('250')
-        h.HAVE_DATA(reply, '', None)
+        h.HAVE_DATA(reply, b'', None)
         self.assertEqual('550', reply.code)
         self.assertEqual('5.6.0 Error queuing message', reply.message)
 

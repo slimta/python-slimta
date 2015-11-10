@@ -35,6 +35,7 @@ from socket import error as socket_error
 from httplib import HTTPConnection as BuiltinHTTPConnection
 
 from gevent import socket, ssl
+import six
 
 from slimta.core import SlimtaError
 
@@ -100,8 +101,8 @@ def get_connection(url, tls=None):
                 ``tls`` parameter to :class:`HTTPSConnection`.
 
     """
-    if isinstance(url, basestring):
-        url = urlparse.urlsplit(url, 'http')
+    if isinstance(url, six.string_types):
+        url = urllibparse.urlsplit(url, 'http')
     host = url.netloc or 'localhost'
     host = host.rsplit(':', 1)[0]
     port = url.port
