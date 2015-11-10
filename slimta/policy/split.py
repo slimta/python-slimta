@@ -29,6 +29,8 @@ from __future__ import absolute_import
 
 from collections import OrderedDict
 
+import six
+
 from . import QueuePolicy
 
 __all__ = ['RecipientSplit', 'RecipientDomainSplit']
@@ -92,7 +94,7 @@ class RecipientDomainSplit(QueuePolicy):
         if len(groups)+len(bad_rcpts) <= 1:
             return
         ret = []
-        for domain, rcpts in groups.items():
+        for domain, rcpts in six.iteritems(groups):
             self._append_envelope_copy(envelope, ret, rcpts)
         for bad_rcpt in bad_rcpts:
             self._append_envelope_copy(envelope, ret, [bad_rcpt])

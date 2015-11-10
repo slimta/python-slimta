@@ -44,8 +44,8 @@ def monkeypatch_all(*args, **kwds):
                  :func:`gevent.monkey.patch_all`.
 
     """
-    modules = ['socket', 'ssl', 'os', 'time', 'select', 'thread', 'threading',
-               'httplib']
+    modules = ['socket', 'ssl', 'os', 'time', 'select', 'six.moves._thread',
+               'threading', 'six.moves.http_client']
     before = {}
     for mod in modules:
         mod_obj = __import__(mod)

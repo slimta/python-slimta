@@ -30,9 +30,9 @@ similar interface to other slimta libraries that use SSL/TLS.
 
 from __future__ import absolute_import
 
-import urlparse
+from six.moves import urllib_parse
 from socket import error as socket_error
-from httplib import HTTPConnection as BuiltinHTTPConnection
+from six.moves.http_client import HTTPConnection as BuiltinHTTPConnection
 
 from gevent import socket, ssl
 import six
@@ -102,7 +102,7 @@ def get_connection(url, tls=None):
 
     """
     if isinstance(url, six.string_types):
-        url = urllibparse.urlsplit(url, 'http')
+        url = urllib_parse.urlsplit(url, 'http')
     host = url.netloc or 'localhost'
     host = host.rsplit(':', 1)[0]
     port = url.port

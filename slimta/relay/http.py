@@ -29,7 +29,7 @@ for exchanging mail.
 from __future__ import absolute_import
 
 import re
-import urlparse
+from six.moves import urllib_parse
 from socket import getfqdn
 from base64 import b64encode
 
@@ -59,7 +59,7 @@ class HttpRelayClient(RelayPoolClient):
     def __init__(self, relay):
         super(HttpRelayClient, self).__init__(relay.queue, relay.idle_timeout)
         self.conn = None
-        self.url = urlparse.urlsplit(relay.url, 'http')
+        self.url = urllib_parse.urlsplit(relay.url, 'http')
         self.relay = relay
 
     def _wait_for_request(self):

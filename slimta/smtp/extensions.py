@@ -138,7 +138,7 @@ class Extensions(object):
 
         """
         lines = [header]
-        for k, v in self.extensions.iteritems():
+        for k, v in six.iteritems(self.extensions):
             if v:
                 try:
                     value_str = str(v)

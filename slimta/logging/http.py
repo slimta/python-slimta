@@ -54,7 +54,7 @@ class HttpLogger(object):
 
     def _get_headers_from_environ(self, environ):
         ret = []
-        for key, value in environ.iteritems():
+        for key, value in six.iteritems(environ):
             if key == 'CONTENT_TYPE':
                 ret.append(('Content-Type', value))
             elif key == 'CONTENT_LENGTH':
