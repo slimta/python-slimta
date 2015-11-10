@@ -103,7 +103,7 @@ class Reply(object):
         """
         return '{0} {1}'.format(self.code, self.message)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Defines the truth-testing operation for |Reply| objects. This will
         evaluate ``True`` if the object value set to its ``code`` attribute
         other than ``None``. This is useful for checking replies that may be
@@ -113,6 +113,9 @@ class Reply(object):
 
         """
         return self.code is not None
+
+    # Python 2 compat.
+    __nonzero__ = __bool__
 
     def copy(self, reply):
         """Direct-copies the given reply code and message into the current
