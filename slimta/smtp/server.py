@@ -25,7 +25,7 @@ certain situations (typically when a client sends various commands).
 
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import re
 

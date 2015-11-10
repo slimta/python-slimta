@@ -55,7 +55,7 @@ The resulting edge can be used by any HTTP client, like curl::
 
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import sys
 import re
