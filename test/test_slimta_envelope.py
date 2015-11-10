@@ -4,13 +4,14 @@ import unittest2 as unittest
 
 from base64 import b64encode
 from email.message import Message
-from email.encoders import encode_base64
 
 import six
 
 from slimta.envelope import Envelope
 from slimta.bounce import Bounce
 from slimta.smtp.reply import Reply
+from slimta.util.encoders import encode_base64
+
 
 
 class TestEnvelope(unittest.TestCase):
@@ -76,6 +77,8 @@ test test\r
                                   'Content-Transfer-Encoding: base64',
                                   '', ''])
         body_str = b'gYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5\nuru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy\n8/T19vf4+fr7/P3+/w=='
+        if six.PY3:
+            body_str = body_str + b'\n'
         env.encode_7bit(encoder=encode_base64)
         ret_headers, ret_body = env.flatten()
         self.assertEqual(header_str, ret_headers)

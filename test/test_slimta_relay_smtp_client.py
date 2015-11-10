@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from email.encoders import encode_base64
+from slimta.util.encoders import encode_base64
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
