@@ -64,8 +64,8 @@ class IO(object):
         if self.encrypted:
             try:
                 self.socket.unwrap()
-            except socket_error as (errno, message):
-                if errno not in (0, EPIPE, ECONNRESET):
+            except socket_error as e:
+                if e.errno not in (0, EPIPE, ECONNRESET):
                     raise
         self.socket.close()
 
@@ -77,8 +77,8 @@ class IO(object):
         check_argtype(data, six.binary_type, 'data')
         try:
             self.socket.sendall(data)
-        except socket_error as (errno, message):
-            if errno == ECONNRESET:
+        except socket_error as e:
+            if e.errno == ECONNRESET:
                 raise ConnectionLost()
             raise
         log.send(self.socket, data)
@@ -86,8 +86,8 @@ class IO(object):
     def raw_recv(self):
         try:
             data = self.socket.recv(4096)
-        except socket_error as (errno, message):
-            if errno == ECONNRESET:
+        except socket_error as e:
+            if e.errno == ECONNRESET:
                 raise ConnectionLost()
             raise
         log.recv(self.socket, data)

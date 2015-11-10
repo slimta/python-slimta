@@ -77,7 +77,7 @@ class SmtpRelayClient(RelayPoolClient):
         try:
             with Timeout(self.connect_timeout):
                 self.socket = self._socket_creator(self.address)
-        except socket_error as (err, msg):
+        except socket_error:
             reply = Reply('451', '4.3.0 Connection failed')
             raise SmtpRelayError.factory(reply)
         self.client = self._client_class(self.socket, self.tls_wrapper)
