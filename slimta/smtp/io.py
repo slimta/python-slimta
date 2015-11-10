@@ -31,6 +31,7 @@ import six
 from six import BytesIO
 
 from slimta import logging
+from slimta.util.typecheck import check_argtype
 from . import ConnectionLost, BadReply
 from .reply import Reply
 
@@ -73,6 +74,7 @@ class IO(object):
 
         :type data: :py:obj:`bytes`
         """
+        check_argtype(data, six.binary_type, 'data')
         try:
             self.socket.sendall(data)
         except socket_error as (errno, message):

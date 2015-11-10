@@ -43,6 +43,8 @@ else:
     from email.parser import BytesParser
     from email.generator import BytesGenerator
 
+from slimta.util.typecheck import check_argtype
+
 
 __all__ = ['Envelope']
 
@@ -76,6 +78,7 @@ class Envelope(object):
         self.headers = headers
 
         #: String of message data, not including headers.
+        check_argtype(message, bytes, 'message', or_none=True)
         self.message = message
 
         #: Dictionary of information about the client that sent the message.

@@ -26,6 +26,8 @@ from itertools import chain
 
 import six
 
+from slimta.util.typecheck import check_argtype
+
 __all__ = ['DataSender']
 
 
