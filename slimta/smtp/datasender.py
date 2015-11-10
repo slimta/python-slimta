@@ -32,7 +32,8 @@ __all__ = ['DataSender']
 
 
 class DataSender(object):
-
+    """Class that writes multi-line message data, taking care of dot marker
+    """
     def __init__(self, *parts):
         self.parts = parts
         self._calc_end_marker()
