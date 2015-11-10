@@ -157,7 +157,7 @@ class Envelope(object):
                     del part['Content-Transfer-Encoding']
                     encoder(part)
 
-        self.parse(msg)
+        self.parse_msg(msg)
 
     def encode_7bit(self, encoder=None):
         """.. versionadded:: 0.3.12
@@ -186,12 +186,12 @@ class Envelope(object):
                 raise
             self._encode_parts(encoded_header_data, msg_data, encoder)
 
-    def parse(self, data):
-        """Parses the given string or :class:`~email.message.Message` to
+    def parse_msg(self, msg):
+        """Parses the given :class:`~email.message.Message` to
         populate the :attr:`headers` and :attr:`message` attributes.
 
         :param data: The complete message, headers and message body.
-        :type data: :py:obj:`str` or :class:`~email.message.Message`
+        :type data: :class:`~email.message.Message`
 
         """
 
@@ -203,6 +203,16 @@ class Envelope(object):
             data = data.encode()
 
         self.parse(data)
+
+    def parse(self, data):
+        """Parses the given string to populate the :attr:`headers` and
+        :attr:`message` attributes.
+
+        :param data: The complete message, headers and message body.
+        :type data: :py:obj:`bytes`
+
+        """
+        check_argtype(data, bytes, 'data')
 
         if isinstance(data, Message):
             outfp = cStringIO()
