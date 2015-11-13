@@ -90,7 +90,12 @@ class WsgiResponse(Exception):
 
     """
 
-    def __init__(self, status, headers=[], data=[]):
+    def __init__(self, status, headers=None, data=None):
+        if headers is None:
+            headers = []
+        if data is None:
+            data = []
+
         super(WsgiResponse, self).__init__(status)
         self.status = status
         self.headers = [(_unicode_to_bytes(k), _unicode_to_bytes(v))
