@@ -34,7 +34,6 @@ from email.parser import Parser
 
 import six
 from six.moves import cStringIO
-from six import BytesIO
 
 if six.PY2:
     from email.generator import Generator as BytesGenerator
@@ -194,8 +193,9 @@ class Envelope(object):
         :type data: :class:`~email.message.Message`
 
         """
-
-        outfp = BytesIO()
+        # Can't use non-six BytesIO here cause python2 BytesGenerator will fail
+        # to decode headers
+        outfp = six.BytesIO()
         BytesGenerator(outfp).flatten(msg, False)
         data = outfp.getvalue()
 
@@ -214,10 +214,6 @@ class Envelope(object):
         """
         check_argtype(data, bytes, 'data')
 
-        if isinstance(data, Message):
-            outfp = cStringIO()
-            Generator(outfp).flatten(data, False)
-            data = outfp.getvalue()
         match = re.search(_HEADER_BOUNDARY, data)
         if not match:
             header_data = data

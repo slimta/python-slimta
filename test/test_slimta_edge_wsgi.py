@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from base64 import b64encode
+from io import BytesIO
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from dns.exception import DNSException
-import six
-
 
 from slimta.edge.wsgi import WsgiEdge, WsgiValidators
 from slimta.util import dns_resolver
@@ -30,7 +29,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
                 b64encode(b'rcpt1@example.com').decode(),
                 b64encode(b'rcpt2@example.com').decode()).encode('ascii'),
             b'HTTP_X_CUSTOM_HEADER': b'custom test',
-            b'wsgi.input': six.BytesIO(b'')
+            b'wsgi.input': BytesIO(b'')
         }
 
         self.unicode_environ = {
@@ -41,7 +40,7 @@ class TestEdgeWsgi(unittest.TestCase, MoxTestBase):
                 b64encode(b'rcpt1@example.com').decode(),
                 b64encode(b'rcpt2@example.com').decode()),
             'HTTP_X_CUSTOM_HEADER': 'custom test',
-            'wsgi.input': six.BytesIO(b'')
+            'wsgi.input': BytesIO(b'')
         }
 
 

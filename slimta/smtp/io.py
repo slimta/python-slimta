@@ -24,11 +24,11 @@ from __future__ import absolute_import, unicode_literals
 import re
 from socket import error as socket_error
 from errno import ECONNRESET, EPIPE
+from io import BytesIO
 
 from gevent.ssl import SSLSocket, SSLError
 from gevent import socket
 import six
-from six import BytesIO
 
 from slimta import logging
 from slimta.util.typecheck import check_argtype

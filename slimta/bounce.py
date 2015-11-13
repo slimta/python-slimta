@@ -24,8 +24,8 @@ from __future__ import absolute_import
 import re
 import uuid
 import time
+from io import BytesIO
 
-from six import BytesIO
 
 from .envelope import Envelope
 
