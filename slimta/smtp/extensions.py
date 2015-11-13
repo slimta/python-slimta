@@ -25,7 +25,6 @@ from __future__ import absolute_import
 
 import re
 
-import six
 
 __all__ = ['Extensions']
 
@@ -138,7 +137,7 @@ class Extensions(object):
 
         """
         lines = [header]
-        for k, v in six.iteritems(self.extensions):
+        for k, v in self.extensions.items():
             if v:
                 try:
                     value_str = str(v)

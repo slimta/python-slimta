@@ -33,8 +33,6 @@ from six.moves import reprlib
 import logging
 from ast import literal_eval
 
-import six
-
 from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger
@@ -117,7 +115,7 @@ def log_exception(name, **kwargs):
     data['traceback'] = traceback.format_exception(type, value, tb)
     data['args'] = value.args
     data_str = ' '.join(['='.join((key, exc_repr.repr(val)))
-                         for key, val in sorted(six.iteritems(data))])
+                         for key, val in sorted(data.items())])
     logger.error('exception:{0}:unhandled {1}'.format(type.__name__, data_str))
 
 
@@ -130,7 +128,7 @@ def logline(log, type, typeid, operation, **data):
         log('{0}:{1}:{2}'.format(type, typeid, operation))
     else:
         data_str = ' '.join(['='.join((key, log_repr.repr(val)))
-                             for key, val in sorted(six.iteritems(data))])
+                             for key, val in sorted(data.items())])
         log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 
 

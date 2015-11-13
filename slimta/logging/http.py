@@ -28,7 +28,6 @@ from __future__ import absolute_import
 
 from functools import partial
 
-import six
 
 __all__ = ['HttpLogger']
 
@@ -54,7 +53,7 @@ class HttpLogger(object):
 
     def _get_headers_from_environ(self, environ):
         ret = []
-        for key, value in six.iteritems(environ):
+        for key, value in environ.items():
             if key == 'CONTENT_TYPE':
                 ret.append(('Content-Type', value))
             elif key == 'CONTENT_LENGTH':
