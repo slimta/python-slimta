@@ -154,7 +154,8 @@ class Bounce(Envelope):
     def _build_message(self, envelope, reply, headers_only):
         sub_table = self._get_substitution_table(envelope, reply, headers_only)
         new_payload = BytesIO()
-        new_payload.write(self.header_template.format(**sub_table).encode('ascii'))
+        new_payload.write(
+            self.header_template.format(**sub_table).encode('ascii'))
         header_data, message_data = envelope.flatten()
         new_payload.write(header_data.encode('ascii'))
         if not headers_only:
