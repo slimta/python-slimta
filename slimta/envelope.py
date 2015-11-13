@@ -48,8 +48,8 @@ from slimta.util.typecheck import check_argtype
 
 __all__ = ['Envelope']
 
-_HEADER_BOUNDARY = re.compile(b'\r?\n\s*?\n')
-_LINE_BREAK = re.compile('\r?\n')
+_HEADER_BOUNDARY = re.compile(br'\r?\n\s*?\n')
+_LINE_BREAK = re.compile(r'\r?\n')
 
 
 class Envelope(object):
