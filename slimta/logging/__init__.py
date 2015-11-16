@@ -21,7 +21,7 @@
 
 """Utilities to make logging consistent and easy in :mod:`slimta` packages."""
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import threading
 threading._DummyThread._Thread__stop = lambda x: 42

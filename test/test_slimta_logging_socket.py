@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import unittest2 as unittest
+import six
 import socket
 
 from testfixtures import log_capture
@@ -30,13 +31,19 @@ class TestSocketLogger(unittest.TestCase):
     def test_send(self, l):
         sock = FakeSocket(136)
         self.log.send(sock, 'test send')
-        l.check(('test', 'DEBUG', 'fd:136:send data=\'test send\''))
+        if six.PY2:
+            l.check(('test', 'DEBUG', 'fd:136:send data=u\'test send\''))
+        else:
+            l.check(('test', 'DEBUG', 'fd:136:send data=\'test send\''))
 
     @log_capture()
     def test_recv(self, l):
         sock = FakeSocket(29193)
         self.log.recv(sock, 'test recv')
-        l.check(('test', 'DEBUG', 'fd:29193:recv data=\'test recv\''))
+        if six.PY2:
+            l.check(('test', 'DEBUG', 'fd:29193:recv data=u\'test recv\''))
+        else:
+            l.check(('test', 'DEBUG', 'fd:29193:recv data=\'test recv\''))
 
     @log_capture()
     def test_accept(self, l):
@@ -44,24 +51,38 @@ class TestSocketLogger(unittest.TestCase):
         client = FakeSocket(927, 'testpeer')
         self.log.accept(server, client)
         self.log.accept(server, client, 'testpeer2')
-        l.check(('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=\'testpeer\''),
-                ('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=\'testpeer2\''))
+        if six.PY2:
+            l.check(('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=u\'testpeer\''),
+                    ('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=u\'testpeer2\''))
+        else:
+            l.check(('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=\'testpeer\''),
+                    ('test', 'DEBUG', 'fd:926:accept clientfd=927 peer=\'testpeer2\''))
 
     @log_capture()
     def test_connect(self, l):
         sock = FakeSocket(539, 'testpeer')
         self.log.connect(sock)
         self.log.connect(sock, 'testpeer2')
-        l.check(('test', 'DEBUG', 'fd:539:connect peer=\'testpeer\''),
-                ('test', 'DEBUG', 'fd:539:connect peer=\'testpeer2\''))
+
+        if six.PY2:
+            l.check(('test', 'DEBUG', 'fd:539:connect peer=u\'testpeer\''),
+                    ('test', 'DEBUG', 'fd:539:connect peer=u\'testpeer2\''))
+        else:
+            l.check(('test', 'DEBUG', 'fd:539:connect peer=\'testpeer\''),
+                    ('test', 'DEBUG', 'fd:539:connect peer=\'testpeer2\''))
 
     @log_capture()
     def test_encrypt(self, l):
         sock = FakeSocket(445)
         self.log.encrypt(sock, {'keyfile': 'test', 'server_side': True})
         self.log.encrypt(sock, {'certfile': 'test'})
-        l.check(('test', 'DEBUG', 'fd:445:encrypt certfile=None keyfile=\'test\' server_side=True'),
-                ('test', 'DEBUG', 'fd:445:encrypt certfile=\'test\' keyfile=None server_side=False'))
+        if six.PY2:
+            l.check(('test', 'DEBUG', 'fd:445:encrypt certfile=None keyfile=u\'test\' server_side=True'),
+                    ('test', 'DEBUG', 'fd:445:encrypt certfile=u\'test\' keyfile=None server_side=False'))
+        else:
+            l.check(('test', 'DEBUG', 'fd:445:encrypt certfile=None keyfile=\'test\' server_side=True'),
+                    ('test', 'DEBUG', 'fd:445:encrypt certfile=\'test\' keyfile=None server_side=False'))
+
 
     @log_capture()
     def test_shutdown(self, l):

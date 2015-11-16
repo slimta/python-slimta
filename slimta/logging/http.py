@@ -24,7 +24,7 @@ responses as well as more general HTTP logs.
 
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 from functools import partial
 
@@ -43,24 +43,24 @@ class HttpLogger(object):
 
     def __init__(self, log):
         from slimta.logging import logline
-        self.log = partial(logline, log.debug, 'http')
+        self.log = partial(logline, log.debug, str('http'))
 
     def _get_method_from_environ(self, environ):
-        return environ['REQUEST_METHOD'].upper()
+        return environ[str('REQUEST_METHOD')].upper()
 
     def _get_path_from_environ(self, environ):
-        return environ.get('PATH_INFO', None)
+        return environ.get(str('PATH_INFO'), None)
 
     def _get_headers_from_environ(self, environ):
         ret = []
         for key, value in environ.items():
-            if key == 'CONTENT_TYPE':
-                ret.append(('Content-Type', value))
-            elif key == 'CONTENT_LENGTH':
-                ret.append(('Content-Length', value))
-            elif key.startswith('HTTP_'):
-                parts = key.split('_')
-                name = '-'.join([part.capitalize() for part in parts[1:]])
+            if key == str('CONTENT_TYPE'):
+                ret.append((str('Content-Type'), value))
+            elif key == str('CONTENT_LENGTH'):
+                ret.append((str('Content-Length'), value))
+            elif key.startswith(str('HTTP_')):
+                parts = key.split(str('_'))
+                name = str('-').join([part.capitalize() for part in parts[1:]])
                 ret.append((name, value))
         return ret
 
