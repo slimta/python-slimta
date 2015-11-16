@@ -138,7 +138,9 @@ def _build_http_response(smtp_reply):
 def _decode_environ_val(v):
     # The request body cannot be encoded, it's a StringIO
     if isinstance(v, six.binary_type):
-        return v.decode()
+        # as WSGI specs says
+        return v.decode('latin-1')
+
     else:
         return v
 
