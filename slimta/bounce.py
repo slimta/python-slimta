@@ -28,6 +28,7 @@ from io import BytesIO
 
 
 from .envelope import Envelope
+from slimta.util.encoders import strict_encode
 
 __all__ = ['Bounce']
 
@@ -155,13 +156,13 @@ class Bounce(Envelope):
         sub_table = self._get_substitution_table(envelope, reply, headers_only)
         new_payload = BytesIO()
         new_payload.write(
-            self.header_template.format(**sub_table).encode('ascii'))
+            strict_encode(self.header_template.format(**sub_table)))
         header_data, message_data = envelope.flatten()
-        new_payload.write(header_data.encode('ascii'))
+        new_payload.write(strict_encode(header_data))
         if not headers_only:
             new_payload.write(message_data)
         new_payload.write(
-            self.footer_template.format(**sub_table).encode('ascii'))
+            strict_encode(self.footer_template.format(**sub_table)))
         self.parse(new_payload.getvalue())
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -1,6 +1,47 @@
+# -*- coding: utf-8 -*-
+
 import six
 
 __all__ = ['encode_base64']
+
+
+def utf8only_decode(bytestr):
+    """ Decode bytes assuming it's utf-8, raising no exception
+
+    Part of the "be liberal in what you accept" policy
+
+    :param bytestr: a string where no non-utf8 char is supposed to occur
+    :type bytestr: str
+    :rtype: bytes
+    """
+    return bytestr.decode('utf-8', 'replace')
+
+
+printable_decode = utf8only_decode
+
+
+def utf8only_encode(unistr):
+    """ Encode to ascii
+
+    Silently replaces invalid chars with "�"
+
+    :param unistr: a string that may contain non-utf-8 characters
+    :type unistr: str
+    :rtype: bytes
+    """
+    return unistr.encode('utf-8', 'replace')
+
+
+def strict_encode(unistr):
+    """ Encode to ascii
+
+    Silently replaces invalid chars with "?"
+
+    :param unistr: a string where no 8-bit char is supposed to occur
+    :type unistr: str
+    :rtype: bytes
+    """
+    return unistr.encode('ascii', 'replace')
 
 
 if six.PY2:

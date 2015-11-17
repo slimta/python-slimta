@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import unittest2 as unittest
@@ -107,6 +108,11 @@ Subject: important things
         self.assertEqual('sender@example.com', env.headers['from'])
         self.assertEqual('important things', env.headers['subject'])
         self.assertEqual(b'', env.message)
+
+    def test_parse_nonascii_headers(self):
+        env = Envelope()
+        env.parse(b"""Subject: \xc3\xa9\xc3\xa9\n""")
+        self.assertEqual('éé', env.headers['subject'])
 
     def test_parse_onlybody(self):
         env = Envelope()

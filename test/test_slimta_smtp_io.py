@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import unittest2 as unittest
@@ -54,6 +55,14 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         code, message = io.recv_reply()
         self.assertEqual('250', code)
         self.assertEqual('Ok', message)
+
+    def test_recv_nonutf8(self):
+        self.sock.recv(IsA(int)).AndReturn(b'250 \xff\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        code, message = io.recv_reply()
+        self.assertEqual('250', code)
+        self.assertEqual('�', message)
 
     def test_recv_reply_multipart(self):
         self.sock.recv(IsA(int)).AndReturn(b'250 ')
@@ -117,11 +126,26 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.assertEqual(None, command)
         self.assertEqual(None, arg)
 
+    def test_recv_command_nonutf8(self):
+        self.sock.recv(IsA(int)).AndReturn(b'cmd\xffr\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        command, arg = io.recv_command()
+        self.assertEqual(None, command)
+        self.assertEqual(None, arg)
+
     def test_send_reply(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
         io.send_reply(Reply('100', 'Ok'))
         self.assertEqual(b'100 Ok\r\n', io.send_buffer.getvalue())
+
+    def test_send_reply_nonascii(self):
+        # be strict on what we send
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        io.send_reply(Reply('100', 'Oké'))
+        self.assertEqual(b'100 Ok?\r\n', io.send_buffer.getvalue())
 
     def test_send_reply_multiline(self):
         self.mox.ReplayAll()
@@ -134,6 +158,13 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         io = IO(self.sock)
         io.send_command('CMD')
         self.assertEqual(b'CMD\r\n', io.send_buffer.getvalue())
+
+    def test_send_command_nonascii(self):
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        io.send_command('CMDé')
+        self.assertEqual(b'CMD?\r\n', io.send_buffer.getvalue())
+
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

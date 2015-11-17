@@ -30,7 +30,6 @@ import re
 import copy
 from email.message import Message
 from email.generator import Generator
-from email.parser import Parser
 
 import six
 from six.moves import cStringIO
@@ -43,6 +42,8 @@ else:
     from email.generator import BytesGenerator
 
 from slimta.util.typecheck import check_argtype
+from slimta.util.encoders import utf8only_encode, utf8only_decode
+from slimta.util.parser import Parser
 
 
 __all__ = ['Envelope']
@@ -176,8 +177,9 @@ class Envelope(object):
 
         """
         header_data, msg_data = self.flatten()
-        # header data is not supposed, in any case, to contain non-ascii chars
-        encoded_header_data = header_data.encode('ascii')
+        # header data may contain ascii chars, even if RFCs disallow it
+        # excepted with SMTPUTF8 extension. Some MTA work like that.
+        encoded_header_data = utf8only_encode(header_data)
         try:
             msg_data.decode('ascii')
         except UnicodeError:
@@ -222,7 +224,7 @@ class Envelope(object):
             header_data = data[:match.end(0)]
             payload = data[match.end(0):]
 
-        header_data_decoded = header_data.decode('ascii')
+        header_data_decoded = utf8only_decode(header_data)
         self.headers = Parser().parsestr(header_data_decoded, True)
         self.message = self.headers.get_payload().encode('ascii') + payload
         self.headers.set_payload('')

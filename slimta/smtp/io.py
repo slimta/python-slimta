@@ -32,6 +32,7 @@ import six
 
 from slimta import logging
 from slimta.util.typecheck import check_argtype
+from slimta.util.encoders import printable_decode, strict_encode
 from . import ConnectionLost, BadReply
 from .reply import Reply
 
@@ -152,15 +153,17 @@ class IO(object):
                     if match:
                         self.recv_buffer = input[match.end(0):]
                         message_lines.append(match.group(1))
-                        raise BadReply(b'\r\n'.join(message_lines).decode())
+                        raise BadReply(
+                            printable_decode(b'\r\n'.join(message_lines)))
                     else:
                         start_i = None
 
             if incomplete:
                 self.buffered_recv()
                 input = self.recv_buffer
+            body = b'\r\n'.join(message_lines)
 
-        return code.decode(), b'\r\n'.join(message_lines).decode()
+        return printable_decode(code), printable_decode(body)
 
     def recv_line(self):
         while True:
@@ -181,18 +184,18 @@ class IO(object):
         cmd_match = command_pattern.match(line)
 
         if cmd_match:
-            return cmd_match.group(1).upper().decode(), None
+            return printable_decode(cmd_match.group(1).upper()), None
         cmd_arg_match = command_arg_pattern.match(line)
         if cmd_arg_match:
             return (
-                cmd_arg_match.group(1).upper().decode(),
-                cmd_arg_match.group(2).decode())
+                printable_decode(cmd_arg_match.group(1).upper()),
+                printable_decode(cmd_arg_match.group(2)))
 
         return None, None
 
     def send_reply(self, reply):
-        code = reply.code.encode('ascii')
-        message = reply.message.encode('ascii')
+        code = strict_encode(reply.code)
+        message = strict_encode(reply.message)
         lines = []
         message = message+b'\r\n'
         for match in line_pattern.finditer(message):
@@ -208,7 +211,7 @@ class IO(object):
         """
         :type command: :py:obj:`str`
         """
-        return self.buffered_send(command.encode()+b'\r\n')
+        return self.buffered_send(strict_encode(command)+b'\r\n')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
