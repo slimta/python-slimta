@@ -186,11 +186,14 @@ class SmtpRelayClient(RelayPoolClient):
         try:
             self._handle_encoding(envelope)
             self._send_envelope(rcpt_results, envelope)
-            self._send_message_data(envelope)
+            msg_result = self._send_message_data(envelope)
         except SmtpRelayError as e:
             result.set_exception(e)
             self._rset()
         else:
+            rcpt_results = [
+                i if i is not None else msg_result
+                for i in rcpt_results]
             result.set(rcpt_results)
 
     def _check_server_timeout(self):
