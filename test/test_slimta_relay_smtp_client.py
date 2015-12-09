@@ -10,6 +10,7 @@ from pysasl.plain import PlainMechanism
 
 from slimta.util.deque import BlockingDeque
 from slimta.smtp import ConnectionLost, SmtpError
+from slimta.smtp.reply import Reply
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
@@ -221,7 +222,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client._connect()
         client._ehlo()
         client._deliver(result, env)
-        self.assertEqual([None], result.get_nowait())
+        self.assertEqual([Reply('250', 'Ok')], result.get_nowait())
 
     def test_deliver_badpipeline(self):
         result = AsyncResult()
@@ -313,7 +314,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client._connect()
         client._ehlo()
         client._deliver(result, env)
-        self.assertEqual([None], result.get_nowait())
+        self.assertEqual([Reply('250', 'Ok')], result.get_nowait())
 
     def test_deliver_conversion_failure(self):
         result = AsyncResult()
@@ -368,7 +369,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._run()
-        self.assertEqual([None], result.get_nowait())
+        self.assertEqual([Reply('250', 'Ok')], result.get_nowait())
 
     def test_run_multiple(self):
         result1 = AsyncResult()
@@ -397,8 +398,8 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient(None, queue, socket_creator=self._socket_creator, ehlo_as='test', idle_timeout=0.0)
         client._run()
-        self.assertEqual([None], result1.get_nowait())
-        self.assertEqual([None], result2.get_nowait())
+        self.assertEqual([Reply('250', 'Ok')], result1.get_nowait())
+        self.assertEqual([Reply('250', 'Ok')], result2.get_nowait())
 
     def test_run_random_exception(self):
         result = AsyncResult()

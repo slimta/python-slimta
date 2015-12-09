@@ -397,7 +397,7 @@ class Queue(Greenlet):
         permfails = []
         for i, rcpt in enumerate(envelope.recipients):
             rcpt_res = results[i]
-            if not rcpt_res:
+            if rcpt_res is None or isinstance(rcpt_res, Reply):
                 delivered.append(i)
             elif isinstance(rcpt_res, PermanentRelayError):
                 delivered.append(i)
