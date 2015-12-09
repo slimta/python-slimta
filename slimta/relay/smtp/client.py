@@ -213,6 +213,7 @@ class SmtpRelayClient(RelayPoolClient):
         result, envelope = self.poll()
         if not result:
             return
+        reraise = True
         try:
             self._connect()
             self._handshake()
@@ -238,9 +239,14 @@ class SmtpRelayClient(RelayPoolClient):
         except Exception as e:
             if not result.ready():
                 result.set_exception(e)
+            reraise = False
             raise
         finally:
-            self._disconnect()
+            try:
+                self._disconnect()
+            except Exception:
+                if reraise:
+                    raise
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
