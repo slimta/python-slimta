@@ -179,7 +179,7 @@ class SmtpRelayClient(RelayPoolClient):
             raise
         for i, rcpt_reply in enumerate(rcpttos):
             if rcpt_reply.is_error():
-                rcpt_results[i] =  SmtpRelayError.factory(rcpt_reply)
+                rcpt_results[i] = SmtpRelayError.factory(rcpt_reply)
 
     def _deliver(self, result, envelope):
         rcpt_results = [None] * len(envelope.recipients)

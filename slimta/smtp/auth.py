@@ -24,8 +24,8 @@ from __future__ import absolute_import
 import re
 import base64
 
-from pysasl import  AuthenticationError, ServerChallenge, \
-                   AuthenticationCredentials
+from pysasl import AuthenticationError, ServerChallenge, \
+    AuthenticationCredentials
 
 from . import SmtpError
 from .reply import Reply
