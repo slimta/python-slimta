@@ -73,6 +73,8 @@ class Reply(object):
         self.newline_first = False
 
     def __eq__(self, other):
+        if not other:
+            return NotImplemented
         return self.code == other.code and self.message == other.message
 
     def __repr__(self):
