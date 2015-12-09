@@ -27,6 +27,8 @@ messages well, such as :class:`~slimta.relay.smtp.mx.MxSmtpRelay`.
 
 from __future__ import absolute_import
 
+from collections import OrderedDict
+
 from . import QueuePolicy
 
 __all__ = ['RecipientSplit', 'RecipientDomainSplit']
@@ -70,7 +72,7 @@ class RecipientDomainSplit(QueuePolicy):
         return domain.lower()
 
     def _get_domain_groups(self, recipients):
-        groups = {}
+        groups = OrderedDict()
         bad_rcpts = []
         for rcpt in recipients:
             try:
@@ -90,7 +92,7 @@ class RecipientDomainSplit(QueuePolicy):
         if len(groups)+len(bad_rcpts) <= 1:
             return
         ret = []
-        for domain, rcpts in groups.iteritems():
+        for domain, rcpts in groups.items():
             self._append_envelope_copy(envelope, ret, rcpts)
         for bad_rcpt in bad_rcpts:
             self._append_envelope_copy(envelope, ret, [bad_rcpt])
