@@ -31,13 +31,15 @@ from __future__ import absolute_import
 import time
 import bisect
 import collections
-from itertools import imap, izip, repeat, chain
+from itertools import repeat, chain
 
 import gevent
 from gevent import Greenlet
 from gevent.event import Event
 from gevent.lock import Semaphore
 from gevent.pool import Pool
+import six
+from six.moves import map
 
 from slimta.logging import log_exception
 from slimta.core import SlimtaError
@@ -280,7 +282,7 @@ class Queue(Greenlet):
 
     def _pool_imap(self, which, func, *iterables):
         pool = getattr(self, which+'_pool', gevent)
-        threads = imap(pool.spawn, repeat(func), *iterables)
+        threads = map(pool.spawn, repeat(func), *iterables)
         ret = []
         for thread in threads:
             thread.join()
@@ -313,7 +315,7 @@ class Queue(Greenlet):
         envelopes = self._run_policies(envelope)
         ids = self._pool_imap('store', self.store.write, envelopes,
                               repeat(now))
-        results = zip(envelopes, ids)
+        results = list(six.moves.zip(envelopes, ids))
         for env, id in results:
             if not isinstance(id, BaseException):
                 if self.relay:

@@ -1,7 +1,7 @@
-
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent import socket, ssl
+import six
 
 from slimta.http import HTTPConnection, HTTPSConnection, get_connection
 
@@ -12,7 +12,11 @@ class TestHTTPConnection(unittest.TestCase, MoxTestBase):
         self.mox.StubOutWithMock(socket, 'create_connection')
         socket.create_connection(('testhost', 8025), 7).AndReturn(9)
         self.mox.ReplayAll()
-        conn = HTTPConnection('testhost', 8025, True, 7)
+        # strict HTTPConnection became deprecated
+        if six.PY2:
+            conn = HTTPConnection('testhost', 8025, True, 7)
+        else:
+            conn = HTTPConnection('testhost', 8025, 7)
         conn.connect()
         self.assertEqual(9, conn.sock)
 
@@ -27,12 +31,19 @@ class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
         ssl.SSLSocket(9, var='val').AndReturn(sslsock)
         sslsock.do_handshake()
         self.mox.ReplayAll()
-        conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
+        # strict HTTPConnection became deprecated
+        if six.PY2:
+            conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
+        else:
+            conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, 7)
         conn.connect()
         self.assertEqual(sslsock, conn.sock)
 
     def test_close(self):
-        conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
+        if six.PY2:
+            conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, True, 7)
+        else:
+            conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, 7)
         conn.sock = self.mox.CreateMockAnything()
         conn.sock.unwrap()
         conn.sock.close()

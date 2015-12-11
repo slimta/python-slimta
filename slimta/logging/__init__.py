@@ -21,7 +21,7 @@
 
 """Utilities to make logging consistent and easy in :mod:`slimta` packages."""
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import threading
 threading._DummyThread._Thread__stop = lambda x: 42
@@ -29,7 +29,7 @@ threading._DummyThread._Thread__stop = lambda x: 42
 import sys
 import traceback
 import re
-import repr
+from six.moves import reprlib
 import logging
 from ast import literal_eval
 
@@ -107,7 +107,7 @@ def log_exception(name, **kwargs):
     type, value, tb = sys.exc_info()
     if not value:
         return
-    exc_repr = repr.Repr()
+    exc_repr = reprlib.Repr()
     exc_repr.maxstring = 1000
     logger = logging.getLogger(name)
     data = kwargs.copy()
@@ -115,11 +115,11 @@ def log_exception(name, **kwargs):
     data['traceback'] = traceback.format_exception(type, value, tb)
     data['args'] = value.args
     data_str = ' '.join(['='.join((key, exc_repr.repr(val)))
-                         for key, val in sorted(data.iteritems())])
+                         for key, val in sorted(data.items())])
     logger.error('exception:{0}:unhandled {1}'.format(type.__name__, data_str))
 
 
-log_repr = repr.Repr()
+log_repr = reprlib.Repr()
 log_repr.maxstring = 100
 
 
@@ -128,7 +128,7 @@ def logline(log, type, typeid, operation, **data):
         log('{0}:{1}:{2}'.format(type, typeid, operation))
     else:
         data_str = ' '.join(['='.join((key, log_repr.repr(val)))
-                             for key, val in sorted(data.iteritems())])
+                             for key, val in sorted(data.items())])
         log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 
 

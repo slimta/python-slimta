@@ -25,6 +25,7 @@ from __future__ import absolute_import
 
 import re
 
+
 __all__ = ['Extensions']
 
 parse_pattern = re.compile(r'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')
@@ -136,7 +137,7 @@ class Extensions(object):
 
         """
         lines = [header]
-        for k, v in self.extensions.iteritems():
+        for k, v in self.extensions.items():
             if v:
                 try:
                     value_str = str(v)

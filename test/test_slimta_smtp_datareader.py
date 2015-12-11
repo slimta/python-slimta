@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
@@ -17,47 +18,47 @@ class TestSmtpDataReader(unittest.TestCase, MoxTestBase):
 
     def test_append_line(self):
         dr = DataReader(None)
-        dr._append_line('asdf')
-        dr._append_line('jkl\r\n')
+        dr._append_line(b'asdf')
+        dr._append_line(b'jkl\r\n')
         dr.i += 1
-        dr._append_line('qwerty')
-        self.assertEqual(['asdfjkl\r\n', 'qwerty'], dr.lines)
+        dr._append_line(b'qwerty')
+        self.assertEqual([b'asdfjkl\r\n', b'qwerty'], dr.lines)
 
     def test_from_recv_buffer(self):
         io = IO(None)
-        io.recv_buffer = 'test\r\ndata'
+        io.recv_buffer = b'test\r\ndata'
         dr = DataReader(io)
         dr.from_recv_buffer()
-        self.assertEqual(['test\r\n', 'data'], dr.lines)
+        self.assertEqual([b'test\r\n', b'data'], dr.lines)
 
     def test_handle_finished_line_EOD(self):
         dr = DataReader(None)
-        dr.lines = ['.\r\n']
+        dr.lines = [b'.\r\n']
         dr.handle_finished_line()
         self.assertEqual(0, dr.EOD)
 
     def test_handle_finished_line_initial_period(self):
         dr = DataReader(None)
-        dr.lines = ['..stuff\r\n']
+        dr.lines = [b'..stuff\r\n']
         dr.handle_finished_line()
-        self.assertEqual('.stuff\r\n', dr.lines[0])
+        self.assertEqual(b'.stuff\r\n', dr.lines[0])
 
     def test_add_lines(self):
         dr = DataReader(None)
-        dr.add_lines('\r\ntwo\r\n.three\r\nfour')
-        self.assertEqual(['\r\n', 'two\r\n', 'three\r\n', 'four'], dr.lines)
+        dr.add_lines(b'\r\ntwo\r\n.three\r\nfour')
+        self.assertEqual([b'\r\n', b'two\r\n', b'three\r\n', b'four'], dr.lines)
         self.assertEqual(3, dr.i)
         self.assertEqual(None, dr.EOD)
 
     def test_recv_piece(self):
-        self.sock.recv(IsA(int)).AndReturn('one\r\ntwo')
-        self.sock.recv(IsA(int)).AndReturn('\r\nthree\r\n.\r\nstuff\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'one\r\ntwo')
+        self.sock.recv(IsA(int)).AndReturn(b'\r\nthree\r\n.\r\nstuff\r\n')
         self.mox.ReplayAll()
         dr = DataReader(IO(self.sock))
         self.assertTrue(dr.recv_piece())
         self.assertFalse(dr.recv_piece())
-        self.assertEqual(['one\r\n', 'two\r\n', 'three\r\n',
-                          '.\r\n', 'stuff\r\n', ''], dr.lines)
+        self.assertEqual([b'one\r\n', b'two\r\n', b'three\r\n',
+                          b'.\r\n', b'stuff\r\n', b''], dr.lines)
         self.assertEqual(3, dr.EOD)
         self.assertEqual(5, dr.i)
 
@@ -67,13 +68,13 @@ class TestSmtpDataReader(unittest.TestCase, MoxTestBase):
         self.assertFalse(dr.recv_piece())
 
     def test_recv_piece_connectionlost(self):
-        self.sock.recv(IsA(int)).AndReturn('')
+        self.sock.recv(IsA(int)).AndReturn(b'')
         self.mox.ReplayAll()
         dr = DataReader(IO(self.sock))
         self.assertRaises(ConnectionLost, dr.recv_piece)
 
     def test_recv_piece_messagetoobig(self):
-        self.sock.recv(IsA(int)).AndReturn('1234567890')
+        self.sock.recv(IsA(int)).AndReturn(b'1234567890')
         self.mox.ReplayAll()
         dr = DataReader(IO(self.sock), 9)
         self.assertRaises(MessageTooBig, dr.recv_piece)
@@ -81,19 +82,19 @@ class TestSmtpDataReader(unittest.TestCase, MoxTestBase):
     def test_return_all(self):
         io = IO(None)
         dr = DataReader(io)
-        dr.lines = ['one\r\n', 'two\r\n', '.\r\n', 'three\r\n']
+        dr.lines = [b'one\r\n', b'two\r\n', b'.\r\n', b'three\r\n']
         dr.EOD = 2
-        self.assertEqual('one\r\ntwo\r\n', dr.return_all())
-        self.assertEqual('three\r\n', io.recv_buffer)
+        self.assertEqual(b'one\r\ntwo\r\n', dr.return_all())
+        self.assertEqual(b'three\r\n', io.recv_buffer)
 
     def test_recv(self):
-        self.sock.recv(IsA(int)).AndReturn('\r\nthree\r\n')
-        self.sock.recv(IsA(int)).AndReturn('.\r\nstuff\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'\r\nthree\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'.\r\nstuff\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.recv_buffer = 'one\r\ntwo'
+        io.recv_buffer = b'one\r\ntwo'
         dr = DataReader(io)
-        self.assertEqual('one\r\ntwo\r\nthree\r\n', dr.recv())
+        self.assertEqual(b'one\r\ntwo\r\nthree\r\n', dr.recv())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

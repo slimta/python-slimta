@@ -30,6 +30,10 @@ from __future__ import absolute_import
 
 import re
 
+import six
+
+from slimta.util.typecheck import check_argtype
+
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
                     'tls_failure', 'invalid_credentials']
@@ -57,6 +61,7 @@ class Reply(object):
 
         #: Holds the reply code, which can only be set to a string containing
         #: three digits.
+        check_argtype(code, six.string_types, 'code', or_none=True)
         self.code = code
 
         #: Holds the ENHANCEDSTATUSCODES_ string. This property is usually set
@@ -66,6 +71,7 @@ class Reply(object):
         #: Gets and sets the reply message. If you set this property with an
         #: ENHANCEDSTATUSCODES_ string prefixed, that string will be pulled out
         #: and set in the ``enhanced_status_code``.
+        check_argtype(message, six.string_types, 'message', or_none=True)
         self.message = message
 
         #: Boolean defining whether a newline should be sent before the reply,
@@ -97,7 +103,7 @@ class Reply(object):
         """
         return '{0} {1}'.format(self.code, self.message)
 
-    def __nonzero__(self):
+    def __bool__(self):
         """Defines the truth-testing operation for |Reply| objects. This will
         evaluate ``True`` if the object value set to its ``code`` attribute
         other than ``None``. This is useful for checking replies that may be
@@ -107,6 +113,9 @@ class Reply(object):
 
         """
         return self.code is not None
+
+    # Python 2 compat.
+    __nonzero__ = __bool__
 
     def copy(self, reply):
         """Direct-copies the given reply code and message into the current
@@ -136,7 +145,7 @@ class Reply(object):
 
         """
         if self.newline_first:
-            io.buffered_send('\r\n')
+            io.buffered_send(b'\r\n')
         io.send_reply(self)
         if flush:
             io.flush_send()

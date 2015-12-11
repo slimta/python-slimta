@@ -135,7 +135,7 @@ def _start_outbound_edge(args, queue):
             reply.message = outbound_banner
 
         def handle_mail(self, reply, sender):
-            print self.session.auth_result
+            print(self.session.auth_result)
             if not self.session.auth_result:
                 reply.code = '550'
                 reply.message = '5.7.1 Sender <{0}> Not allowed'.format(sender)

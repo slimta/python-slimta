@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import unittest2 as unittest
 
@@ -10,7 +11,7 @@ class TestPoliySplit(unittest.TestCase):
     def test_recipientsplit_apply(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',
                                               'rcpt2@example.com'])
-        env.parse("""\
+        env.parse(b"""\
 From: sender@example.com
 To: rcpt1@example.com
 To: rcpt2@example.com
@@ -25,14 +26,14 @@ test test\r
         self.assertEqual('sender@example.com', env1.headers['from'])
         self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
                          env1.headers.get_all('To'))
-        self.assertEqual('test test\r\n', env1.message)
+        self.assertEqual(b'test test\r\n', env1.message)
 
         self.assertEqual('sender@example.com', env2.sender)
         self.assertEqual(['rcpt2@example.com'], env2.recipients)
         self.assertEqual('sender@example.com', env2.headers['from'])
         self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'],
                          env2.headers.get_all('To'))
-        self.assertEqual('test test\r\n', env2.message)
+        self.assertEqual(b'test test\r\n', env2.message)
 
     def test_recipientsplit_apply_onercpt(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
@@ -66,36 +67,36 @@ test test\r
         env = Envelope('sender@example.com', ['rcpt1@example.com',
                                               'rcpt2@example.com',
                                               'rcpt@test.com'])
-        env.parse("""\r\ntest test\r\n""")
+        env.parse(b"""\r\ntest test\r\n""")
         policy = RecipientDomainSplit()
         env1, env2 = policy.apply(env)
 
         self.assertEqual('sender@example.com', env1.sender)
         self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env1.recipients)
-        self.assertEqual('test test\r\n', env1.message)
+        self.assertEqual(b'test test\r\n', env1.message)
 
         self.assertEqual('sender@example.com', env2.sender)
         self.assertEqual(['rcpt@test.com'], env2.recipients)
-        self.assertEqual('test test\r\n', env2.message)
+        self.assertEqual(b'test test\r\n', env2.message)
 
     def test_recipientdomainsplit_apply_allbadrcpts(self):
         env = Envelope('sender@example.com', ['rcpt1', 'rcpt2@'])
-        env.parse("""\r\ntest test\r\n""")
+        env.parse(b"""\r\ntest test\r\n""")
         policy = RecipientDomainSplit()
         env1, env2 = policy.apply(env)
 
         self.assertEqual('sender@example.com', env1.sender)
         self.assertEqual(['rcpt1'], env1.recipients)
-        self.assertEqual('test test\r\n', env1.message)
+        self.assertEqual(b'test test\r\n', env1.message)
 
         self.assertEqual('sender@example.com', env2.sender)
         self.assertEqual(['rcpt2@'], env2.recipients)
-        self.assertEqual('test test\r\n', env2.message)
+        self.assertEqual(b'test test\r\n', env2.message)
 
     def test_recipientdomainsplit_apply_onedomain(self):
         env = Envelope('sender@example.com', ['rcpt1@example.com',
                                               'rcpt2@example.com'])
-        env.parse('')
+        env.parse(b'')
         policy = RecipientDomainSplit()
         self.assertFalse(policy.apply(env))
 

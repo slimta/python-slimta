@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
@@ -39,7 +40,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         self.client = HttpRelayClient(FakeRelay())
         self.result = self.mox.CreateMock(AsyncResult)
         self.env = Envelope('sender@example.com', ['rcpt1@example.com', 'rcpt2@example.com'])
-        self.env.parse('Header: value\r\n\r\ntest message\r\n')
+        self.env.parse(b'Header: value\r\n\r\ntest message\r\n')
 
     def test_wait_for_request(self):
         self.mox.StubOutWithMock(self.client, '_handle_request')
@@ -60,14 +61,14 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.StubOutWithMock(self.client, '_process_response')
         conn = self.client.conn = self.mox.CreateMockAnything()
         conn.putrequest('POST', '/path/info')
-        conn.putheader('Content-Length', 31)
-        conn.putheader('Content-Type', 'message/rfc822')
-        conn.putheader('X-Ehlo', 'test')
-        conn.putheader('X-Envelope-Sender', 'c2VuZGVyQGV4YW1wbGUuY29t')
-        conn.putheader('X-Envelope-Recipient', 'cmNwdDFAZXhhbXBsZS5jb20=')
-        conn.putheader('X-Envelope-Recipient', 'cmNwdDJAZXhhbXBsZS5jb20=')
-        conn.endheaders('Header: value\r\n\r\n')
-        conn.send('test message\r\n')
+        conn.putheader(b'Content-Length', 31)
+        conn.putheader(b'Content-Type', b'message/rfc822')
+        conn.putheader(b'X-Ehlo', b'test')
+        conn.putheader(b'X-Envelope-Sender', b'c2VuZGVyQGV4YW1wbGUuY29t')
+        conn.putheader(b'X-Envelope-Recipient', b'cmNwdDFAZXhhbXBsZS5jb20=')
+        conn.putheader(b'X-Envelope-Recipient', b'cmNwdDJAZXhhbXBsZS5jb20=')
+        conn.endheaders(b'Header: value\r\n\r\n')
+        conn.send(b'test message\r\n')
         conn.getresponse().AndReturn(13)
         self.client._process_response(13, 21)
         self.mox.ReplayAll()

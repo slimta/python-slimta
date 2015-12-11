@@ -30,11 +30,12 @@ similar interface to other slimta libraries that use SSL/TLS.
 
 from __future__ import absolute_import
 
-import urlparse
+from six.moves import urllib_parse
 from socket import error as socket_error
-from httplib import HTTPConnection as BuiltinHTTPConnection
+from six.moves.http_client import HTTPConnection as BuiltinHTTPConnection
 
 from gevent import socket, ssl
+import six
 
 from slimta.core import SlimtaError
 
@@ -84,8 +85,8 @@ class HTTPSConnection(HTTPConnection):
         if self.sock:
             try:
                 self.sock.unwrap()
-            except socket_error as (errno, message):
-                if errno != 0:
+            except socket_error as e:
+                if e.errno != 0:
                     raise
         HTTPConnection.close(self)
 
@@ -100,15 +101,22 @@ def get_connection(url, tls=None):
                 ``tls`` parameter to :class:`HTTPSConnection`.
 
     """
-    if isinstance(url, basestring):
-        url = urlparse.urlsplit(url, 'http')
+    if isinstance(url, six.string_types):
+        url = urllib_parse.urlsplit(url, 'http')
     host = url.netloc or 'localhost'
     host = host.rsplit(':', 1)[0]
     port = url.port
+    kwargs = {}
+
+    if six.PY2:
+        # strict is deprecated on Python3
+        # https://docs.python.org/3.2/library/http.client.html#httpconnection-objects
+        kwargs['strict'] = True
+
     if url.scheme == 'https':
-        conn = HTTPSConnection(host, port, strict=True, tls=tls)
+        conn = HTTPSConnection(host, tls=tls, **kwargs)
     else:
-        conn = HTTPConnection(host, port, strict=True)
+        conn = HTTPConnection(host, **kwargs)
     return conn
 
 

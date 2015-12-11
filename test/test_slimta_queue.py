@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import sys
 from functools import wraps
@@ -18,7 +19,7 @@ from slimta.envelope import Envelope
 def _redirect_stderr(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        print 'NOTE: stderr is redirected to stdout for this test.'
+        print('NOTE: stderr is redirected to stdout for this test.')
         old_stderr = sys.stderr
         sys.stderr = sys.stdout
         try:

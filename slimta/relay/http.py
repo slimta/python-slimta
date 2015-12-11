@@ -29,7 +29,7 @@ for exchanging mail.
 from __future__ import absolute_import
 
 import re
-import urlparse
+from six.moves import urllib_parse
 from socket import getfqdn
 from base64 import b64encode
 
@@ -37,6 +37,7 @@ import gevent
 from gevent import socket
 from gevent.queue import PriorityQueue, Empty
 from gevent.event import AsyncResult
+import six
 
 from slimta import logging
 from slimta.smtp.reply import Reply
@@ -58,7 +59,7 @@ class HttpRelayClient(RelayPoolClient):
     def __init__(self, relay):
         super(HttpRelayClient, self).__init__(relay.queue, relay.idle_timeout)
         self.conn = None
-        self.url = urlparse.urlsplit(relay.url, 'http')
+        self.url = urllib_parse.urlsplit(relay.url, 'http')
         self.relay = relay
 
     def _wait_for_request(self):
@@ -75,9 +76,11 @@ class HttpRelayClient(RelayPoolClient):
         headers = [('Content-Length', content_length),
                    ('Content-Type', 'message/rfc822'),
                    (self.relay.ehlo_header, self.relay.ehlo_as),
-                   (self.relay.sender_header, b64encode(envelope.sender))]
+                   (self.relay.sender_header,
+                    b64encode(envelope.sender.encode()))]
         for rcpt in envelope.recipients:
-            headers.append((self.relay.recipient_header, b64encode(rcpt)))
+            headers.append((self.relay.recipient_header,
+                            b64encode(rcpt.encode())))
         return headers
 
     def _handle_request(self, result, envelope):
@@ -90,8 +93,14 @@ class HttpRelayClient(RelayPoolClient):
             log.request(self.conn, method, self.url.path, headers)
             self.conn.putrequest(method, self.url.path)
             for name, value in headers:
-                self.conn.putheader(name, value)
-            self.conn.endheaders(msg_headers)
+                # https://www.python.org/dev/peps/pep-0333/#unicode-issues
+                # value is sometime an int/float
+                if isinstance(value, six.string_types):
+                    encoded_value = value.encode('iso-8859-1')
+                else:
+                    encoded_value = value
+                self.conn.putheader(name.encode('iso-8859-1'), encoded_value)
+            self.conn.endheaders(msg_headers.encode('iso-8859-1'))
             self.conn.send(msg_body)
             self._process_response(self.conn.getresponse(), result)
 

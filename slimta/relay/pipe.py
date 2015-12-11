@@ -97,7 +97,7 @@ class PipeRelay(Relay):
 
     def _exec_process(self, envelope):
         header_data, message_data = envelope.flatten()
-        stdin = ''.join((header_data, message_data))
+        stdin = b''.join((header_data.encode('ascii'), message_data))
         with Timeout(self.timeout):
             args = self._process_args(envelope)
             p = subprocess.Popen(args, stdin=subprocess.PIPE,

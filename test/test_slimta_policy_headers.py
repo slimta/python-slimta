@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import unittest2 as unittest
 import re
@@ -11,7 +12,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_date_header(self):
         env = Envelope()
-        env.parse('')
+        env.parse(b'')
         env.timestamp = 1234567890
         adh = AddDateHeader()
         self.assertEqual(None, env.headers['Date'])
@@ -20,7 +21,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_date_header_existing(self):
         env = Envelope()
-        env.parse('Date: testing\r\n')
+        env.parse(b'Date: testing\r\n')
         adh = AddDateHeader()
         self.assertEqual('testing', env.headers['Date'])
         adh.apply(env)
@@ -28,7 +29,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_message_id_header(self):
         env = Envelope()
-        env.parse('')
+        env.parse(b'')
         env.timestamp = 1234567890
         amih = AddMessageIdHeader('example.com')
         self.assertEqual(None, env.headers['Message-Id'])
@@ -38,7 +39,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_message_id_header_existing(self):
         env = Envelope()
-        env.parse('Message-Id: testing\r\n')
+        env.parse(b'Message-Id: testing\r\n')
         amih = AddMessageIdHeader()
         self.assertEqual('testing', env.headers['Message-Id'])
         amih.apply(env)
@@ -46,7 +47,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_received_header(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
-        env.parse('From: test@example.com\r\n')
+        env.parse(b'From: test@example.com\r\n')
         env.timestamp = 1234567890
         env.client['name'] = 'mail.example.com'
         env.client['ip'] = '1.2.3.4'
@@ -60,7 +61,7 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_received_header_prepended(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
-        env.parse('From: test@example.com\r\n')
+        env.parse(b'From: test@example.com\r\n')
         AddReceivedHeader().apply(env)
         self.assertEqual(['Received', 'From'], env.headers.keys())
 

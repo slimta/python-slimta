@@ -24,18 +24,31 @@ metadata.
 
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import re
 import copy
-import cStringIO
 from email.message import Message
 from email.generator import Generator
-from email.parser import Parser, FeedParser
+
+import six
+from six.moves import cStringIO
+
+if six.PY2:
+    from email.generator import Generator as BytesGenerator
+
+else:
+    from email.parser import BytesParser
+    from email.generator import BytesGenerator
+
+from slimta.util.typecheck import check_argtype
+from slimta.util.encoders import utf8only_encode, utf8only_decode
+from slimta.util.parser import Parser
+
 
 __all__ = ['Envelope']
 
-_HEADER_BOUNDARY = re.compile(r'\r?\n\s*?\n')
+_HEADER_BOUNDARY = re.compile(br'\r?\n\s*?\n')
 _LINE_BREAK = re.compile(r'\r?\n')
 
 
@@ -48,6 +61,7 @@ class Envelope(object):
     :param headers: The message headers.
     :type headers: :class:`email.message.Message`
     :param message: String containing the message contents after the headers.
+    :type message: :py:obj:`bytes`
 
     """
 
@@ -64,6 +78,7 @@ class Envelope(object):
         self.headers = headers
 
         #: String of message data, not including headers.
+        check_argtype(message, bytes, 'message', or_none=True)
         self.message = message
 
         #: Dictionary of information about the client that sent the message.
@@ -113,31 +128,36 @@ class Envelope(object):
         :returns: Tuple of two strings: ``(header_data, message_data)``
 
         """
-        outfp = cStringIO.StringIO()
+        outfp = cStringIO()
         Generator(outfp).flatten(self.headers, False)
         header_data = re.sub(_LINE_BREAK, '\r\n', outfp.getvalue())
         return header_data, self.message
 
     def _encode_parts(self, header_data, msg_data, encoder):
-        """Encodes any MIME part in the current message that is 8-bit."""
+        """Encodes any MIME part in the current message that is 8-bit.
+
+        :type header_data: :py:obj:`bytes`
+        :type msg_data: :py:obj:`bytes`
+        """
         self.headers = None
         self.message = None
 
-        parser = FeedParser()
-        parser.feed(header_data)
-        parser.feed(msg_data)
-        msg = parser.close()
+        if six.PY3:
+            msg = BytesParser().parsebytes(header_data+msg_data)
+
+        else:
+            msg = Parser().parsestr(header_data+msg_data)
 
         for part in msg.walk():
             if not part.is_multipart():
                 payload = part.get_payload()
                 try:
                     payload.encode('ascii')
-                except UnicodeDecodeError:
+                except UnicodeError:
                     del part['Content-Transfer-Encoding']
                     encoder(part)
 
-        self.parse(msg)
+        self.parse_msg(msg)
 
     def encode_7bit(self, encoder=None):
         """.. versionadded:: 0.3.12
@@ -157,34 +177,56 @@ class Envelope(object):
 
         """
         header_data, msg_data = self.flatten()
+        # header data may contain ascii chars, even if RFCs disallow it
+        # excepted with SMTPUTF8 extension. Some MTA work like that.
+        encoded_header_data = utf8only_encode(header_data)
         try:
-            msg_data.encode('ascii')
-        except UnicodeDecodeError:
+            msg_data.decode('ascii')
+        except UnicodeError:
             if not encoder:
                 raise
-            self._encode_parts(header_data, msg_data, encoder)
+            self._encode_parts(encoded_header_data, msg_data, encoder)
 
-    def parse(self, data):
-        """Parses the given string or :class:`~email.message.Message` to
+    def parse_msg(self, msg):
+        """Parses the given :class:`~email.message.Message` to
         populate the :attr:`headers` and :attr:`message` attributes.
 
         :param data: The complete message, headers and message body.
-        :type data: :py:obj:`str` or :class:`~email.message.Message`
+        :type data: :class:`~email.message.Message`
 
         """
-        if isinstance(data, Message):
-            outfp = cStringIO.StringIO()
-            Generator(outfp).flatten(data, False)
-            data = outfp.getvalue()
+        # Can't use non-six BytesIO here cause python2 BytesGenerator will fail
+        # to decode headers
+        outfp = six.BytesIO()
+        BytesGenerator(outfp).flatten(msg, False)
+        data = outfp.getvalue()
+
+        if six.PY2:
+            data = data.encode()
+
+        self.parse(data)
+
+    def parse(self, data):
+        """Parses the given string to populate the :attr:`headers` and
+        :attr:`message` attributes.
+
+        :param data: The complete message, headers and message body.
+        :type data: :py:obj:`bytes`
+
+        """
+        check_argtype(data, bytes, 'data')
+
         match = re.search(_HEADER_BOUNDARY, data)
         if not match:
             header_data = data
-            payload = ''
+            payload = b''
         else:
             header_data = data[:match.end(0)]
             payload = data[match.end(0):]
-        self.headers = Parser().parsestr(header_data, True)
-        self.message = self.headers.get_payload() + payload
+
+        header_data_decoded = utf8only_decode(header_data)
+        self.headers = Parser().parsestr(header_data_decoded, True)
+        self.message = self.headers.get_payload().encode('ascii') + payload
         self.headers.set_payload('')
 
     def __repr__(self):

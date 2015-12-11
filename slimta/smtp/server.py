@@ -25,7 +25,7 @@ certain situations (typically when a client sends various commands).
 
 """
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import re
 
@@ -33,6 +33,7 @@ from gevent.ssl import SSLError
 from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from pysasl import SASLAuth
+from six.moves import range
 
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
@@ -53,7 +54,7 @@ def find_outside_quotes(haystack, needle, start_i=0, quotes='"'):
     quoted = None
     h_len = len(haystack)
     n_len = len(needle)
-    for i in xrange(start_i, h_len-n_len+1):
+    for i in range(start_i, h_len-n_len+1):
         if not quoted:
             if haystack[i:i+n_len] == needle:
                 return i

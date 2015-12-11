@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
@@ -15,12 +16,12 @@ class TestPipeRelay(unittest.TestCase, MoxTestBase):
         pmock = self.mox.CreateMock(subprocess.Popen)
         self.mox.StubOutWithMock(subprocess, 'Popen')
         env = Envelope('sender@example.com', ['rcpt@example.com'])
-        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         subprocess.Popen(['relaytest', '-f', 'sender@example.com'],
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE).AndReturn(pmock)
-        pmock.communicate('From: sender@example.com\r\n\r\ntest test\r\n').AndReturn(('testout', 'testerr'))
+        pmock.communicate(b'From: sender@example.com\r\n\r\ntest test\r\n').AndReturn(('testout', 'testerr'))
         pmock.pid = -1
         pmock.returncode = 0
         self.mox.ReplayAll()
@@ -34,12 +35,12 @@ class TestPipeRelay(unittest.TestCase, MoxTestBase):
         pmock = self.mox.CreateMock(subprocess.Popen)
         self.mox.StubOutWithMock(subprocess, 'Popen')
         env = Envelope('sender@example.com', ['rcpt@example.com'])
-        env.parse('From: sender@example.com\r\n\r\ntest test\r\n')
+        env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         subprocess.Popen(['relaytest', '-f', 'sender@example.com'],
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE).AndReturn(pmock)
-        pmock.communicate('From: sender@example.com\r\n\r\ntest test\r\n').AndReturn(('', ''))
+        pmock.communicate(b'From: sender@example.com\r\n\r\ntest test\r\n').AndReturn(('', ''))
         pmock.pid = -1
         pmock.returncode = 1337
         self.mox.ReplayAll()

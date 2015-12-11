@@ -1,4 +1,4 @@
-
+from __future__ import unicode_literals
 import unittest2 as unittest
 
 from slimta.smtp.reply import Reply
@@ -119,14 +119,14 @@ class TestSmtpReply(unittest.TestCase):
         r = Reply('250', 'Ok')
         io = IO(None)
         r.send(io)
-        self.assertEqual('250 2.0.0 Ok\r\n', io.send_buffer.getvalue())
+        self.assertEqual(b'250 2.0.0 Ok\r\n', io.send_buffer.getvalue())
 
     def test_send_newline_first(self):
         r = Reply('250', 'Ok')
         r.newline_first = True
         io = IO(None)
         r.send(io)
-        self.assertEqual('\r\n250 2.0.0 Ok\r\n', io.send_buffer.getvalue())
+        self.assertEqual(b'\r\n250 2.0.0 Ok\r\n', io.send_buffer.getvalue())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
