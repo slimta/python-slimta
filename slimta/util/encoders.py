@@ -44,6 +44,19 @@ def strict_encode(unistr):
     return unistr.encode('ascii', 'replace')
 
 
+def xmlcharref_encode(unistr):
+    """ Encode to ascii with xml escapment codes for 8-bit chars
+
+    Note that those chars are nicely decoded by a wide range of MUA (even if
+    that behavior is not part of any standard).
+
+    :param unistr: a string where no 8-bit char is supposed to occur
+    :type unistr: str
+    :rtype: bytes
+    """
+    return unistr.encode('ascii', 'xmlcharref_encode')
+
+
 if six.PY2:
     from email.encoders import _bencode
 
