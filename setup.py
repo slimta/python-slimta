@@ -20,15 +20,7 @@
 #
 
 from setuptools import setup, find_packages
-import platform
 
-def _dnspython_package():
-    """dnspython comes in different pkgs for py2 and py3
-    """
-    if platform.python_version_tuple() < ('3',):
-        return 'dnspython'
-    else:
-        return 'dnspython3'
 
 setup(name='python-slimta',
       version='2.0.0',
@@ -40,9 +32,10 @@ setup(name='python-slimta',
       packages=find_packages(),
       namespace_packages=['slimta'],
       install_requires=['gevent >= 1.1rc',
-                        _dnspython_package(),
                         'pysasl >= 0.2.0',
                         'six >= 1'],
+      extras_require={':python_version <  "3.0"': ['dnspython'],
+                      ':python_version >= "3.0"': ['dnspython3']},
       tests_require=['nose',
                      'mox3',
                      'testfixtures'],
@@ -56,8 +49,7 @@ setup(name='python-slimta',
                    'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3.3',
                    'Programming Language :: Python :: 3.4',
-                   'Programming Language :: Python :: 3.5'
-               ])
+                   'Programming Language :: Python :: 3.5'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
