@@ -55,7 +55,7 @@ The resulting edge can be used by any HTTP client, like curl::
 
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 import sys
 import re
@@ -66,7 +66,6 @@ import gevent
 from gevent.pywsgi import WSGIServer
 from dns import reversename
 from dns.exception import DNSException
-import six
 
 from slimta.logging import log_exception
 from slimta.http.wsgi import WsgiServer
@@ -91,27 +90,10 @@ class WsgiResponse(Exception):
     """
 
     def __init__(self, status, headers=None, data=None):
-        if headers is None:
-            headers = []
-        if data is None:
-            data = []
-
         super(WsgiResponse, self).__init__(status)
         self.status = status
-        self.headers = [(_unicode_to_bytes(k), _unicode_to_bytes(v))
-                        for k, v in headers]
+        self.headers = headers or []
         self.data = data or []
-
-
-def _unicode_to_bytes(s):
-    """Encodes headers to iso-8859-1 bytes
-
-    https://www.python.org/dev/peps/pep-0333/#unicode-issues
-    """
-    assert isinstance(s, six.string_types), (
-        "{} is supposed to be an unicode string, not {}".format(type(s))
-    )
-    return s.encode('iso-8859-1')
 
 
 def _header_name_to_cgi(name):
@@ -126,31 +108,13 @@ def _build_http_response(smtp_reply):
         info['command'] = smtp_reply.command
     Headers(headers).add_header('X-Smtp-Reply', code, **info)
     if code.startswith('2'):
-        return WsgiResponse('200 OK', headers)
+        return WsgiResponse('204 No Content', headers)
     elif code.startswith('4'):
         return WsgiResponse('503 Service Unavailable', headers)
     elif code == '535':
         return WsgiResponse('401 Unauthorized', headers)
     else:
         return WsgiResponse('500 Internal Server Error', headers)
-
-
-def _decode_environ_val(v):
-    # The request body cannot be encoded, it's a StringIO
-    if isinstance(v, six.binary_type):
-        # as WSGI specs says
-        return v.decode('latin-1')
-
-    else:
-        return v
-
-
-def decode_environ(environ):
-    """ Turns keys/values of environ dict into unicode
-    """
-    return {_decode_environ_val(k):
-            _decode_environ_val(v) if k != 'wsgi.input' else v
-            for k, v in environ.items()}
 
 
 class WsgiEdge(Edge, WsgiServer):
@@ -194,18 +158,17 @@ class WsgiEdge(Edge, WsgiServer):
                  uri_pattern=None):
         super(WsgiEdge, self).__init__(queue, hostname)
         self.validator_class = validator_class
-        if isinstance(uri_pattern, six.string_types):
+        if isinstance(uri_pattern, str):
             self.uri_pattern = re.compile(uri_pattern)
         else:
             self.uri_pattern = uri_pattern
 
     def __call__(self, environ, start_response):
-        unicode_environ = decode_environ(environ)
-        self._trigger_ptr_lookup(unicode_environ)
+        self._trigger_ptr_lookup(environ)
         try:
-            self._validate_request(unicode_environ)
-            env = self._get_envelope(unicode_environ)
-            self._add_envelope_extras(unicode_environ, env)
+            self._validate_request(environ)
+            env = self._get_envelope(environ)
+            self._add_envelope_extras(environ, env)
             self._enqueue_envelope(env)
         except WsgiResponse as res:
             start_response(res.status, res.headers)
@@ -213,12 +176,13 @@ class WsgiEdge(Edge, WsgiServer):
         except Exception as exc:
             log_exception(__name__)
             msg = '{0!s}\n'.format(exc)
-            headers = [('Content-Length', len(msg)),
+            content_length = str(len(msg))
+            headers = [('Content-Length', content_length),
                        ('Content-Type', 'text/plain')]
             start_response('500 Internal Server Error', headers)
             return [msg]
         finally:
-            unicode_environ['slimta.ptr_lookup_thread'].kill(block=False)
+            environ['slimta.ptr_lookup_thread'].kill(block=False)
 
     def _validate_request(self, environ):
         if self.uri_pattern:
@@ -265,9 +229,12 @@ class WsgiEdge(Edge, WsgiServer):
         thread = gevent.spawn(self._ptr_lookup, environ)
         environ['slimta.ptr_lookup_thread'] = thread
 
+    def _b64decode(self, b64str):
+        return b64decode(b64str.encode('ascii')).decode('utf-8')
+
     def _get_sender(self, environ):
         sender_header = _header_name_to_cgi(self.sender_header)
-        return b64decode(environ.get(sender_header, '')).decode()
+        return self._b64decode(environ.get(sender_header, ''))
 
     def _get_recipients(self, environ):
         rcpt_header = _header_name_to_cgi(self.rcpt_header)
@@ -275,7 +242,7 @@ class WsgiEdge(Edge, WsgiServer):
         if not rcpts_raw:
             return []
         rcpts_split = self.split_pattern.split(rcpts_raw)
-        return [b64decode(rcpt_b64).decode() for rcpt_b64 in rcpts_split]
+        return [self._b64decode(rcpt_b64) for rcpt_b64 in rcpts_split]
 
     def _get_ehlo(self, environ):
         ehlo_header = _header_name_to_cgi(self.ehlo_header)
