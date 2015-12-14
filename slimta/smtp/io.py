@@ -36,6 +36,13 @@ from slimta.util.encoders import printable_decode, strict_encode
 from . import ConnectionLost, BadReply
 from .reply import Reply
 
+try:
+    from gevent.ssl import SSLWantReadError
+except ImportError:
+    # Some supported versions of gevent won't have this.
+    class SSLWantReadError(Exception):
+        pass
+
 __all__ = ['IO']
 
 line_pattern = re.compile(br'(.*?)\r?\n')
@@ -65,6 +72,8 @@ class IO(object):
         if self.encrypted:
             try:
                 self.socket.unwrap()
+            except SSLWantReadError:
+                pass
             except socket_error as e:
                 if e.errno not in (0, EPIPE, ECONNRESET):
                     raise

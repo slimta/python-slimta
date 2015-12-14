@@ -29,7 +29,7 @@ matched symbols in ``X-Spam-Symbols``).
 from __future__ import absolute_import
 
 import re
-import cStringIO
+from io import StringIO
 
 from gevent import Timeout
 from gevent.socket import create_connection, SHUT_WR
@@ -85,7 +85,7 @@ class SpamAssassin(QueuePolicy):
         return socket
 
     def _build_request_str(self, header_data, message_data):
-        reqfp = cStringIO.StringIO()
+        reqfp = StringIO()
         data_len = len(header_data) + len(message_data)
         reqfp.write('SYMBOLS SPAMC/{0}\r\n'.format(self.SPAMC_PROTOCOL_VER))
         reqfp.write('Content-Length: {0!s}\r\n'.format(data_len))
@@ -102,7 +102,7 @@ class SpamAssassin(QueuePolicy):
         log.shutdown(socket, SHUT_WR)
 
     def _recv_all(self, socket):
-        resfp = cStringIO.StringIO()
+        resfp = StringIO()
         with Timeout(self.timeout):
             while True:
                 data = socket.recv(4096)
