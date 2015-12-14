@@ -1,28 +1,31 @@
 #!/usr/bin/env python
 
-from gevent import monkey; monkey.patch_all()
-
 import sys
 import logging
 import os.path
 
+# The following lines replace many standard library modules with versions that
+# use gevent for concurrency. This is NOT required by slimta, but may help
+# you avoid mistakes that can have harsh performance implications!
+from gevent import monkey
+monkey.patch_all()
+
+
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 
-# {{{ _start_inbound_relay()
 def _start_inbound_relay(args):
     from slimta.relay.pipe import PipeRelay
 
     relay = PipeRelay(['tee', '{message_id}.eml'])
     return relay
-# }}}
 
-# {{{ _start_inbound_queue()
+
 def _start_inbound_queue(args, relay):
     from slimta.queue.dict import DictStorage
     from slimta.queue import Queue
     from slimta.policy.headers import AddDateHeader, \
-            AddMessageIdHeader, AddReceivedHeader
+        AddMessageIdHeader, AddReceivedHeader
     from slimta.policy.spamassassin import SpamAssassin
     import shelve
 
@@ -40,9 +43,8 @@ def _start_inbound_queue(args, relay):
         queue.add_policy(SpamAssassin())
 
     return queue
-# }}}
 
-# {{{ _start_inbound_edge()
+
 def _start_inbound_edge(args, queue):
     from slimta.edge.smtp import SmtpEdge, SmtpValidators
     from slimta.util.dnsbl import check_dnsbl
@@ -54,11 +56,11 @@ def _start_inbound_edge(args, queue):
         def handle_banner(self, reply, address):
             reply.message = inbound_banner
 
-        def handle_rcpt(self, reply, recipient):
+        def handle_rcpt(self, reply, recipient, params):
             if recipient not in deliverable_addresses:
                 reply.code = '550'
-                reply.message = '5.7.1 Recipient <{0}> Not allowed'.format(recipient)
-                return
+                reply.message = \
+                    '5.7.1 Recipient <{0}> Not allowed'.format(recipient)
 
     tls = _get_tls_args(args)
 
@@ -69,25 +71,23 @@ def _start_inbound_edge(args, queue):
     edge.start()
 
     return edge
-# }}}
 
-# {{{ _start_outbound_relay()
+
 def _start_outbound_relay(args):
     from slimta.relay.smtp.mx import MxSmtpRelay
 
     tls = _get_tls_args(args)
 
     relay = MxSmtpRelay(tls=tls, connect_timeout=20.0, command_timeout=10.0,
-                                 data_timeout=20.0, idle_timeout=10.0)
+                        data_timeout=20.0, idle_timeout=10.0)
     return relay
-# }}}
 
-# {{{ _start_outbound_queue()
+
 def _start_outbound_queue(args, relay):
     from slimta.queue.dict import DictStorage
     from slimta.queue import Queue
     from slimta.policy.headers import AddDateHeader, \
-            AddMessageIdHeader, AddReceivedHeader
+        AddMessageIdHeader, AddReceivedHeader
     from slimta.policy.split import RecipientDomainSplit
     import shelve
 
@@ -104,29 +104,12 @@ def _start_outbound_queue(args, relay):
     queue.add_policy(RecipientDomainSplit())
 
     return queue
-# }}}
 
-# {{{ _start_outbound_edge()
+
 def _start_outbound_edge(args, queue):
     from slimta.edge.smtp import SmtpEdge, SmtpValidators
     from slimta.util.dnsbl import check_dnsbl
-    from slimta.smtp.auth import Auth, CredentialsInvalidError
     from site_data import credentials, outbound_banner
-
-    class EdgeAuth(Auth):
-
-        def verify_secret(self, username, password, identity=None):
-            try:
-                assert credentials[username] == password
-            except (KeyError, AssertionError):
-                raise CredentialsInvalidError()
-            return username
-
-        def get_secret(self, username, identity=None):
-            try:
-                return credentials[username], username
-            except KeyError:
-                raise CredentialsInvalidError()
 
     class EdgeValidators(SmtpValidators):
 
@@ -134,29 +117,37 @@ def _start_outbound_edge(args, queue):
         def handle_banner(self, reply, address):
             reply.message = outbound_banner
 
-        def handle_mail(self, reply, sender):
-            print(self.session.auth_result)
-            if not self.session.auth_result:
+        def handle_auth(self, reply, creds):
+            try:
+                password = credentials[creds.authcid]
+                assert creds.check_secret(password)
+            except (KeyError, AssertionError):
+                reply.code = '535'
+                reply.message = '5.7.8 Authentication credentials invalid'
+
+        def handle_mail(self, reply, sender, params):
+            if not self.session.auth:
                 reply.code = '550'
                 reply.message = '5.7.1 Sender <{0}> Not allowed'.format(sender)
 
     tls = _get_tls_args(args)
 
     edge = SmtpEdge(('', args.outbound_port), queue, tls=tls,
-                    validator_class=EdgeValidators, auth_class=EdgeAuth,
+                    validator_class=EdgeValidators,
+                    auth=[b'PLAIN', b'LOGIN'],
                     command_timeout=20.0, data_timeout=30.0)
     edge.start()
 
     ssl_edge = SmtpEdge(('', args.outbound_ssl_port), queue,
-                        validator_class=EdgeValidators, auth_class=EdgeAuth,
+                        validator_class=EdgeValidators,
+                        auth=[b'PLAIN', b'LOGIN'],
                         tls=tls, tls_immediately=True,
                         command_timeout=20.0, data_timeout=30.0)
     ssl_edge.start()
 
     return edge, ssl_edge
-# }}}
 
-# {{{ _get_tls_args()
+
 def _get_tls_args(args):
     try:
         open(args.keyfile, 'r').close()
@@ -167,9 +158,8 @@ def _get_tls_args(args):
 
     return {'keyfile': os.path.realpath(args.keyfile),
             'certfile': os.path.realpath(args.certfile)}
-# }}}
 
-# {{{ _daemonize()
+
 def _daemonize(args):
     from slimta import system
     from gevent import sleep
@@ -180,9 +170,8 @@ def _daemonize(args):
     sleep(0.1)
     if args.user:
         system.drop_privileges(args.user, args.group)
-# }}}
 
-# {{{ main()
+
 def main():
     from gevent.event import Event
     from argparse import ArgumentParser
@@ -205,11 +194,14 @@ def main():
 
     group = parser.add_argument_group('Port Configuration')
     group.add_argument('--inbound-port', dest='inbound_port', type=int,
-                       metavar='PORT', default=1025, help='Listening port number for inbound mail')
+                       metavar='PORT', default=1025,
+                       help='Listening port number for inbound mail')
     group.add_argument('--outbound-port', dest='outbound_port', type=int,
-                       metavar='PORT', default=1587, help='Listening port number for outbound mail')
-    group.add_argument('--outbound-ssl-port', dest='outbound_ssl_port', type=int,
-                       metavar='PORT', default=1465, help='Listening SSL-only port number for outbound mail')
+                       metavar='PORT', default=1587,
+                       help='Listening port number for outbound mail')
+    group.add_argument('--outbound-ssl-port', dest='outbound_ssl_port',
+                       type=int, metavar='PORT', default=1465,
+                       help='Listening SSL-only port number for outbound mail')
 
     group = parser.add_argument_group('SSL/TLS Configuration')
     group.add_argument('--cert-file', dest='certfile', metavar='FILE',
@@ -247,7 +239,6 @@ def main():
         Event().wait()
     except KeyboardInterrupt:
         print
-# }}}
 
 
 if __name__ == '__main__':

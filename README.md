@@ -61,7 +61,10 @@ Check out the in-line documentation with `--help`, and then run:
 
 Manually or with a mail client, you should now be able to deliver messages. On
 port `1025`, messages will go to unique files in the current directory. On port
-`1587`, messages will be delivered to others using MX records!
+`1587`, messages will be delivered to others using MX records! To try out a TLS
+connection:
+
+    $ openssl s_client -host localhost -port 1587 -starttls smtp
 
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
