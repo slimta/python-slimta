@@ -36,6 +36,10 @@ To run the suite of unit tests included with `slimta`:
     (.venv)$ pip install -r test/requirements.txt
     (.venv)$ nosetests -v
 
+If installation fails, you may need to update your pip or setuptools first:
+
+    (.venv)$ pip install -U pip setuptools
+
 Running the Example
 ===================
 
@@ -66,8 +70,21 @@ connection:
 
     $ openssl s_client -host localhost -port 1587 -starttls smtp
 
+Contributing
+============
+
+If you want to fix a bug or make a change, follow the [fork pull request][6]
+model. We've had quite a few [awesome contributors][7] over the years, and are
+always open to more.
+
+Special thanks to [JocelynDelalande][8] for extensive work bringing Python 3
+compatibility to the project!
+
 [1]: http://en.wikipedia.org/wiki/Message_transfer_agent
 [2]: http://pypi.python.org/pypi/virtualenv
 [3]: http://en.wikipedia.org/wiki/Open_mail_relay
 [4]: http://opensource.org/licenses/MIT
 [5]: http://slimta.org/
+[6]: https://help.github.com/articles/using-pull-requests/
+[7]: https://github.com/slimta/python-slimta/graphs/contributors
+[8]: https://github.com/JocelynDelalande
