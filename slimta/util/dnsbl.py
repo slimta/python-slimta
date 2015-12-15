@@ -218,8 +218,12 @@ def check_dnsbl(address, match_code='550', match_message='5.7.1 Access denied',
     def new_decorator(f):
         @wraps(f)
         def new_f(self, reply, *args, **kwargs):
-            ip = self.session.address[0]
-            if address.get(ip, timeout=timeout):
+            ip = self.session.address[0] or ''
+            try:
+                ret = address.get(ip, timeout=timeout)
+            except ValueError:
+                ret = None
+            if ret:
                 reply.code = match_code
                 reply.message = match_message
             else:

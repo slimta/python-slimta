@@ -59,7 +59,7 @@ class PtrLookup(gevent.Greenlet):
 
     def __init__(self, ip):
         super(PtrLookup, self).__init__()
-        self.ip = ip
+        self.ip = ip or ''
         self.start_time = None
 
     @classmethod

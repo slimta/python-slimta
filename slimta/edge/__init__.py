@@ -31,7 +31,6 @@ from socket import getfqdn
 
 import gevent
 from gevent.server import StreamServer
-from gevent.ssl import SSLSocket
 
 from slimta import logging
 
