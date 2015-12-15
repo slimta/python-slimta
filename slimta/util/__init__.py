@@ -59,7 +59,9 @@ def monkeypatch_all(*args, **kwds):
                 setattr(before[mod][0], k, v)
 
 
-with monkeypatch_all():
+with monkeypatch_all(
+        socket=True, dns=True, time=True, select=True, thread=False,
+        os=True, ssl=True, httplib=False, aggressive=True):
     import dns.resolver
 
 #: .. versionadded:: 0.3.19
