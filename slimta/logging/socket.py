@@ -131,5 +131,26 @@ class SocketLogger(object):
         """
         self.log(socket.fileno(), 'close')
 
+    def proxyproto_success(self, socket, src_addr):
+        """Logs a successful proxy protocol header, with the new source address
+        information. Logged at the ``DEBUG`` level.
+
+        :param socket: The socket that received the header.
+        :param src_addr: The new source address information.
+
+        """
+        self.log(socket.fileno(), 'ppsuccess', peer=src_addr)
+
+    def proxyproto_invalid(self, socket, exc):
+        """Logs an invalid proxy protocol header, with an exception provided by
+        the :class:`~slimta.util.proxyproto.ProxyProtocol` class. Logged at the
+        ``WARNING`` level.
+
+        :param socket: The socket that failed the proxy protocol.
+        :param exc: The exception generated during the failure.
+
+        """
+        self.log(socket.fileno(), 'ppinvalid', message=str(exc))
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
