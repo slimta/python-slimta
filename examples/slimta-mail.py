@@ -27,10 +27,9 @@ def _start_inbound_queue(args, relay):
     from slimta.policy.headers import AddDateHeader, \
         AddMessageIdHeader, AddReceivedHeader
     from slimta.policy.spamassassin import SpamAssassin
-    import shelve
 
-    envelope_db = shelve.open(args.envelope_db)
-    meta_db = shelve.open(args.meta_db)
+    envelope_db = {}
+    meta_db = {}
 
     storage = DictStorage(envelope_db, meta_db)
     queue = Queue(storage, relay)
@@ -89,10 +88,9 @@ def _start_outbound_queue(args, relay):
     from slimta.policy.headers import AddDateHeader, \
         AddMessageIdHeader, AddReceivedHeader
     from slimta.policy.split import RecipientDomainSplit
-    import shelve
 
-    envelope_db = shelve.open(args.envelope_db)
-    meta_db = shelve.open(args.meta_db)
+    envelope_db = {}
+    meta_db = {}
 
     storage = DictStorage(envelope_db, meta_db)
     queue = Queue(storage, relay)
@@ -183,14 +181,6 @@ def main():
                         default=None, help='Drop privileges down to USR')
     parser.add_argument('--group', dest='group', type=str, metavar='GRP',
                         default=None, help='Drop privileges down to GRP')
-
-    group = parser.add_argument_group('Queue Configuration')
-    group.add_argument('--envelope-db', dest='envelope_db', metavar='FILE',
-                       type=str, default='envelope.db',
-                       help='File path for envelope database')
-    group.add_argument('--meta-db', dest='meta_db', type=str,
-                       metavar='FILE', default='meta.db',
-                       help='File path for meta database')
 
     group = parser.add_argument_group('Port Configuration')
     group.add_argument('--inbound-port', dest='inbound_port', type=int,
