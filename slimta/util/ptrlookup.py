@@ -30,7 +30,7 @@ However, it is not usually desired to slow down a client's request just because
 their PTR record lookup has not yet finished. This module implements a
 :class:`~gevent.Greenlet` thread that will look up a client's PTR record will
 its request is being processed. If the request finishes before the PTR record
-lookup, the lookup is stopped
+lookup, the lookup is stopped.
 
 """
 
@@ -39,11 +39,8 @@ from __future__ import absolute_import
 import time
 
 import gevent
-from dns import reversename
-from dns.resolver import NXDOMAIN
-from dns.exception import SyntaxError as DnsSyntaxError
+from gevent import socket
 
-from slimta.util import dns_resolver
 from slimta import logging
 
 __all__ = ['PtrLookup']
@@ -63,29 +60,29 @@ class PtrLookup(gevent.Greenlet):
         self.start_time = None
 
     @classmethod
-    def from_getpeername(cls, socket):
+    def from_getpeername(cls, sock):
         """Creates a :class:`PtrLookup` object based on the IP address of the
         socket's remote address, using :py:meth:`~socket.socket.getpeername`.
 
-        :param socket: The :py:class:`~socket.socket` object to use.
+        :param sock: The :py:class:`~socket.socket` object to use.
         :returns: A tuple containing the new :class:`PtrLookup` object and the
                   port number from :py:meth:`~socket.socket.getpeername`.
 
         """
-        ip, port = socket.getpeername()
+        ip, port = sock.getpeername()
         return cls(ip), port
 
     @classmethod
-    def from_getsockname(cls, socket):
+    def from_getsockname(cls, sock):
         """Creates a :class:`PtrLookup` object based on the IP address of the
         socket's local address, using :py:meth:`~socket.socket.getsockname`.
 
-        :param socket: The :py:class:`~socket.socket` object to use.
+        :param sock: The :py:class:`~socket.socket` object to use.
         :returns: A tuple containing the new :class:`PtrLookup` object and the
                   port number from :py:meth:`~socket.socket.getsockname`.
 
         """
-        ip, port = socket.getsockname()
+        ip, port = sock.getsockname()
         return cls(ip), port
 
     def start(self):
@@ -99,19 +96,13 @@ class PtrLookup(gevent.Greenlet):
 
     def _run(self):
         try:
-            ptraddr = reversename.from_address(self.ip)
-            try:
-                answers = dns_resolver.query(ptraddr, 'PTR')
-            except NXDOMAIN:
-                answers = []
-            try:
-                return str(answers[0])
-            except IndexError:
-                pass
-        except (DnsSyntaxError, gevent.GreenletExit):
+            hostname, _, _ = socket.gethostbyaddr(self.ip)
+        except (socket.herror, gevent.GreenletExit):
             pass
         except Exception:
             logging.log_exception(__name__, query=self.ip)
+        else:
+            return hostname
 
     def finish(self, runtime=None):
         """Attempts to get the results of the PTR lookup. If the results are

@@ -3,10 +3,8 @@ from __future__ import unicode_literals
 import unittest2 as unittest
 
 import gevent
+from gevent import socket
 from mox3.mox import MoxTestBase, IgnoreArg
-from dns.resolver import NXDOMAIN
-from dns.exception import DNSException
-from dns.exception import SyntaxError as DnsSyntaxError
 
 from slimta.util import dns_resolver
 from slimta.util.ptrlookup import PtrLookup
@@ -32,46 +30,47 @@ class TestPtrLookup(unittest.TestCase, MoxTestBase):
         self.assertIsInstance(ptr, PtrLookup)
         self.assertEqual('127.0.0.1', ptr.ip)
 
-    def test_run_nxdomain(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(NXDOMAIN)
+    def test_run_no_result(self):
+        self.mox.StubOutWithMock(socket, 'gethostbyaddr')
+        socket.gethostbyaddr('127.0.0.1').AndRaise(socket.herror)
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         self.assertIsInstance(ptr, gevent.Greenlet)
         self.assertIsNone(ptr._run())
 
-    def test_run_dnsexception(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
+    def test_run_bad_ip(self):
         self.mox.ReplayAll()
-        ptr = PtrLookup('127.0.0.1')
+        ptr = PtrLookup('abcd')
         self.assertIsInstance(ptr, gevent.Greenlet)
         self.assertIsNone(ptr._run())
 
-    def test_run_dnssyntaxerror(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
+    def test_run_greenletexit(self):
+        self.mox.StubOutWithMock(socket, 'gethostbyaddr')
+        socket.gethostbyaddr('127.0.0.1').AndRaise(gevent.GreenletExit)
         self.mox.ReplayAll()
         ptr = PtrLookup('abcd')
         self.assertIsInstance(ptr, gevent.Greenlet)
         self.assertIsNone(ptr._run())
 
     def test_finish(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
+        self.mox.StubOutWithMock(socket, 'gethostbyaddr')
+        socket.gethostbyaddr('127.0.0.1').AndReturn(
+            ('example.com', None, None))
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         ptr.start()
         self.assertEqual('example.com', ptr.finish(runtime=1.0))
 
     def test_finish_timeout(self):
-        self.mox.StubOutWithMock(dns_resolver, 'query')
         def long_sleep(*args):
             gevent.sleep(1.0)
-        dns_resolver.query(IgnoreArg(), 'PTR').WithSideEffects(long_sleep)
+
+        self.mox.StubOutWithMock(socket, 'gethostbyaddr')
+        socket.gethostbyaddr('127.0.0.1').WithSideEffects(long_sleep)
         self.mox.ReplayAll()
         ptr = PtrLookup('127.0.0.1')
         ptr.start()
-        self.assertIsNone(ptr.finish(runtime=0.0))
+        self.assertIsNone(ptr.finish(runtime=0.001))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
