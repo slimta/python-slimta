@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Ian C. Good
+# Copyright (c) 2015 Ian C. Good
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,64 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
-"""Module containing useful tools, helpers, and other features that didn't
-belong under any other module.
-
-"""
-
-from __future__ import absolute_import
-
-from contextlib import contextmanager
-
-from gevent import monkey
-
-__all__ = ['monkeypatch_all', 'dns_resolver']
-
-
-@contextmanager
-def monkeypatch_all(*args, **kwds):
-    """Returns a context manager that monkey-patches before execution and
-    reverts after execution.
-
-    :param args: Positional arguments fed directly into
-                 :func:`gevent.monkey.patch_all`.
-    :param kwds: Keyword arguments fed directly into
-                 :func:`gevent.monkey.patch_all`.
-
-    """
-    modules = ['socket', 'ssl', 'os', 'time', 'select', 'six.moves._thread',
-               'threading', 'six.moves.http_client']
-    before = {}
-    for mod in modules:
-        mod_obj = __import__(mod)
-        before[mod] = (mod_obj, vars(mod_obj).copy())
-    monkey.patch_all(*args, **kwds)
-    try:
-        yield
-    finally:
-        for mod in modules:
-            for k, v in before[mod][1].items():
-                setattr(before[mod][0], k, v)
-
-
-with monkeypatch_all(
-        socket=True, dns=True, time=True, select=True, thread=False,
-        os=True, ssl=True, httplib=False, aggressive=True):
-    import dns.resolver
-
-#: .. versionadded:: 0.3.19
-#:
-#: This is an instance of `dns.resolver.Resolver()
-#: <http://www.dnspython.org/docs/1.11.1/dns.resolver.Resolver-class.html>`_
-#: monkey-patched with :mod:`gevent`. Additionally it has its
-#: ``retry_servfail`` attribute set to ``True``.
-#:
-#: Built-in slimta modules use this resolver for custom DNS queries, such as
-#: *MX* record lookup. You can modify attributes such as ``timeout`` or
-#: ``lifetime`` to control query behavior.
-dns_resolver = dns.resolver.Resolver()
-dns_resolver.retry_servfail = True
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
