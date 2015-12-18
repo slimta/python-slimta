@@ -39,6 +39,10 @@ class LmtpRelayClient(SmtpRelayClient):
     _client_class = LmtpClient
 
     def _ehlo(self):
+        try:
+            ehlo_as = self.ehlo_as(self.address)
+        except TypeError:
+            ehlo_as = self.ehlo_as
         with Timeout(self.command_timeout):
             lhlo = self.client.lhlo(self.ehlo_as)
         if lhlo.is_error():
