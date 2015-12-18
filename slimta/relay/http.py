@@ -29,7 +29,6 @@ for exchanging mail.
 from __future__ import absolute_import
 
 import re
-from six.moves import urllib_parse
 from socket import getfqdn
 from base64 import b64encode
 
@@ -38,6 +37,7 @@ from gevent import socket
 from gevent.queue import PriorityQueue, Empty
 from gevent.event import AsyncResult
 import six
+from six.moves import urllib_parse
 
 from slimta import logging
 from slimta.smtp.reply import Reply
@@ -59,7 +59,8 @@ class HttpRelayClient(RelayPoolClient):
     def __init__(self, relay):
         super(HttpRelayClient, self).__init__(relay.queue, relay.idle_timeout)
         self.conn = None
-        self.url = urllib_parse.urlsplit(relay.url, 'http')
+        self.ehlo_as = None
+        self.url = relay.url
         self.relay = relay
 
     def _wait_for_request(self):
@@ -70,12 +71,13 @@ class HttpRelayClient(RelayPoolClient):
         else:
             if self.conn:
                 self.conn.close()
+                self.conn = None
 
     def _build_headers(self, envelope, msg_headers, msg_body):
         content_length = len(msg_headers) + len(msg_body)
         headers = [('Content-Length', content_length),
                    ('Content-Type', 'message/rfc822'),
-                   (self.relay.ehlo_header, self.relay.ehlo_as),
+                   (self.relay.ehlo_header, self.ehlo_as),
                    (self.relay.sender_header,
                     b64encode(envelope.sender.encode()))]
         for rcpt in envelope.recipients:
@@ -83,10 +85,17 @@ class HttpRelayClient(RelayPoolClient):
                             b64encode(rcpt.encode())))
         return headers
 
+    def _new_conn(self):
+        self.conn = get_connection(self.url, self.relay.tls)
+        try:
+            self.ehlo_as = self.relay.ehlo_as()
+        except TypeError:
+            self.ehlo_as = self.relay.ehlo_as
+
     def _handle_request(self, result, envelope):
         method = self.relay.http_verb
         if not self.conn:
-            self.conn = get_connection(self.url, self.relay.tls)
+            self._new_conn()
         with gevent.Timeout(self.relay.timeout):
             msg_headers, msg_body = envelope.flatten()
             headers = self._build_headers(envelope, msg_headers, msg_body)
@@ -173,7 +182,9 @@ class HttpRelay(RelayPool):
                 to :class:`gevent.ssl.SSLSocket`. This parameter is optional
                 unless ``https:`` is given in ``url``.
     :param ehlo_as: The string to send as the EHLO string in a header. Defaults
-                    to the FQDN of the system.
+                    to the FQDN of the system. This may also be given as a
+                    function that will be executed with no arguments at the
+                    beginning of each connection.
     :param timeout: This is the maximum time in seconds to wait for the entire
                     session: connection, request, and response. If ``None``,
                     there is no timeout.
@@ -199,7 +210,7 @@ class HttpRelay(RelayPool):
     def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__(pool_size)
-        self.url = url
+        self.url = urllib_parse.urlsplit(url, 'http')
         self.tls = tls
         self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout

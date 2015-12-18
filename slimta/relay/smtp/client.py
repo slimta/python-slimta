@@ -89,8 +89,12 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(banner)
 
     def _ehlo(self):
+        try:
+            ehlo_as = self.ehlo_as(self.address)
+        except TypeError:
+            ehlo_as = self.ehlo_as
         with Timeout(self.command_timeout):
-            ehlo = self.client.ehlo(self.ehlo_as)
+            ehlo = self.client.ehlo(ehlo_as)
         if ehlo.is_error():
             raise SmtpRelayError.factory(ehlo)
 

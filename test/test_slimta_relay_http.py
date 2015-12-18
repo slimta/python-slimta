@@ -4,6 +4,7 @@ import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 from gevent.event import AsyncResult
 from gevent import Timeout
+from six.moves import urllib_parse
 
 from slimta.envelope import Envelope
 from slimta.util.deque import BlockingDeque
@@ -28,7 +29,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         class FakeRelay(object):
             queue = self.queue
             idle_timeout = None
-            url = 'http://testurl:8025/path/info'
+            url = urllib_parse.urlsplit('http://testurl:8025/path/info')
             tls = None
             http_verb = 'POST'
             sender_header = 'X-Envelope-Sender'
@@ -60,6 +61,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
     def test_handle_request(self):
         self.mox.StubOutWithMock(self.client, '_process_response')
         conn = self.client.conn = self.mox.CreateMockAnything()
+        self.client.ehlo_as = 'test'
         conn.putrequest('POST', '/path/info')
         conn.putheader(b'Content-Length', 31)
         conn.putheader(b'Content-Type', b'message/rfc822')

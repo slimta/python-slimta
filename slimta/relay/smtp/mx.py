@@ -143,6 +143,10 @@ class MxSmtpRelay(Relay):
                          timeout expires, the connection will be re-used. By
                          default, QUIT is sent immediately and connections are
                          never re-used.
+    :param ehlo_as: The string to send as the EHLO or HELO string. Defaults to
+                    the FQDN of the system. This may also be given as a
+                    function that will be executed with the destination address
+                    at the beginning of each connection.
     :param binary_encoder: Optional function from :mod:`email.encoders` used as
                            an argument to
                            :meth:`~slimta.envelope.Envelope.encode_7bit` when
