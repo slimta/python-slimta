@@ -4,9 +4,8 @@ import unittest2 as unittest
 
 import gevent
 from gevent import socket
-from mox3.mox import MoxTestBase, IgnoreArg
+from mox3.mox import MoxTestBase
 
-from slimta.util import dns_resolver
 from slimta.util.ptrlookup import PtrLookup
 
 

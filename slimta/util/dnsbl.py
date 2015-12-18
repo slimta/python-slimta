@@ -31,14 +31,11 @@ from __future__ import absolute_import
 from functools import wraps
 
 import gevent
-from dns.resolver import NXDOMAIN
-from dns.exception import DNSException
 from gevent.pool import Pool, Group
-from gevent.event import Event
+from pycares.errno import ARES_ENOTFOUND
 
 from slimta import logging
-from slimta.util import dns_resolver
-from slimta.smtp.reply import Reply
+from slimta.util.dns import DNSResolver, DNSError
 
 __all__ = ['DnsBlocklist', 'DnsBlocklistGroup', 'check_dnsbl']
 
@@ -89,10 +86,10 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns_resolver.query(query, 'A')
-            except NXDOMAIN:
-                return False
-            except DNSException:
+                DNSResolver.query(query, 'A').get()
+            except DNSError as exc:
+                if exc.errno == ARES_ENOTFOUND:
+                    return False
                 logging.log_exception(__name__, query=query)
                 return not strict
             else:
@@ -112,13 +109,13 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                answers = dns_resolver.query(query, 'TXT')
-            except DNSException:
+                answers = DNSResolver.query(query, 'TXT').get()
+            except DNSError:
                 pass
             else:
                 if answers:
-                    for txt in answers:
-                        return str(txt)
+                    for rdata in answers:
+                        return rdata.text
 
 
 class DnsBlocklistGroup(object):

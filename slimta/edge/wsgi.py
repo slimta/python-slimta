@@ -64,8 +64,6 @@ from wsgiref.headers import Headers
 
 import gevent
 from gevent.pywsgi import WSGIServer
-from dns import reversename
-from dns.exception import DNSException
 
 from slimta.logging import log_exception
 from slimta.http.wsgi import WsgiServer
@@ -73,7 +71,7 @@ from slimta.envelope import Envelope
 from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
-from slimta.util import dns_resolver
+from slimta.util.ptrlookup import PtrLookup
 from . import Edge
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
@@ -164,11 +162,12 @@ class WsgiEdge(Edge, WsgiServer):
             self.uri_pattern = uri_pattern
 
     def __call__(self, environ, start_response):
-        self._trigger_ptr_lookup(environ)
+        ptr_lookup = PtrLookup(environ.get('REMOTE_ADDR', '0.0.0.0'))
+        ptr_lookup.start()
         try:
             self._validate_request(environ)
             env = self._get_envelope(environ)
-            self._add_envelope_extras(environ, env)
+            self._add_envelope_extras(environ, env, ptr_lookup)
             self._enqueue_envelope(env)
         except WsgiResponse as res:
             start_response(res.status, res.headers)
@@ -182,7 +181,7 @@ class WsgiEdge(Edge, WsgiServer):
             start_response('500 Internal Server Error', headers)
             return [msg]
         finally:
-            environ['slimta.ptr_lookup_thread'].kill(block=False)
+            ptr_lookup.kill(block=False)
 
     def _validate_request(self, environ):
         if self.uri_pattern:
@@ -209,25 +208,6 @@ class WsgiEdge(Edge, WsgiServer):
         for name in validators.custom_headers:
             cgi_name = _header_name_to_cgi(name)
             validators.validate_custom(name, environ.get(cgi_name))
-
-    def _ptr_lookup(self, environ):
-        ip = environ.get('REMOTE_ADDR', '0.0.0.0')
-        try:
-            ptraddr = reversename.from_address(ip)
-            try:
-                answers = dns_resolver.query(ptraddr, 'PTR')
-            except NXDOMAIN:
-                answers = []
-            try:
-                environ['slimta.reverse_address'] = str(answers[0])
-            except IndexError:
-                pass
-        except Exception:
-            log_exception(__name__, query=ip)
-
-    def _trigger_ptr_lookup(self, environ):
-        thread = gevent.spawn(self._ptr_lookup, environ)
-        environ['slimta.ptr_lookup_thread'] = thread
 
     def _b64decode(self, b64str):
         return b64decode(b64str.encode('ascii')).decode('utf-8')
@@ -259,9 +239,9 @@ class WsgiEdge(Edge, WsgiServer):
         env.parse(data)
         return env
 
-    def _add_envelope_extras(self, environ, env):
+    def _add_envelope_extras(self, environ, env, ptr_lookup):
         env.client['ip'] = environ.get('REMOTE_ADDR', 'unknown')
-        env.client['host'] = environ.get('slimta.reverse_address', None)
+        env.client['host'] = ptr_lookup.finish()
         env.client['name'] = self._get_ehlo(environ)
         env.client['protocol'] = environ.get('wsgi.url_scheme', 'http').upper()
 

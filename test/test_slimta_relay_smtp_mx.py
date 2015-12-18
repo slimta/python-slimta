@@ -1,25 +1,33 @@
 from __future__ import unicode_literals
 
 import unittest2 as unittest
-from mox3.mox import MoxTestBase, IsA
-import dns.resolver
-from dns.exception import Timeout as DNSTimeout
+from mox3.mox import MoxTestBase
+from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
-from slimta.relay import TransientRelayError, PermanentRelayError
-from slimta.relay.smtp.mx import MxSmtpRelay, MxRecord, NoDomainError
+from slimta.relay import PermanentRelayError
+from slimta.relay.smtp.mx import MxSmtpRelay, NoDomainError
 from slimta.relay.smtp.static import StaticSmtpRelay
-from slimta.util import dns_resolver
+from slimta.util.dns import DNSResolver, DNSError
 from slimta.envelope import Envelope
+
+
+class FakeAsyncResult(object):
+
+    def __init__(self, answer=None):
+        self.answer = answer
+
+    def get(self):
+        return self.answer
 
 
 class FakeMxAnswer(object):
 
     def __init__(self, expired, rdata):
         class FakeMxRdata(object):
-            def __init__(self, preference, exchange):
-                self.preference = preference
-                self.exchange = exchange
-        self.expiration = float('-inf') if expired else float('inf')
+            def __init__(self, priority, host):
+                self.priority = priority
+                self.host = host
+                self.ttl = float('-inf') if expired else float('inf')
         self.rdata = [FakeMxRdata(*rr) for rr in rdata]
 
     def __iter__(self):
@@ -31,8 +39,8 @@ class FakeAAnswer(object):
     def __init__(self, expired, rdata):
         class FakeARdata(object):
             def __init__(self, address):
-                self.address = address
-        self.expiration = float('-inf') if expired else float('inf')
+                self.host = address
+                self.ttl = float('-inf') if expired else float('inf')
         self.rdata = [FakeARdata(*rr) for rr in rdata]
 
     def __iter__(self):
@@ -67,8 +75,8 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        self.mox.StubOutWithMock(DNSResolver, 'query')
+        DNSResolver.query('example.com', 'MX').AndReturn(FakeAsyncResult(mx_ret))
         mx.new_static_relay('mx1.example.com', 25).AndReturn(static)
         static.attempt(env, 0)
         mx.new_static_relay('mx2.example.com', 25).AndReturn(static)
@@ -83,9 +91,9 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
-        dns_resolver.query('example.com', 'A').AndReturn(a_ret)
+        self.mox.StubOutWithMock(DNSResolver, 'query')
+        DNSResolver.query('example.com', 'MX').AndRaise(DNSError(ARES_ENOTFOUND))
+        DNSResolver.query('example.com', 'A').AndReturn(FakeAsyncResult(a_ret))
         mx.new_static_relay('1.2.3.4', 25).AndReturn(static)
         static.attempt(env, 0)
         self.mox.ReplayAll()
@@ -94,11 +102,10 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
     def test_attempt_no_records(self):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         mx = MxSmtpRelay()
-        static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NXDOMAIN)
-        dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NXDOMAIN)
+        self.mox.StubOutWithMock(DNSResolver, 'query')
+        DNSResolver.query('example.com', 'MX').AndRaise(DNSError(ARES_ENOTFOUND))
+        DNSResolver.query('example.com', 'A').AndRaise(DNSError(ARES_ENOTFOUND))
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             mx.attempt(env, 0)
@@ -110,11 +117,11 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
         mx = MxSmtpRelay()
         static = self.mox.CreateMock(StaticSmtpRelay)
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        self.mox.StubOutWithMock(DNSResolver, 'query')
+        DNSResolver.query('example.com', 'MX').AndReturn(FakeAsyncResult(mx_ret))
         mx.new_static_relay('mx1.example.com', 25).AndReturn(static)
         static.attempt(env, 0)
-        dns_resolver.query('example.com', 'MX').AndReturn(mx_ret)
+        DNSResolver.query('example.com', 'MX').AndReturn(FakeAsyncResult(mx_ret))
         mx.new_static_relay('mx2.example.com', 25).AndReturn(static)
         static.attempt(env, 1)
         self.mox.ReplayAll()
@@ -138,21 +145,11 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         mx = MxSmtpRelay()
         self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndRaise(dns.resolver.NoAnswer)
-        dns_resolver.query('example.com', 'A').AndRaise(dns.resolver.NoAnswer)
+        self.mox.StubOutWithMock(DNSResolver, 'query')
+        DNSResolver.query('example.com', 'MX').AndRaise(DNSError(ARES_ENODATA))
+        DNSResolver.query('example.com', 'A').AndRaise(DNSError(ARES_ENODATA))
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
-            mx.attempt(env, 0)
-
-    def test_attempt_no_answer(self):
-        env = Envelope('sender@example.com', ['rcpt@example.com'])
-        mx = MxSmtpRelay()
-        self.mox.StubOutWithMock(mx, 'new_static_relay')
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query('example.com', 'MX').AndRaise(DNSTimeout)
-        self.mox.ReplayAll()
-        with self.assertRaises(TransientRelayError):
             mx.attempt(env, 0)
 
 

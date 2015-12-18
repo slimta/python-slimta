@@ -26,19 +26,11 @@ Attempts to follow the SMTP server RFCs.
 
 from __future__ import absolute_import
 
-import gevent
-from gevent.server import StreamServer
-from dns import reversename
-from dns.resolver import NXDOMAIN
-
-from slimta import logging
 from slimta.envelope import Envelope
 from slimta.smtp.server import Server
-from slimta.smtp.reply import unknown_command, bad_sequence
 from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
-from slimta.util import dns_resolver
 from slimta.util.ptrlookup import PtrLookup
 from . import EdgeServer
 

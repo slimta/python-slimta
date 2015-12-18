@@ -31,12 +31,11 @@ from __future__ import absolute_import
 
 import time
 
-from dns.resolver import NXDOMAIN, NoAnswer
-from dns.exception import DNSException
+from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
 from slimta.logging import log_exception
 from slimta.smtp.reply import Reply
-from slimta.util import dns_resolver
+from slimta.util.dns import DNSResolver, DNSError
 from .. import TransientRelayError, PermanentRelayError, Relay
 from .static import StaticSmtpRelay
 
@@ -65,7 +64,7 @@ class MxRecord(object):
     def __init__(self, domain):
         self.domain = domain
         self._records = None
-        self._expiration = None
+        self._expiration = 0
 
     def get(self):
         if not self.expired:
@@ -75,34 +74,44 @@ class MxRecord(object):
             return self._records
 
     def _resolve_a(self):
-        answer = dns_resolver.query(self.domain, 'A')
+        answer = DNSResolver.query(self.domain, 'A').get()
+        expiration = 0
+        now = time.time()
         ret = []
         for rdata in answer:
-            ret.append((0, str(rdata.address)))
-            break
-        return ret, answer.expiration
+            ret.append((0, str(rdata.host)))
+            expiration = max(expiration, now + rdata.ttl)
+        return ret, expiration
 
     def _resolve_mx(self):
-        answer = dns_resolver.query(self.domain, 'MX')
+        answer = DNSResolver.query(self.domain, 'MX').get()
+        expiration = 0
+        now = time.time()
         ret = []
         for rdata in answer:
             for i, rec in enumerate(ret):
-                if rec[0] > rdata.preference:
-                    ret.insert(i, (rdata.preference, str(rdata.exchange)))
+                if rec[0] > rdata.priority:
+                    ret.insert(i, (rdata.priority, str(rdata.host)))
                     break
             else:
-                ret.append((rdata.preference, str(rdata.exchange)))
-        return ret, answer.expiration
+                ret.append((rdata.priority, str(rdata.host)))
+            expiration = max(expiration, now + rdata.ttl)
+        return ret, expiration
 
     def _resolve(self):
+        non_fatal_errors = (ARES_ENOTFOUND, ARES_ENODATA)
         try:
             return self._resolve_mx()
-        except (NXDOMAIN, NoAnswer):
-            try:
-                return self._resolve_a()
-            except (NXDOMAIN, NoAnswer):
-                msg = 'No usable DNS records found: '+self.domain
-                raise ValueError(msg)
+        except DNSError as exc:
+            if exc.errno in non_fatal_errors:
+                try:
+                    return self._resolve_a()
+                except DNSError as exc:
+                    if exc.errno in non_fatal_errors:
+                        msg = 'No usable DNS records found: '+self.domain
+                        raise ValueError(msg)
+                    raise
+            raise
 
     @property
     def expired(self):
@@ -206,7 +215,7 @@ class MxSmtpRelay(Relay):
                 msg = str(exc)
                 reply = Reply('550', '5.1.2 '+msg)
                 raise PermanentRelayError(msg, reply)
-            except DNSException:
+            except DNSError:
                 log_exception(__name__)
                 msg = 'DNS lookup failed'
                 reply = Reply('451', '4.4.3 '+msg)

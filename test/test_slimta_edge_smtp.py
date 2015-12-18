@@ -4,11 +4,8 @@ import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
-from dns.resolver import NXDOMAIN
-from dns.exception import DNSException
 
 from slimta.edge.smtp import SmtpEdge, SmtpSession
-from slimta.util import dns_resolver
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
 from slimta.smtp.reply import Reply

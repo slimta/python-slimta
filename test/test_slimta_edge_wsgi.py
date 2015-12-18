@@ -1,15 +1,11 @@
 
 from io import BytesIO
 
-from mox3.mox import MoxTestBase, IsA, IgnoreArg
-import gevent
-from dns.exception import DNSException
+from mox3.mox import MoxTestBase, IsA
 
 from slimta.edge.wsgi import WsgiEdge, WsgiValidators
-from slimta.util import dns_resolver
 from slimta.envelope import Envelope
 from slimta.queue import QueueError
-from slimta.smtp.reply import Reply
 
 
 class TestEdgeWsgi(MoxTestBase):
@@ -24,19 +20,6 @@ class TestEdgeWsgi(MoxTestBase):
                         'HTTP_X_ENVELOPE_RECIPIENT': 'cmNwdDFAZXhhbXBsZS5jb20=, cmNwdDJAZXhhbXBsZS5jb20=',
                         'HTTP_X_CUSTOM_HEADER': 'custom test',
                         'wsgi.input': BytesIO(b'')}
-
-    def test_ptr_lookup(self):
-        environ = self.environ.copy()
-        environ['REMOTE_ADDR'] = '1.2.3.4'
-        self.mox.StubOutWithMock(dns_resolver, 'query')
-        dns_resolver.query(IgnoreArg(), 'PTR').AndRaise(DNSException)
-        dns_resolver.query(IgnoreArg(), 'PTR').AndReturn(['example.com'])
-        self.mox.ReplayAll()
-        w = WsgiEdge(None)
-        w._ptr_lookup(environ)
-        self.assertNotIn('slimta.reverse_address', environ)
-        w._ptr_lookup(environ)
-        self.assertEqual('example.com', environ['slimta.reverse_address'])
 
     def test_invalid_path(self):
         environ = self.environ.copy()
