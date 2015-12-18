@@ -29,8 +29,6 @@ from __future__ import absolute_import, unicode_literals
 
 import re
 
-from gevent.ssl import SSLError
-from gevent.socket import timeout as socket_timeout
 from gevent import Timeout
 from pysasl import SASLAuth
 from six.moves import range
@@ -40,7 +38,7 @@ from .datareader import DataReader
 from .io import IO
 from .extensions import Extensions
 from .auth import ServerAuthError, AuthSession
-from .reply import *
+from .reply import *  # NOQA
 
 __all__ = ['Server']
 
@@ -157,7 +155,7 @@ class Server(object):
                 data = None
                 err = e
 
-        reply = Reply('250', '2.6.0 Message Accepted for Delivery')
+        reply = Reply('250', '2.6.0 Message accepted for delivery')
         self._call_custom_handler('HAVE_DATA', reply, data, err)
 
         self.io.send_reply(reply)
@@ -212,7 +210,7 @@ class Server(object):
                     break
                 except ConnectionLost:
                     raise
-                except Exception as e:
+                except Exception:
                     unhandled_error.send(self.io)
                     raise
                 finally:

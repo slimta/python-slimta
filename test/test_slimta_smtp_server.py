@@ -36,7 +36,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.assertEqual('ARG', arg)
 
     def test_get_message_data(self):
-        expected_reply = b'250 2.6.0 Message Accepted for Delivery\r\n'
+        expected_reply = b'250 2.6.0 Message accepted for delivery\r\n'
         self.sock.recv(IsA(int)).AndReturn(b'one\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'.\r\n')
         self.sock.sendall(expected_reply)
@@ -280,7 +280,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'DATA\r\n')
         self.sock.sendall(b'354 Start mail input; end with <CRLF>.<CRLF>\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'.\r\nQUIT\r\n')
-        self.sock.sendall(b'250 2.6.0 Message Accepted for Delivery\r\n')
+        self.sock.sendall(b'250 2.6.0 Message accepted for delivery\r\n')
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
