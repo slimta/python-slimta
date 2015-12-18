@@ -105,6 +105,7 @@ class Server(object):
 
         self.io = IO(socket, tls_wrapper)
 
+        self.bannered = False
         self.have_mailfrom = None
         self.have_rcptto = None
         self.ehlo_as = None
@@ -171,6 +172,10 @@ class Server(object):
         self._call_custom_handler('TLSHANDSHAKE')
         return True
 
+    def _check_close_code(self, reply):
+        if reply.code in ('221', '421'):
+            raise StopIteration()
+
     def _handle_command(self, which, arg):
         method = '_command_'+which
         if hasattr(self, method):
@@ -203,6 +208,7 @@ class Server(object):
                     else:
                         unknown_command.send(self.io)
                 except StopIteration:
+                    self._call_custom_handler('CLOSE')
                     break
                 except ConnectionLost:
                     raise
@@ -242,12 +248,16 @@ class Server(object):
         self._call_custom_handler('BANNER_', reply)
 
         reply.send(self.io)
+        self._check_close_code(reply)
 
-        if reply.code != '220':
-            self._call_custom_handler('CLOSE')
-            raise StopIteration()
+        if reply.code == '220':
+            self.bannered = True
 
     def _command_EHLO(self, ehlo_as):
+        if not self.bannered:
+            bad_sequence.send(self.io)
+            return
+
         reply = Reply('250', 'Hello {0}'.format(ehlo_as))
         reply.enhanced_status_code = False
         self._call_custom_handler('EHLO', reply, ehlo_as)
@@ -261,11 +271,18 @@ class Server(object):
             self.ehlo_as = ehlo_as
 
         reply.send(self.io)
+        self._check_close_code(reply)
 
     def _command_HELO(self, ehlo_as):
+        if not self.bannered:
+            bad_sequence.send(self.io)
+            return
+
         reply = Reply('250', 'Hello {0}'.format(ehlo_as))
         reply.enhanced_status_code = False
         self._call_custom_handler('HELO', reply, ehlo_as)
+        reply.send(self.io)
+        self._check_close_code(reply)
 
         if reply.code == '250':
             self.have_mailfrom = None
@@ -273,25 +290,21 @@ class Server(object):
             self.ehlo_as = ehlo_as
             self.extensions.reset()
 
-        reply.send(self.io)
-
     def _command_STARTTLS(self, arg):
         if 'STARTTLS' not in self.extensions:
             unknown_command.send(self.io)
             return
-
         if arg:
             bad_arguments.send(self.io)
             return
-
         if not self.ehlo_as:
             bad_sequence.send(self.io)
             return
 
         reply = Reply('220', '2.7.0 Go ahead')
         self._call_custom_handler('STARTTLS', reply, self.extensions)
-
         reply.send(self.io, flush=True)
+        self._check_close_code(reply)
 
         if reply.code == '220':
             if not self._encrypt_session():
@@ -321,6 +334,7 @@ class Server(object):
         reply = Reply('235', '2.7.0 Authentication successful')
         self._call_custom_handler('AUTH', reply, result)
         reply.send(self.io)
+        self._check_close_code(reply)
 
         if reply.code == '235':
             self.authed = True
@@ -366,8 +380,8 @@ class Server(object):
 
         reply = Reply('250', '2.1.0 Sender <{0}> Ok'.format(address))
         self._call_custom_handler('MAIL', reply, address, params)
-
         reply.send(self.io)
+        self._check_close_code(reply)
 
         self.have_mailfrom = self.have_mailfrom or (reply.code == '250')
 
@@ -392,8 +406,8 @@ class Server(object):
 
         reply = Reply('250', '2.1.5 Recipient <{0}> Ok'.format(address))
         self._call_custom_handler('RCPT', reply, address, params)
-
         reply.send(self.io)
+        self._check_close_code(reply)
 
         self.have_rcptto = self.have_rcptto or (reply.code == '250')
 
@@ -408,9 +422,8 @@ class Server(object):
 
         reply = Reply('354', 'Start mail input; end with <CRLF>.<CRLF>')
         self._call_custom_handler('DATA', reply)
-
-        reply.send(self.io)
-        self.io.flush_send()
+        reply.send(self.io, flush=True)
+        self._check_close_code(reply)
 
         if reply.code == '354':
             self._get_message_data()
@@ -422,18 +435,18 @@ class Server(object):
 
         reply = Reply('250', 'Ok')
         self._call_custom_handler('RSET', reply)
+        reply.send(self.io)
+        self._check_close_code(reply)
 
         if reply.code == '250':
             self.have_mailfrom = None
             self.have_rcptto = None
 
-        reply.send(self.io)
-
     def _command_NOOP(self, arg):
         reply = Reply('250', 'Ok')
         self._call_custom_handler('NOOP', reply)
-
         reply.send(self.io)
+        self._check_close_code(reply)
 
     def _command_QUIT(self, arg):
         if arg:
@@ -442,19 +455,15 @@ class Server(object):
 
         reply = Reply('221', 'Bye')
         self._call_custom_handler('QUIT', reply)
-
         reply.send(self.io)
-
-        if reply.code == '221':
-            self._call_custom_handler('CLOSE')
-            raise StopIteration()
+        self._check_close_code(reply)
 
     def _command_custom(self, command, arg):
         reply = Reply()
         reply.copy(unknown_command)
         self._call_custom_handler(command, reply, arg, self)
-
         reply.send(self.io)
+        self._check_close_code(reply)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

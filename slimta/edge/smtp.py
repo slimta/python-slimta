@@ -42,7 +42,11 @@ class SmtpValidators(object):
 
     Sub-classes may implement some or all of the following functions. Leaving
     the `reply` argument untouched will return the default, successful reply
-    from the command.
+    from the command. Setting the response code to ``421`` or ``221`` will
+    close the connection.
+
+    .. _RFC 2821 4.2: https://tools.ietf.org/html/rfc2821#section-4.2
+    .. seealso:: `RFC 2821 4.2`_
 
     - ``handle_banner(reply, address)``: Validate connecting address before
       sending the SMTP banner.
