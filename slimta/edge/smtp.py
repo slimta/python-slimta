@@ -56,9 +56,12 @@ class SmtpValidators(object):
       a :class:`~pysasl.AuthenticationCredentials` object.
     - ``handle_mail(reply, sender, params)``: Validate the sender address.
     - ``handle_rcpt(reply, recipient, params)``: Validate one recipient
-                                                 address.
+      address.
     - ``handle_data(reply)``: Any remaining validation before receiving data.
     - ``handle_have_data(reply, data)``: Validate the received message data.
+    - ``handle_queued(reply, results)``: Once the message has been queued,
+      modify the returned |Reply| using the ``results`` from calling
+      :meth:`~slimta.queue.Queue.enqueue`.
     - ``handle_rset(reply)``: Called before replying to an RSET command.
     - ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
@@ -186,6 +189,7 @@ class SmtpSession(object):
             reply.copy(relay_reply)
         else:
             reply.message = '2.6.0 Message accepted for delivery'
+        self._call_validator('queued', reply, results)
 
         self.envelope = None
 
