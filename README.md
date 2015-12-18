@@ -36,10 +36,6 @@ To run the suite of unit tests included with `slimta`:
     (.venv)$ pip install -r test/requirements.txt
     (.venv)$ nosetests -v
 
-If installation fails, you may need to update your pip or setuptools first:
-
-    (.venv)$ pip install -U pip setuptools
-
 Running the Example
 ===================
 
