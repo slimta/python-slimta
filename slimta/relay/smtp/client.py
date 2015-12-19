@@ -65,8 +65,7 @@ class SmtpRelayClient(RelayPoolClient):
                  credentials=None, binary_encoder=None):
         super(SmtpRelayClient, self).__init__(queue, idle_timeout)
         self.address = address
-        if socket_creator:
-            self._socket_creator = socket_creator
+        self.socket_creator = socket_creator or create_connection
         self.socket = None
         self.client = None
         self.ehlo_as = ehlo_as or hostname
@@ -81,20 +80,17 @@ class SmtpRelayClient(RelayPoolClient):
         self.binary_encoder = binary_encoder
         self.current_command = None
 
-    def _socket_creator(self, address):
-        socket = create_connection(address)
-        log.connect(socket, address)
-        return socket
-
     @current_command('[CONNECT]')
     def _connect(self):
         try:
             with Timeout(self.connect_timeout):
-                self.socket = self._socket_creator(self.address)
+                self.socket = self.socket_creator(self.address)
         except socket_error:
             reply = Reply('451', '4.3.0 Connection failed',
                           command=self.current_command)
             raise SmtpRelayError.factory(reply)
+        else:
+            log.connect(self.socket, self.address)
         self.client = self._client_class(self.socket, self.tls_wrapper)
 
     @current_command('[BANNER]')

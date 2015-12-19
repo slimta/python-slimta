@@ -67,6 +67,9 @@ class StaticSmtpRelay(RelayPool):
                         passed as the arguments into the
                         :meth:`~slimta.smtp.client.Client.auth` method of the
                         session. By default, no authentication is attempted.
+    :param socket_creator: Optional function to use instead of
+                           :py:func:`~socket.create_connection` for creating
+                           sockets.
     :param ehlo_as: The string to send as the EHLO or HELO string. Defaults to
                     the FQDN of the system. This may also be given as a
                     function that will be executed with the destination address
@@ -96,8 +99,6 @@ class StaticSmtpRelay(RelayPool):
 class StaticLmtpRelay(StaticSmtpRelay):
     """Exactly like :class:`StaticSmtpRelay`, except that the LMTP protocol is
     used by default instead.
-
-    .. seealso:: :class:`slimta.smtp.client.LmtpClient`
 
     """
 
