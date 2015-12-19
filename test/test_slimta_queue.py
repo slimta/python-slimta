@@ -191,12 +191,13 @@ class TestQueue(unittest.TestCase, MoxTestBase):
                                               'rcpt2@example.com',
                                               'rcpt3@example.com'])
         self.store.write(env, IsA(float)).AndReturn('1234')
-        self.relay._attempt(env, 0).AndReturn([None,
-                                               TransientRelayError('transient', Reply('450', 'transient')),
-                                               PermanentRelayError('permanent', Reply('550', 'permanent'))])
+        self.relay._attempt(env, 0).AndReturn(
+            {'rcpt1@example.com': None,
+             'rcpt2@example.com': TransientRelayError('transient', Reply('450', 'transient')),
+             'rcpt3@example.com': PermanentRelayError('permanent', Reply('550', 'permanent'))})
         self.store.increment_attempts('1234')
         self.store.set_timestamp('1234', IsA(float))
-        self.store.set_recipients_delivered('1234', [0, 2])
+        self.store.set_recipients_delivered('1234', set([0, 2]))
         self.mox.ReplayAll()
         def backoff(envelope, attempts):
             return 0
@@ -214,9 +215,10 @@ class TestQueue(unittest.TestCase, MoxTestBase):
         bounce_mock(IsA(Envelope), IsA(Reply)).AndReturn(None)
         bounce_mock(IsA(Envelope), IsA(Reply)).AndReturn(None)
         self.store.write(env, IsA(float)).AndReturn('1234')
-        self.relay._attempt(env, 0).AndReturn([TransientRelayError('transient', Reply('450', 'transient 1')),
-                                               TransientRelayError('transient', Reply('450', 'transient 1')),
-                                               TransientRelayError('transient', Reply('450', 'transient 2'))])
+        self.relay._attempt(env, 0).AndReturn(
+            {'rcpt1@example.com': TransientRelayError('transient', Reply('450', 'transient 1')),
+             'rcpt2@example.com': TransientRelayError('transient', Reply('450', 'transient 1')),
+             'rcpt3@example.com': TransientRelayError('transient', Reply('450', 'transient 2'))})
         self.store.increment_attempts('1234')
         self.store.remove('1234')
         self.mox.ReplayAll()

@@ -388,21 +388,23 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            if isinstance(results, collections.Sequence):
+            if isinstance(results, collections.Mapping):
+                self._handle_partial_relay(id, envelope, attempts, results)
+            elif isinstance(results, collections.Sequence):
+                results = dict(zip(envelope.recipients, results))
                 self._handle_partial_relay(id, envelope, attempts, results)
             else:
                 self._remove(id)
 
     def _handle_partial_relay(self, id, envelope, attempts, results):
-        delivered = []
+        delivered = set()
         tempfails = []
         permfails = []
-        for i, rcpt in enumerate(envelope.recipients):
-            rcpt_res = results[i]
+        for rcpt, rcpt_res in results.items():
             if rcpt_res is None or isinstance(rcpt_res, Reply):
-                delivered.append(i)
+                delivered.add(envelope.recipients.index(rcpt))
             elif isinstance(rcpt_res, PermanentRelayError):
-                delivered.append(i)
+                delivered.add(envelope.recipients.index(rcpt))
                 permfails.append((rcpt, rcpt_res.reply))
             elif isinstance(rcpt_res, TransientRelayError):
                 tempfails.append((rcpt, rcpt_res.reply))
