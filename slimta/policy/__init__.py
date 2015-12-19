@@ -52,6 +52,14 @@ class QueuePolicy(object):
     persistently queued and may overwrite the original |Envelope| with one or
     many new |Envelope| objects.
 
+    ::
+
+        class MyQueuePolicy(QueuePolicy):
+            def apply(self, env):
+                env['X-When-Queued'] = str(time.time())
+
+        my_queue.add_policy(MyQueuePolicy())
+
     """
 
     def apply(self, envelope):
@@ -75,6 +83,14 @@ class RelayPolicy(object):
     """Base class for relay policies. These are run immediately before a relay
     attempt is made.
 
+    ::
+
+        class MyRelayPolicy(RelayPolicy):
+            def apply(self, env):
+                env['X-When-Delivered'] = str(time.time())
+
+        my_relay.add_policy(MyRelayPolicy())
+
     """
 
     def apply(self, envelope):
@@ -89,13 +105,14 @@ class RelayPolicy(object):
         failed for the entire message.
 
         Modifications to the ``envelope`` will be passed on to the
-        :class:`~slimta.relay.Relay`. However, it depends on the
-        :class:`~slimta.queue.QueueStorage` implementation to know if those
-        modifications will or will not persist between relay attempts!
+        :class:`~slimta.relay.Relay`. However, it is unlikely these
+        modifications will be persisted by the
+        :class:`~slimta.queue.QueueStorage` implementation.
 
         :param envelope: The |Envelope| object the policy execution should
                          apply any changes to.
-        :raises: :class:`PermanentRelayError`, :class:`TransientRelayError`
+        :raises: :class:`~slimta.relay.PermanentRelayError`,
+                 :class:`~slimta.relay.TransientRelayError`
 
         """
         raise NotImplementedError()
