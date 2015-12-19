@@ -24,6 +24,11 @@ _There are currently no unreleased changes._
 - Compatibility with Python 2.6.x.
 - Dependence on [dnspython][4] for DNS resolution.
 
+### Changed
+
+- Relay results that were returned as a list are now returned as a dict, keyed
+  on the envelope recipients.
+
 ### Fixed
 
 - During SMTP relaying, timeouts and other errors will more consistently return

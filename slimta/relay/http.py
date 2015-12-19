@@ -133,15 +133,15 @@ class HttpRelayClient(RelayPoolClient):
         smtp_reply = self._parse_smtp_reply_header(http_res)
         log.response(self.conn, status, http_res.getheaders())
         if status.startswith('2'):
-            result.set(True)
-            return
-        if smtp_reply:
-            exc = SmtpRelayError.factory(smtp_reply)
-        elif status.startswith('4'):
-            exc = PermanentRelayError(http_res.reason)
+            result.set(smtp_reply)
         else:
-            exc = TransientRelayError(http_res.reason)
-        result.set_exception(exc)
+            if smtp_reply:
+                exc = SmtpRelayError.factory(smtp_reply)
+            elif status.startswith('4'):
+                exc = PermanentRelayError(http_res.reason)
+            else:
+                exc = TransientRelayError(http_res.reason)
+            result.set_exception(exc)
 
     def _run(self):
         try:

@@ -211,11 +211,12 @@ class SmtpRelayClient(RelayPoolClient):
                 self._send_empty_data()
             raise
         for i, rcpt_reply in enumerate(rcpttos):
+            rcpt = envelope.recipients[i]
             if rcpt_reply.is_error():
-                rcpt_results[i] = SmtpRelayError.factory(rcpt_reply)
+                rcpt_results[rcpt] = SmtpRelayError.factory(rcpt_reply)
 
     def _deliver(self, result, envelope):
-        rcpt_results = [None] * len(envelope.recipients)
+        rcpt_results = dict.fromkeys(envelope.recipients)
         try:
             self._handle_encoding(envelope)
             self._send_envelope(rcpt_results, envelope)
@@ -224,9 +225,9 @@ class SmtpRelayClient(RelayPoolClient):
             result.set_exception(e)
             self._rset()
         else:
-            rcpt_results = [
-                i if i is not None else msg_result
-                for i in rcpt_results]
+            for key, value in rcpt_results.items():
+                if value is None:
+                    rcpt_results[key] = msg_result
             result.set(rcpt_results)
 
     def _check_server_timeout(self):

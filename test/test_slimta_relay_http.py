@@ -8,6 +8,7 @@ from six.moves import urllib_parse
 
 from slimta.envelope import Envelope
 from slimta.util.deque import BlockingDeque
+from slimta.smtp.reply import Reply
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.relay.http import HttpRelay, HttpRelayClient
 from slimta.http import HTTPConnection
@@ -99,7 +100,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         http_res.reason = 'OK'
         http_res.getheader('X-Smtp-Reply', '').AndReturn('250; message="2.0.0 Ok"')
         http_res.getheaders()
-        self.result.set(True)
+        self.result.set(Reply('250', '2.0.0 Ok'))
         self.mox.ReplayAll()
         self.client._process_response(http_res, self.result)
 
