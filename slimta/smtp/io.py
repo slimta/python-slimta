@@ -27,14 +27,12 @@ from errno import ECONNRESET, EPIPE
 from io import BytesIO
 
 from gevent.ssl import SSLSocket, SSLError
-from gevent import socket
 import six
 
 from slimta import logging
 from slimta.util.typecheck import check_argtype
 from slimta.util.encoders import printable_decode, strict_encode
 from . import ConnectionLost, BadReply
-from .reply import Reply
 
 try:
     from gevent.ssl import SSLWantReadError
@@ -80,10 +78,6 @@ class IO(object):
         self.socket.close()
 
     def raw_send(self, data):
-        """
-
-        :type data: :py:obj:`bytes`
-        """
         check_argtype(data, six.binary_type, 'data')
         try:
             self.socket.sendall(data)
@@ -123,9 +117,6 @@ class IO(object):
         self.recv_buffer += received
 
     def buffered_send(self, data):
-        """
-        :type data: :py:obj:`bytes`
-        """
         self.send_buffer.write(data)
 
     def flush_send(self):
@@ -184,11 +175,6 @@ class IO(object):
             self.buffered_recv()
 
     def recv_command(self):
-        """ Receive a SMTP command
-
-        :return: (command, arg)
-        :rtype: (:py:obj:`str`, :py:obj:`str`)
-        """
         line = self.recv_line()
         cmd_match = command_pattern.match(line)
 
@@ -217,9 +203,6 @@ class IO(object):
         return self.buffered_send(to_send.getvalue())
 
     def send_command(self, command):
-        """
-        :type command: :py:obj:`str`
-        """
         return self.buffered_send(strict_encode(command)+b'\r\n')
 
 

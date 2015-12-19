@@ -21,11 +21,10 @@
 
 from __future__ import absolute_import
 
-import time
 from socket import getfqdn, error as socket_error
+from functools import wraps
 
-import gevent
-from gevent import Timeout, Greenlet
+from gevent import Timeout
 from gevent.socket import create_connection
 
 from slimta.smtp import SmtpError
@@ -39,6 +38,19 @@ __all__ = ['SmtpRelayClient']
 
 log = logging.getSocketLogger(__name__)
 hostname = getfqdn()
+
+
+def current_command(cmd):
+    def deco(old_f):
+        @wraps(old_f)
+        def new_f(self, *args, **kwargs):
+            prev = self.current_command
+            self.current_command = cmd
+            ret = old_f(self, *args, **kwargs)
+            self.current_command = prev
+            return ret
+        return new_f
+    return deco
 
 
 class SmtpRelayClient(RelayPoolClient):
@@ -67,27 +79,32 @@ class SmtpRelayClient(RelayPoolClient):
         self.data_timeout = data_timeout or command_timeout
         self.credentials = credentials
         self.binary_encoder = binary_encoder
+        self.current_command = None
 
     def _socket_creator(self, address):
         socket = create_connection(address)
         log.connect(socket, address)
         return socket
 
+    @current_command('[CONNECT]')
     def _connect(self):
         try:
             with Timeout(self.connect_timeout):
                 self.socket = self._socket_creator(self.address)
         except socket_error:
-            reply = Reply('451', '4.3.0 Connection failed')
+            reply = Reply('451', '4.3.0 Connection failed',
+                          command=self.current_command)
             raise SmtpRelayError.factory(reply)
         self.client = self._client_class(self.socket, self.tls_wrapper)
 
+    @current_command('[BANNER]')
     def _banner(self):
         with Timeout(self.command_timeout):
             banner = self.client.get_banner()
         if banner.is_error():
             raise SmtpRelayError.factory(banner)
 
+    @current_command('EHLO')
     def _ehlo(self):
         try:
             ehlo_as = self.ehlo_as(self.address)
@@ -98,18 +115,21 @@ class SmtpRelayClient(RelayPoolClient):
         if ehlo.is_error():
             raise SmtpRelayError.factory(ehlo)
 
+    @current_command('STARTTLS')
     def _starttls(self):
         with Timeout(self.command_timeout):
             starttls = self.client.starttls(self.tls)
         if starttls.is_error() and self.tls_required:
             raise SmtpRelayError.factory(starttls)
 
+    @current_command('AUTH')
     def _authenticate(self):
+        try:
+            credentials = self.credentials()
+        except TypeError:
+            credentials = self.credentials
         with Timeout(self.command_timeout):
-            if callable(self.credentials):
-                auth = self.client.auth(*self.credentials())
-            else:
-                auth = self.client.auth(*self.credentials)
+            auth = self.client.auth(*credentials)
         if auth.is_error():
             raise SmtpRelayError.factory(auth)
 
@@ -125,10 +145,12 @@ class SmtpRelayClient(RelayPoolClient):
         if self.credentials:
             self._authenticate()
 
+    @current_command('RSET')
     def _rset(self):
         with Timeout(self.command_timeout):
-            rset = self.client.rset()
+            self.client.rset()
 
+    @current_command('MAIL')
     def _mailfrom(self, sender):
         with Timeout(self.command_timeout):
             mailfrom = self.client.mailfrom(sender)
@@ -136,9 +158,15 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(mailfrom)
         return mailfrom
 
+    @current_command('RCPT')
     def _rcptto(self, rcpt):
         with Timeout(self.command_timeout):
             return self.client.rcptto(rcpt)
+
+    @current_command('DATA')
+    def _data(self):
+        with Timeout(self.command_timeout):
+            return self.client.data()
 
     def _check_replies(self, mailfrom, rcpttos, data):
         if mailfrom.is_error():
@@ -151,6 +179,12 @@ class SmtpRelayClient(RelayPoolClient):
         if data.is_error():
             raise SmtpRelayError.factory(data)
 
+    @current_command('[SEND_DATA]')
+    def _send_empty_data(self):
+        with Timeout(self.data_timeout):
+            self.client.send_empty_data()
+
+    @current_command('[SEND_DATA]')
     def _send_message_data(self, envelope):
         header_data, message_data = envelope.flatten()
         with Timeout(self.data_timeout):
@@ -174,13 +208,11 @@ class SmtpRelayClient(RelayPoolClient):
         mailfrom = self._mailfrom(envelope.sender)
         rcpttos = [self._rcptto(rcpt) for rcpt in envelope.recipients]
         try:
-            with Timeout(self.command_timeout):
-                data = self.client.data()
+            data = self._data()
             self._check_replies(mailfrom, rcpttos, data)
         except SmtpRelayError:
             if data and not data.is_error():
-                with Timeout(self.data_timeout):
-                    self.client.send_empty_data()
+                self._send_empty_data()
             raise
         for i, rcpt_reply in enumerate(rcpttos):
             if rcpt_reply.is_error():
@@ -202,10 +234,14 @@ class SmtpRelayClient(RelayPoolClient):
             result.set(rcpt_results)
 
     def _check_server_timeout(self):
-        if self.client.has_reply_waiting():
-            with Timeout(self.command_timeout):
-                timeout = self.client.get_reply()
+        try:
+            if self.client.has_reply_waiting():
+                with Timeout(self.command_timeout):
+                    self.client.get_reply()
+                return True
+        except SmtpError:
             return True
+        return False
 
     def _disconnect(self):
         try:
@@ -237,12 +273,14 @@ class SmtpRelayClient(RelayPoolClient):
             result.set_exception(e)
         except SmtpError as e:
             if not result.ready():
-                reply = Reply('421', '4.3.0 {0!s}'.format(e))
+                reply = Reply('421', '4.3.0 {0!s}'.format(e),
+                              command=self.current_command)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Timeout:
             if not result.ready():
-                relay_error = SmtpRelayError.factory(timed_out)
+                reply = Reply(command=self.current_command).copy(timed_out)
+                relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Exception as e:
             if not result.ready():

@@ -127,6 +127,7 @@ class Reply(object):
         self._code = reply._code
         self._message = reply._message
         self._esc = reply._esc
+        return self
 
     def recv(self, io):
         """Populates the object with the code and message received from the

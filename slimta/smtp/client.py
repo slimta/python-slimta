@@ -82,7 +82,7 @@ class Client(object):
         if sock_fd < 0:
             return False
         try:
-            wait_read(sock_fd, 0.1, Timeout())
+            wait_read(sock_fd, 0.01, Timeout())
         except Timeout:
             return False
         else:
