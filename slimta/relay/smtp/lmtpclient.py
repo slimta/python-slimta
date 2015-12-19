@@ -44,12 +44,12 @@ class LmtpRelayClient(SmtpRelayClient):
         except TypeError:
             ehlo_as = self.ehlo_as
         with Timeout(self.command_timeout):
-            lhlo = self.client.lhlo(self.ehlo_as)
+            lhlo = self.client.lhlo(ehlo_as)
         if lhlo.is_error():
             raise SmtpRelayError.factory(lhlo)
 
     def _deliver(self, result, envelope):
-        rcpt_results = [None] * len(envelope.recipients)
+        rcpt_results = dict.fromkeys(envelope.recipients)
         try:
             self._handle_encoding(envelope)
             self._send_envelope(rcpt_results, envelope)
@@ -61,8 +61,7 @@ class LmtpRelayClient(SmtpRelayClient):
         had_errors = False
         for rcpt, reply in data_results:
             if reply.is_error():
-                i = envelope.recipients.index(rcpt)
-                rcpt_results[i] = SmtpRelayError.factory(reply)
+                rcpt_results[rcpt] = SmtpRelayError.factory(reply)
                 had_errors = True
         result.set(rcpt_results)
         if had_errors:

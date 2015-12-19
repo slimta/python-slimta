@@ -54,7 +54,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test \x81\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set([None])
+        result.set({'rcpt@example.com': None})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='test')
         client._connect()
@@ -88,7 +88,9 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n250 Ok\r\n550 Nope\r\n250 Ok\r\n354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n450 Yikes\r\n')
-        result.set([None, IsA(PermanentRelayError), IsA(TransientRelayError)])
+        result.set({'rcpt1@example.com': None,
+                    'rcpt2@example.com': IsA(PermanentRelayError),
+                    'rcpt3@example.com': IsA(TransientRelayError)})
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
@@ -142,7 +144,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n250 Ok\r\n354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIENCg==\n\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set([None])
+        result.set({'rcpt@example.com': None})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='test', binary_encoder=encode_base64)
         client._connect()
