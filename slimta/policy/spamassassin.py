@@ -29,7 +29,7 @@ matched symbols in ``X-Spam-Symbols``).
 from __future__ import absolute_import
 
 import re
-from io import StringIO
+from io import BytesIO
 
 from gevent import Timeout
 from gevent.socket import create_connection, SHUT_WR
@@ -42,10 +42,10 @@ __all__ = ['SpamAssassinError', 'SpamAssassin']
 
 log = logging.getSocketLogger(__name__)
 
-first_line_pattern = re.compile(r'^SPAMD/[^ ]+ 0 EX_OK$')
-spammy_pattern = re.compile(r'^Spam: ([^ ]+)', re.MULTILINE)
-divider_pattern = re.compile(r'^(.*?)\r?\n(.*?)\r?\n\r?\n', re.DOTALL)
-symbols_pattern = re.compile(r'[^\s,]+')
+first_line_pattern = re.compile(br'^SPAMD/[^ ]+ 0 EX_OK$')
+spammy_pattern = re.compile(br'^Spam: ([^ ]+)', re.MULTILINE)
+divider_pattern = re.compile(br'^(.*?)\r?\n(.*?)\r?\n\r?\n', re.DOTALL)
+symbols_pattern = re.compile(br'[^\s,]+')
 
 
 class SpamAssassinError(PolicyError):
@@ -69,8 +69,8 @@ class SpamAssassin(QueuePolicy):
 
     """
 
-    SPAMC_USER = 'slimta'
-    SPAMC_PROTOCOL_VER = '1.1'
+    SPAMC_USER = b'slimta'
+    SPAMC_PROTOCOL_VER = b'1.1'
 
     def __init__(self, address=None, timeout=None, socket_creator=None):
         self.address = address or ('127.0.0.1', 783)
@@ -85,11 +85,11 @@ class SpamAssassin(QueuePolicy):
         return socket
 
     def _build_request_str(self, header_data, message_data):
-        reqfp = StringIO()
-        data_len = len(header_data) + len(message_data)
-        reqfp.write('SYMBOLS SPAMC/{0}\r\n'.format(self.SPAMC_PROTOCOL_VER))
-        reqfp.write('Content-Length: {0!s}\r\n'.format(data_len))
-        reqfp.write('User: {0}\r\n\r\n'.format(self.SPAMC_USER))
+        reqfp = BytesIO()
+        data_len = str(len(header_data) + len(message_data)).encode('ascii')
+        reqfp.write(b'SYMBOLS SPAMC/' + self.SPAMC_PROTOCOL_VER + b'\r\n')
+        reqfp.write(b'Content-Length: ' + data_len + b'\r\n')
+        reqfp.write(b'User: ' + self.SPAMC_USER + b'\r\n\r\n')
         reqfp.write(header_data)
         reqfp.write(message_data)
         return reqfp.getvalue()
@@ -102,12 +102,12 @@ class SpamAssassin(QueuePolicy):
         log.shutdown(socket, SHUT_WR)
 
     def _recv_all(self, socket):
-        resfp = StringIO()
+        resfp = BytesIO()
         with Timeout(self.timeout):
             while True:
                 data = socket.recv(4096)
                 log.recv(socket, data)
-                if data == '':
+                if data == b'':
                     break
                 resfp.write(data)
         response = resfp.getvalue()
@@ -127,7 +127,7 @@ class SpamAssassin(QueuePolicy):
             raise SpamAssassinError()
         spammy = False
         match = spammy_pattern.search(headers)
-        if match and match.group(1) == 'True':
+        if match and match.group(1) == b'True':
             spammy = True
         return spammy, symbols
 
@@ -145,7 +145,7 @@ class SpamAssassin(QueuePolicy):
         if isinstance(message, Envelope):
             header_data, message_data = message.flatten()
         else:
-            header_data = ''
+            header_data = b''
             message_data = message
         socket = None
         try:
