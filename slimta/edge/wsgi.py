@@ -248,7 +248,7 @@ class WsgiEdge(Edge, WsgiServer):
     def _enqueue_envelope(self, env):
         results = self.handoff(env)
         if isinstance(results[0][1], QueueError):
-            reply = Reply('550', '5.6.0 Error queuing message')
+            reply = Reply('451', '4.7.0 Error queuing message')
             raise _build_http_response(reply)
         elif isinstance(results[0][1], RelayError):
             relay_reply = results[0][1].reply

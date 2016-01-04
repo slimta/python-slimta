@@ -182,8 +182,8 @@ class SmtpSession(object):
 
         results = self.handoff(self.envelope)
         if isinstance(results[0][1], QueueError):
-            reply.code = '550'
-            reply.message = '5.6.0 Error queuing message'
+            reply.code = '451'
+            reply.message = '4.7.0 Error queuing message'
         elif isinstance(results[0][1], RelayError):
             relay_reply = results[0][1].reply
             reply.copy(relay_reply)
