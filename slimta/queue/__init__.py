@@ -52,7 +52,14 @@ __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
 
 class QueueError(SlimtaError):
-    """Base exception for errors in the queue package."""
+    """Base exception for errors in the queue package.
+
+    .. attribute:: reply
+
+       If set, |Edge| services may use this as the |Reply| object to return to
+       clients when queuing fails.
+
+    """
     pass
 
 
