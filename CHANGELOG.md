@@ -1,7 +1,7 @@
 
 # Change Log
 
-## \[[3.1][5]\] - _Pending Release_
+## [3.1] - _Unreleased_
 
 ### Added
 
@@ -10,9 +10,10 @@
 
 ### Changed
 
-- The builtin edges now use `451` codes when a `QueueError` occurs.
+- The builtin edges now use `451` codes when a `QueueError` occurs, rather than
+  `550`.
 
-## \[[3.0][4]\] - 2015-12-19
+## [3.0] - 2015-12-19
 
 ### Added
 
@@ -46,5 +47,5 @@
 [1]: http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
 [2]: https://github.com/saghul/pycares
 [3]: http://www.dnspython.org/
-[4]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
-[5]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
+[3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
+[3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
