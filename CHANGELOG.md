@@ -1,17 +1,24 @@
 
 # Change Log
 
-## [Unreleased]
+## \[[3.1][5]\] - _Pending Release_
 
-_There are currently no unreleased changes._
+### Added
 
-## \[[3.0.0][1]\] - 2015-12-19
+- `QueueError` objects may now set the `reply` attribute to tell edge services
+  what happened.
+
+### Changed
+
+- The builtin edges now use `451` codes when a `QueueError` occurs.
+
+## \[[3.0][4]\] - 2015-12-19
 
 ### Added
 
 - Compatibility with Python 3.3+.
-- [Proxy protocol][2] version 1 support on edge services.
-- Dependence on [pycares][3] for DNS resolution.
+- [Proxy protocol][1] version 1 support on edge services.
+- Dependence on [pycares][2] for DNS resolution.
 - Support for the `socket_creator` option to control how sockets are created
   during SMTP relaying.
 - Support for `ehlo_as` functions to allow custom EHLO logic on each delivery
@@ -22,7 +29,7 @@ _There are currently no unreleased changes._
 ### Removed
 
 - Compatibility with Python 2.6.x.
-- Dependence on [dnspython][4] for DNS resolution.
+- Dependence on [dnspython][3] for DNS resolution.
 
 ### Changed
 
@@ -36,7 +43,8 @@ _There are currently no unreleased changes._
 - Setting a reply code to `221` or `421` in an SMTP edge session will now result
   in the connection closing.
 
-[1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0.0
-[2]: http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
-[3]: https://github.com/saghul/pycares
-[4]: http://www.dnspython.org/
+[1]: http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
+[2]: https://github.com/saghul/pycares
+[3]: http://www.dnspython.org/
+[4]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
+[5]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
