@@ -28,6 +28,7 @@ from __future__ import absolute_import
 
 from slimta.envelope import Envelope
 from slimta.smtp.server import Server
+from slimta.smtp.reply import Reply
 from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
@@ -182,8 +183,9 @@ class SmtpSession(object):
 
         results = self.handoff(self.envelope)
         if isinstance(results[0][1], QueueError):
-            reply.code = '550'
-            reply.message = '5.6.0 Error queuing message'
+            default_reply = Reply('451', '4.3.0 Error queuing message')
+            queue_reply = getattr(results[0][1], 'reply', default_reply)
+            reply.copy(queue_reply)
         elif isinstance(results[0][1], RelayError):
             relay_reply = results[0][1].reply
             reply.copy(relay_reply)

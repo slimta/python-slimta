@@ -73,7 +73,7 @@ class TestEdgeWsgi(MoxTestBase):
 
     def test_queueerror(self):
         self.queue.enqueue(IsA(Envelope)).AndReturn([(Envelope(), QueueError())])
-        self.start_response.__call__('500 Internal Server Error', IsA(list))
+        self.start_response.__call__('503 Service Unavailable', IsA(list))
         self.mox.ReplayAll()
         w = WsgiEdge(self.queue)
         self.assertEqual([], w(self.environ, self.start_response))
