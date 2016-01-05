@@ -113,7 +113,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         reply = Reply('250')
         h.HAVE_DATA(reply, b'', None)
         self.assertEqual('451', reply.code)
-        self.assertEqual('4.7.0 Error queuing message', reply.message)
+        self.assertEqual('4.3.0 Error queuing message', reply.message)
 
     def test_smtp_edge(self):
         queue = self.mox.CreateMockAnything()
