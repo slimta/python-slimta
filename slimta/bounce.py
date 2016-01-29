@@ -58,7 +58,7 @@ Destination host responded:
 Content-Type: message/delivery-status
 
 Remote-MTA: dns; {client_name} [{client_ip}]
-Diagnostic-Code: {protocol}; {code} {message}
+Diagnostic-Code: smtp; {code} {message}
 
 --{boundary}
 Content-Type: {content_type}
