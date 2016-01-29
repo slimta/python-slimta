@@ -34,12 +34,11 @@ from email.generator import Generator
 import six
 from six.moves import cStringIO
 
-if six.PY2:
-    from email.generator import Generator as BytesGenerator
-
-else:
+try:
     from email.parser import BytesParser
     from email.generator import BytesGenerator
+except ImportError:
+    from email.generator import Generator as BytesGenerator
 
 from slimta.util.typecheck import check_argtype
 from slimta.util.encoders import utf8only_encode, utf8only_decode
