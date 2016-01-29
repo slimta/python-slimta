@@ -29,7 +29,6 @@ other data should have the prefixed ``.`` removed.
 from __future__ import absolute_import
 
 import re
-from pprint import pformat
 
 from . import ConnectionLost, MessageTooBig
 

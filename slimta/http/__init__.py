@@ -37,8 +37,6 @@ from six.moves.http_client import HTTPConnection as BuiltinHTTPConnection
 from gevent import socket, ssl
 import six
 
-from slimta.core import SlimtaError
-
 __all__ = ['HTTPConnection', 'HTTPSConnection', 'get_connection']
 
 
@@ -104,14 +102,7 @@ def get_connection(url, tls=None):
     if isinstance(url, six.string_types):
         url = urllib_parse.urlsplit(url, 'http')
     host = url.netloc or 'localhost'
-    host = host.rsplit(':', 1)[0]
-    port = url.port
-    kwargs = {}
-
-    if six.PY2:
-        # strict is deprecated on Python3
-        # https://docs.python.org/3.2/library/http.client.html#httpconnection-objects
-        kwargs['strict'] = True
+    kwargs = {'strict': True} if six.PY2 else {}
 
     if url.scheme == 'https':
         conn = HTTPSConnection(host, tls=tls, **kwargs)

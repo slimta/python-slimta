@@ -27,10 +27,8 @@ from errno import ECONNRESET, EPIPE
 from io import BytesIO
 
 from gevent.ssl import SSLSocket, SSLError
-import six
 
 from slimta import logging
-from slimta.util.typecheck import check_argtype
 from slimta.util.encoders import printable_decode, strict_encode
 from . import ConnectionLost, BadReply
 
@@ -78,7 +76,6 @@ class IO(object):
         self.socket.close()
 
     def raw_send(self, data):
-        check_argtype(data, six.binary_type, 'data')
         try:
             self.socket.sendall(data)
         except socket_error as e:

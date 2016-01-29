@@ -21,12 +21,7 @@
 
 from __future__ import absolute_import
 
-import re
 from itertools import chain
-
-import six
-
-from slimta.util.typecheck import check_argtype
 
 __all__ = ['DataSender']
 
@@ -58,7 +53,6 @@ class DataSender(object):
         """
         :type part: bytes
         """
-        check_argtype(part, six.binary_type, 'part')
         part_len = len(part)
         i = 0
         if part_len > 0 and part[0:1] == b'.':

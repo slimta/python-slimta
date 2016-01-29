@@ -57,13 +57,9 @@ The resulting edge can be used by any HTTP client, like curl::
 
 from __future__ import absolute_import
 
-import sys
 import re
 from base64 import b64decode
 from wsgiref.headers import Headers
-
-import gevent
-from gevent.pywsgi import WSGIServer
 
 from slimta.logging import log_exception
 from slimta.http.wsgi import WsgiServer

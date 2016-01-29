@@ -31,7 +31,7 @@ from __future__ import absolute_import
 import time
 import bisect
 import collections
-from itertools import repeat, chain
+from itertools import repeat
 
 import gevent
 from gevent import Greenlet
@@ -441,15 +441,15 @@ class Queue(Greenlet):
     def _check_ready(self, now):
         last_i = 0
         for i, entry in enumerate(self.queued):
-            timestamp, id = entry
+            timestamp, entry_id = entry
             if now >= timestamp:
-                self._pool_spawn('store', self._dequeue, id)
+                self._pool_spawn('store', self._dequeue, entry_id)
                 last_i = i+1
             else:
                 break
         if last_i > 0:
             self.queued = self.queued[last_i:]
-            self.queued_ids = set([id for timestamp, id in self.queued])
+            self.queued_ids = set([id for _, id in self.queued])
 
     def _wait_store(self):
         while True:

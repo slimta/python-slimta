@@ -28,7 +28,6 @@ from __future__ import absolute_import, unicode_literals
 
 import re
 import copy
-from email.message import Message
 from email.generator import Generator
 
 import six
@@ -38,9 +37,9 @@ try:
     from email.parser import BytesParser
     from email.generator import BytesGenerator
 except ImportError:
+    from email.parser import Parser as BytesParser
     from email.generator import Generator as BytesGenerator
 
-from slimta.util.typecheck import check_argtype
 from slimta.util.encoders import utf8only_encode, utf8only_decode
 from slimta.util.parser import Parser
 
@@ -77,7 +76,6 @@ class Envelope(object):
         self.headers = headers
 
         #: String of message data, not including headers.
-        check_argtype(message, bytes, 'message', or_none=True)
         self.message = message
 
         #: Dictionary of information about the client that sent the message.
@@ -213,8 +211,6 @@ class Envelope(object):
         :type data: :py:obj:`bytes`
 
         """
-        check_argtype(data, bytes, 'data')
-
         match = re.search(_HEADER_BOUNDARY, data)
         if not match:
             header_data = data

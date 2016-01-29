@@ -33,9 +33,6 @@ from socket import getfqdn
 from base64 import b64encode
 
 import gevent
-from gevent import socket
-from gevent.queue import PriorityQueue, Empty
-from gevent.event import AsyncResult
 import six
 from six.moves import urllib_parse
 
