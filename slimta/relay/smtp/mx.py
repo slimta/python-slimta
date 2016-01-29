@@ -67,11 +67,12 @@ class MxRecord(object):
         self._expiration = 0
 
     def get(self):
-        if not self.expired:
-            return self._records
-        else:
+        if self.expired:
             self._records, self._expiration = self._resolve()
-            return self._records
+        if not self._records:
+            msg = 'No usable DNS records found: '+self.domain
+            raise ValueError(msg)
+        return self._records
 
     def _resolve_a(self):
         answer = DNSResolver.query(self.domain, 'A').get()
@@ -108,8 +109,7 @@ class MxRecord(object):
                     return self._resolve_a()
                 except DNSError as exc:
                     if exc.errno in non_fatal_errors:
-                        msg = 'No usable DNS records found: '+self.domain
-                        raise ValueError(msg)
+                        return None, 0
                     raise
             raise
 

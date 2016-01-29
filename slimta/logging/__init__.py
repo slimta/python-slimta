@@ -24,7 +24,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import threading
-threading._DummyThread._Thread__stop = lambda x: 42
 
 import sys
 import traceback
@@ -40,6 +39,8 @@ from .http import HttpLogger
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
            'getHttpLogger', 'log_exception']
+
+threading._DummyThread._Thread__stop = lambda x: 42
 
 
 def getSocketLogger(name):
