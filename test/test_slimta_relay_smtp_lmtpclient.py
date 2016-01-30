@@ -4,8 +4,8 @@ import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket, error as socket_error
 from gevent.event import AsyncResult
-import six
 
+from slimta.util import pycompat
 from slimta.util.deque import BlockingDeque
 from slimta.smtp import ConnectionLost
 from slimta.relay import TransientRelayError, PermanentRelayError
@@ -139,7 +139,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
         self.sock.sendall(b'MAIL FROM:<sender@example.com>\r\nRCPT TO:<rcpt@example.com>\r\nDATA\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n250 Ok\r\n354 Go ahead\r\n')
-        if six.PY3:
+        if pycompat.PY3:
             self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIEK\r\n.\r\n')
         else:
             self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIENCg==\r\n.\r\n')

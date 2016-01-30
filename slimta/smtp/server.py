@@ -31,7 +31,6 @@ import re
 
 from gevent import Timeout
 from pysasl import SASLAuth
-from six.moves import range
 
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
@@ -261,7 +260,7 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello '+ehlo_as.decode())
+        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
         reply.enhanced_status_code = False
         self._call_custom_handler('EHLO', reply, ehlo_as)
 
@@ -281,7 +280,7 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello '+ehlo_as.decode())
+        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
         reply.enhanced_status_code = False
         self._call_custom_handler('HELO', reply, ehlo_as)
         reply.send(self.io)

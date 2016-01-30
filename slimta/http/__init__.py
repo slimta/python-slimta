@@ -30,17 +30,16 @@ similar interface to other slimta libraries that use SSL/TLS.
 
 from __future__ import absolute_import
 
-from six.moves import urllib_parse
 from socket import error as socket_error
-from six.moves.http_client import HTTPConnection as BuiltinHTTPConnection
 
 from gevent import socket, ssl
-import six
+
+from slimta.util.pycompat import httplib, urlparse
 
 __all__ = ['HTTPConnection', 'HTTPSConnection', 'get_connection']
 
 
-class HTTPConnection(BuiltinHTTPConnection):
+class HTTPConnection(httplib.HTTPConnection):
     """Modified version of the :py:class:`httplib.HTTPConnection` class that
     uses gevent sockets. This attempts to avoid the complete re-implementation
     that ships in :mod:`gevent.httplib`.
@@ -99,15 +98,14 @@ def get_connection(url, tls=None):
                 ``tls`` parameter to :class:`HTTPSConnection`.
 
     """
-    if isinstance(url, six.string_types):
-        url = urllib_parse.urlsplit(url, 'http')
+    if isinstance(url, (str, bytes)):
+        url = urlparse.urlsplit(url, 'http')
     host = url.netloc or 'localhost'
-    kwargs = {'strict': True} if six.PY2 else {}
 
     if url.scheme == 'https':
-        conn = HTTPSConnection(host, tls=tls, **kwargs)
+        conn = HTTPSConnection(host, tls=tls)
     else:
-        conn = HTTPConnection(host, **kwargs)
+        conn = HTTPConnection(host)
     return conn
 
 

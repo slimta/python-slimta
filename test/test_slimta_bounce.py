@@ -31,7 +31,7 @@ EOM
 """
         bounce = Bounce(env, reply)
 
-        self.assertEqual(b'', bounce.sender)
+        self.assertEqual('', bounce.sender)
         self.assertEqual(['sender@example.com'], bounce.recipients)
         self.assertEqual('550', bounce.headers['X-Reply-Code'])
         self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
@@ -70,7 +70,7 @@ EOM
 """
         bounce = Bounce(env, reply, headers_only=True)
 
-        self.assertEqual(b'', bounce.sender)
+        self.assertEqual('', bounce.sender)
         self.assertEqual(['sender@example.com'], bounce.recipients)
         self.assertEqual('550', bounce.headers['X-Reply-Code'])
         self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])

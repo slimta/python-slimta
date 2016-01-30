@@ -159,7 +159,7 @@ class IO(object):
             body = b'\r\n'.join(message_lines)
 
         try:
-            return code.decode(), body.decode('utf-8')
+            return code.decode('ascii'), body.decode('utf-8')
         except UnicodeDecodeError:
             raise BadReply(b'\r\n'.join(message_lines))
 
@@ -186,7 +186,7 @@ class IO(object):
         return None, None
 
     def send_reply(self, reply):
-        code = reply.code.encode()
+        code = reply.code.encode('ascii')
         message = reply.message.encode('utf-8')
         lines = []
         message = message+b'\r\n'

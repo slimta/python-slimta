@@ -31,15 +31,14 @@ import copy
 from io import BytesIO
 
 try:
-    from email.parser import BytesParser as Parser
-    from email.generator import BytesGenerator as Generator
+    from email.parser import BytesParser
+    from email.generator import BytesGenerator
     from email.policy import SMTP
 except ImportError:
     from email.parser import Parser
     from email.generator import Generator
 
-import six
-
+from slimta.util import pycompat
 
 __all__ = ['Envelope']
 
@@ -95,15 +94,15 @@ class Envelope(object):
         self.timestamp = None
 
     def _parse_data(self, data, *extra):
-        if six.PY3:
-            return Parser(policy=SMTP).parse(BytesIO(data), *extra)
+        if pycompat.PY3:
+            return BytesParser(policy=SMTP).parse(BytesIO(data), *extra)
         else:
             return Parser().parse(BytesIO(data), *extra)
 
     def _msg_generator(self, msg):
         outfp = BytesIO()
-        if six.PY3:
-            Generator(outfp, policy=SMTP).flatten(msg, False)
+        if pycompat.PY3:
+            BytesGenerator(outfp, policy=SMTP).flatten(msg, False)
             return outfp.getvalue()
         else:
             Generator(outfp).flatten(msg, False)
@@ -150,14 +149,15 @@ class Envelope(object):
         header_data = self._msg_generator(self.headers)
         return header_data, self.message
 
-    def _encode_parts(self, header_data, msg_data, encoder):
+    def _encode_parts(self, encoder):
+        header_data, msg_data = self.flatten()
         msg = self._parse_data(header_data + msg_data)
 
         for part in msg.walk():
             if not part.is_multipart():
                 payload = part.get_payload()
                 try:
-                    payload.encode()
+                    payload.encode('ascii')
                 except UnicodeError:
                     del part['Content-Transfer-Encoding']
                     encoder(part)
@@ -181,13 +181,12 @@ class Envelope(object):
         :raises: UnicodeDecodeError
 
         """
-        header_data, msg_data = self.flatten()
         try:
-            msg_data.decode('ascii')
-        except UnicodeError:
+            self.message.decode('ascii')
+        except UnicodeDecodeError:
             if not encoder:
                 raise
-            self._encode_parts(header_data, msg_data, encoder)
+            self._encode_parts(encoder)
 
     def parse_msg(self, msg):
         """Parses the given :class:`~email.message.Message` to

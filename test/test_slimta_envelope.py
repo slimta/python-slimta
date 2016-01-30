@@ -60,11 +60,12 @@ To: rcpt2@example.com
         headers['To'] = 'rcpt@example.com'
         body = bytes(bytearray(range(129, 256)))
         env = Envelope(headers=headers, message=body)
-        header_str = b'\r\n'.join([b'From: sender@example.com',
-                                   b'To: rcpt@example.com',
-                                   b'Content-Transfer-Encoding: base64',
-                                   b'',
-                                   b''])
+        header_str = b"""\
+From: sender@example.com
+To: rcpt@example.com
+Content-Transfer-Encoding: base64
+
+""".replace(b'\n', b'\r\n')
         body_str = b'gYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5\r\nuru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy\r\n8/T19vf4+fr7/P3+/w=='
         env.encode_7bit(encoder=encode_base64)
         ret_headers, ret_body = env.flatten()

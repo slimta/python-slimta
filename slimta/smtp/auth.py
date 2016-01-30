@@ -84,7 +84,8 @@ class AuthSession(object):
     def __str__(self):
         available = self.server_mechanisms
         if available:
-            return ' '.join(sorted([mech.name.decode() for mech in available]))
+            return ' '.join(sorted([mech.name.decode('ascii')
+                                    for mech in available]))
         else:
             raise ValueError('No mechanisms available')
 
@@ -109,7 +110,7 @@ class AuthSession(object):
 
     def _server_challenge(self, challenge, response=None):
         if not response:
-            challenge_raw = base64.b64encode(challenge).decode()
+            challenge_raw = base64.b64encode(challenge).decode('ascii')
             Reply('334', challenge_raw).send(self.io, flush=True)
             response = self.io.recv_line()
         if response == b'*':

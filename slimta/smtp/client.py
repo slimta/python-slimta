@@ -75,7 +75,7 @@ class Client(object):
         if 'SMTPUTF8' in self.extensions:
             return thing.encode('utf-8')
         else:
-            return thing.encode()
+            return thing.encode('ascii')
 
     def has_reply_waiting(self):
         """Checks if the underlying socket has data waiting to be received,

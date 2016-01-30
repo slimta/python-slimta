@@ -206,7 +206,7 @@ class WsgiEdge(Edge, WsgiServer):
             validators.validate_custom(name, environ.get(cgi_name))
 
     def _b64decode(self, b64str):
-        return b64decode(b64str.encode()).decode('utf-8')
+        return b64decode(b64str.encode('ascii')).decode('utf-8')
 
     def _get_sender(self, environ):
         sender_header = _header_name_to_cgi(self.sender_header)

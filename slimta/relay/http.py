@@ -33,11 +33,11 @@ from socket import getfqdn
 from base64 import b64encode
 
 import gevent
-from six.moves import urllib_parse
 
 from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.http import get_connection
+from slimta.util.pycompat import urlparse
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
@@ -69,16 +69,19 @@ class HttpRelayClient(RelayPoolClient):
                 self.conn.close()
                 self.conn = None
 
+    def _b64encode(self, what):
+        return b64encode(what.encode('utf-8')).decode('ascii')
+
     def _build_headers(self, envelope, msg_headers, msg_body):
         content_length = str(len(msg_headers) + len(msg_body))
         headers = [('Content-Length', content_length),
                    ('Content-Type', 'message/rfc822'),
                    (self.relay.ehlo_header, self.ehlo_as),
                    (self.relay.sender_header,
-                    b64encode(envelope.sender.encode('utf-8')))]
+                    self._b64encode(envelope.sender))]
         for rcpt in envelope.recipients:
             headers.append((self.relay.recipient_header,
-                            b64encode(rcpt.encode('utf-8'))))
+                            self._b64encode(rcpt)))
         return headers
 
     def _new_conn(self):
@@ -201,7 +204,7 @@ class HttpRelay(RelayPool):
     def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__(pool_size)
-        self.url = urllib_parse.urlsplit(url, 'http')
+        self.url = urlparse.urlsplit(url, 'http')
         self.tls = tls
         self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout

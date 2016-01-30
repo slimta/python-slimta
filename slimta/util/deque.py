@@ -24,7 +24,6 @@ from __future__ import absolute_import
 from collections import deque
 
 from gevent.lock import Semaphore
-from six.moves import range
 
 __all__ = ['BlockingDeque']
 
