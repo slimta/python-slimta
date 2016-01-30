@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 #
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 import re
 import base64

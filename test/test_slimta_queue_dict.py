@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 import re
 
