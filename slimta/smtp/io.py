@@ -29,7 +29,6 @@ from io import BytesIO
 from gevent.ssl import SSLSocket, SSLError
 
 from slimta import logging
-from slimta.util.encoders import printable_decode, strict_encode
 from . import ConnectionLost, BadReply
 
 try:
@@ -150,8 +149,7 @@ class IO(object):
                     if match:
                         self.recv_buffer = input[match.end(0):]
                         message_lines.append(match.group(1))
-                        raise BadReply(
-                            printable_decode(b'\r\n'.join(message_lines)))
+                        raise BadReply(b'\r\n'.join(message_lines))
                     else:
                         start_i = None
 
@@ -160,7 +158,7 @@ class IO(object):
                 input = self.recv_buffer
             body = b'\r\n'.join(message_lines)
 
-        return printable_decode(code), printable_decode(body)
+        return code, body
 
     def recv_line(self):
         while True:
@@ -176,18 +174,17 @@ class IO(object):
         cmd_match = command_pattern.match(line)
 
         if cmd_match:
-            return printable_decode(cmd_match.group(1).upper()), None
+            return cmd_match.group(1).upper(), None
         cmd_arg_match = command_arg_pattern.match(line)
         if cmd_arg_match:
-            return (
-                printable_decode(cmd_arg_match.group(1).upper()),
-                printable_decode(cmd_arg_match.group(2)))
+            return (cmd_arg_match.group(1).upper(),
+                    cmd_arg_match.group(2))
 
         return None, None
 
     def send_reply(self, reply):
-        code = strict_encode(reply.code)
-        message = strict_encode(reply.message)
+        code = reply.code
+        message = reply.message
         lines = []
         message = message+b'\r\n'
         for match in line_pattern.finditer(message):
@@ -200,7 +197,7 @@ class IO(object):
         return self.buffered_send(to_send.getvalue())
 
     def send_command(self, command):
-        return self.buffered_send(strict_encode(command)+b'\r\n')
+        return self.buffered_send(command+b'\r\n')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
