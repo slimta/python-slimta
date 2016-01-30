@@ -8,8 +8,8 @@ from slimta.smtp.reply import Reply
 class TestBounce(unittest.TestCase):
 
     def test_bounce(self):
-        env = Envelope(b'sender@example.com', [b'rcpt1@example.com',
-                                               b'rcpt2@example.com'])
+        env = Envelope('sender@example.com', ['rcpt1@example.com',
+                                              'rcpt2@example.com'])
         env.parse(b"""\
 From: sender@example.com
 To: rcpt1@example.com
@@ -32,7 +32,7 @@ EOM
         bounce = Bounce(env, reply)
 
         self.assertEqual(b'', bounce.sender)
-        self.assertEqual([b'sender@example.com'], bounce.recipients)
+        self.assertEqual(['sender@example.com'], bounce.recipients)
         self.assertEqual('550', bounce.headers['X-Reply-Code'])
         self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
         self.assertEqual('sender@example.com', bounce.headers['X-Orig-Sender'])
@@ -47,8 +47,8 @@ EOM
 """.replace(b'\n', b'\r\n'), bounce.message)
 
     def test_bounce_headersonly(self):
-        env = Envelope(b'sender@example.com', [b'rcpt1@example.com',
-                                               b'rcpt2@example.com'])
+        env = Envelope('sender@example.com', ['rcpt1@example.com',
+                                              'rcpt2@example.com'])
         env.parse(b"""\
 From: sender@example.com
 To: rcpt1@example.com
@@ -71,7 +71,7 @@ EOM
         bounce = Bounce(env, reply, headers_only=True)
 
         self.assertEqual(b'', bounce.sender)
-        self.assertEqual([b'sender@example.com'], bounce.recipients)
+        self.assertEqual(['sender@example.com'], bounce.recipients)
         self.assertEqual('550', bounce.headers['X-Reply-Code'])
         self.assertEqual('5.0.0 Rejected', bounce.headers['X-Reply-Message'])
         self.assertEqual('sender@example.com', bounce.headers['X-Orig-Sender'])

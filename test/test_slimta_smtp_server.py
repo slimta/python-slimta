@@ -18,11 +18,11 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
 
     def test_starttls_extension(self):
         s = Server(None, None)
-        self.assertFalse(b'STARTTLS' in s.extensions)
+        self.assertFalse('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=False)
-        self.assertTrue(b'STARTTLS' in s.extensions)
+        self.assertTrue('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=True)
-        self.assertFalse(b'STARTTLS' in s.extensions)
+        self.assertFalse('STARTTLS' in s.extensions)
 
     def test_recv_command(self):
         self.sock.recv(IsA(int)).AndReturn(b'cmd ARG\r\n')
@@ -112,7 +112,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add(b'TEST')
+        s.extensions.add('TEST')
         s.handle()
         self.assertEqual(b'there', s.ehlo_as)
 
@@ -141,7 +141,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
         s.extensions.reset()
-        s.extensions.add(b'STARTTLS')
+        s.extensions.add('STARTTLS')
         s.handle()
         self.assertEqual(None, s.ehlo_as)
 
@@ -162,7 +162,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
         s.extensions.reset()
-        s.extensions.add(b'STARTTLS')
+        s.extensions.add('STARTTLS')
         s.handle()
         self.assertEqual(b'there', s.ehlo_as)
 
@@ -177,7 +177,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add(b'AUTH', AuthSession(SASLAuth([b'PLAIN']), s.io))
+        s.extensions.add('AUTH', AuthSession(SASLAuth([b'PLAIN']), s.io))
         s.handle()
         self.assertTrue(s.authed)
 
@@ -232,7 +232,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add(b'SIZE', 10)
+        s.extensions.add('SIZE', 10)
         s.handle()
         self.assertTrue(s.have_mailfrom)
 
@@ -360,8 +360,8 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         class TestHandlers(object):
             def TEST(self2, reply, arg, server):
                 self.assertTrue(server.have_mailfrom)
-                reply.code = b'250'
-                reply.message = b'Doing '+arg
+                reply.code = '250'
+                reply.message = 'Doing '+arg.decode()
         self.sock.sendall(b'220 ESMTP server\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'TEST stuff\r\n')
         self.sock.sendall(b'250 2.0.0 Doing stuff\r\n')

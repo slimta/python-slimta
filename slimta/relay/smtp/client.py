@@ -86,7 +86,7 @@ class SmtpRelayClient(RelayPoolClient):
             with Timeout(self.connect_timeout):
                 self.socket = self.socket_creator(self.address)
         except socket_error:
-            reply = Reply(b'451', b'4.3.0 Connection failed',
+            reply = Reply('451', '4.3.0 Connection failed',
                           command=self.current_command)
             raise SmtpRelayError.factory(reply)
         else:
@@ -135,7 +135,7 @@ class SmtpRelayClient(RelayPoolClient):
         self._banner()
         self._ehlo()
         if self.tls and not self.tls_immediately:
-            if self.tls_required or b'STARTTLS' in self.client.extensions:
+            if self.tls_required or 'STARTTLS' in self.client.extensions:
                 self._starttls()
                 self._ehlo()
         if self.credentials:
@@ -192,11 +192,11 @@ class SmtpRelayClient(RelayPoolClient):
         return send_data
 
     def _handle_encoding(self, envelope):
-        if b'8BITMIME' not in self.client.extensions:
+        if '8BITMIME' not in self.client.extensions:
             try:
                 envelope.encode_7bit(self.binary_encoder)
             except UnicodeError:
-                reply = Reply(b'554', b'5.6.3 Conversion not allowed')
+                reply = Reply('554', '5.6.3 Conversion not allowed')
                 raise SmtpRelayError.factory(reply)
 
     def _send_envelope(self, rcpt_results, envelope):
@@ -270,8 +270,8 @@ class SmtpRelayClient(RelayPoolClient):
             result.set_exception(e)
         except SmtpError as e:
             if not result.ready():
-                reply_msg = b'4.3.0 '+str(e).encode('utf-8')
-                reply = Reply(b'421', reply_msg, command=self.current_command)
+                reply = Reply('421', '4.3.0 '+str(e),
+                              command=self.current_command)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Timeout:

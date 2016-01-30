@@ -176,9 +176,9 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
         client._connect()
-        client._mailfrom(b'sender')
+        client._mailfrom('sender')
         with self.assertRaises(PermanentRelayError):
-            client._mailfrom(b'sender')
+            client._mailfrom('sender')
 
     def test_rcptto(self):
         self.sock.sendall(b'RCPT TO:<recipient>\r\n')
@@ -186,10 +186,10 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
         client._connect()
-        client._rcptto(b'recipient')
+        client._rcptto('recipient')
 
     def test_send_message_data(self):
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
@@ -204,7 +204,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 8BITMIME\r\n')
@@ -221,11 +221,11 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client._connect()
         client._ehlo()
         client._deliver(result, env)
-        self.assertEqual({b'rcpt@example.com': Reply(b'250', b'Ok')}, result.get_nowait())
+        self.assertEqual({'rcpt@example.com': Reply('250', 'Ok')}, result.get_nowait())
 
     def test_deliver_badpipeline(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -243,7 +243,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_baddata(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -263,7 +263,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_badrcpts(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -281,7 +281,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_rset_exception(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -300,7 +300,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_conversion(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -316,11 +316,11 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client._connect()
         client._ehlo()
         client._deliver(result, env)
-        self.assertEqual({b'rcpt@example.com': Reply(b'250', b'Ok')}, result.get_nowait())
+        self.assertEqual({'rcpt@example.com': Reply('250', 'Ok')}, result.get_nowait())
 
     def test_deliver_conversion_failure(self):
         result = AsyncResult()
-        env = Envelope('bsender@example.com', [b'rcpt@example.com'])
+        env = Envelope('bsender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'EHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -354,7 +354,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_run(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result, env))
@@ -371,14 +371,14 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as=b'test')
         client._run()
-        self.assertEqual({b'rcpt@example.com': Reply(b'250', b'Ok')}, result.get_nowait())
+        self.assertEqual({'rcpt@example.com': Reply('250', 'Ok')}, result.get_nowait())
 
     def test_run_multiple(self):
         result1 = AsyncResult()
         result2 = AsyncResult()
-        env1 = Envelope(b'sender1@example.com', [b'rcpt1@example.com'])
+        env1 = Envelope('sender1@example.com', ['rcpt1@example.com'])
         env1.parse(b'From: sender1@example.com\r\n\r\ntest test\r\n')
-        env2 = Envelope(b'sender2@example.com', [b'rcpt2@example.com'])
+        env2 = Envelope('sender2@example.com', ['rcpt2@example.com'])
         env2.parse(b'From: sender2@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result1, env1))
@@ -400,12 +400,12 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as=b'test', idle_timeout=0.0)
         client._run()
-        self.assertEqual({b'rcpt1@example.com': Reply(b'250', b'Ok')}, result1.get_nowait())
-        self.assertEqual({b'rcpt2@example.com': Reply(b'250', b'Ok')}, result2.get_nowait())
+        self.assertEqual({'rcpt1@example.com': Reply('250', 'Ok')}, result1.get_nowait())
+        self.assertEqual({'rcpt2@example.com': Reply('250', 'Ok')}, result2.get_nowait())
 
     def test_run_random_exception(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result, env))
@@ -422,7 +422,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_run_smtperror(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result, env))
@@ -438,7 +438,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_run_timeout(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result, env))
@@ -454,7 +454,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_run_banner_failure(self):
         result = AsyncResult()
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         queue = BlockingDeque()
         queue.append((result, env))

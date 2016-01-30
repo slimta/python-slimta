@@ -28,8 +28,8 @@ import re
 
 __all__ = ['Extensions']
 
-parse_pattern = re.compile(br'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')
-line_pattern = re.compile(br'(.*?)\r?\n')
+parse_pattern = re.compile(r'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')
+line_pattern = re.compile(r'(.*?)\r?\n')
 
 
 class Extensions(object):
@@ -113,19 +113,20 @@ class Extensions(object):
 
         """
         header = None
-        string += b'\r\n'
+        string += '\r\n'
         for match in line_pattern.finditer(string):
             if not header:
                 header = match.group(1)
             else:
                 ext_match = parse_pattern.match(match.group(1))
                 if ext_match:
+                    name = ext_match.group(1)
                     arg = ext_match.group(2)
                     if arg:
-                        self.add(ext_match.group(1), ext_match.group(2))
+                        self.add(name, arg)
                     else:
-                        self.add(ext_match.group(1))
-        return header or string
+                        self.add(name)
+        return header or string.rstrip('\r\n')
 
     def build_string(self, header):
         """Converts the object into a string that can be sent with the response
@@ -140,19 +141,14 @@ class Extensions(object):
         for k, v in self.extensions.items():
             if v:
                 try:
-                    if isinstance(v, bytes):
-                        value = v
-                    elif hasattr(v, '__bytes__'):
-                        value = v.__bytes__()
-                    else:
-                        value = str(v).encode('ascii')
+                    value = str(v)
                 except ValueError:
                     pass
                 else:
-                    lines.append(b' '.join((k, value)))
+                    lines.append(' '.join((k, value)))
             else:
                 lines.append(k)
-        return b'\r\n'.join(lines)
+        return '\r\n'.join(lines)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

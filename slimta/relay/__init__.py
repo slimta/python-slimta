@@ -39,7 +39,7 @@ class RelayError(SlimtaError):
         if reply:
             self.reply = reply
         else:
-            reply_msg = self._default_esc + ' ' + msg
+            reply_msg = ' '.join((self._default_esc, msg))
             self.reply = Reply(self._default_code, reply_msg)
 
 

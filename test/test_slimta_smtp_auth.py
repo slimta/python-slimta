@@ -21,7 +21,7 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
 
     def test_bytes(self):
         auth = AuthSession(SASLAuth(), self.io)
-        self.assertEqual(b'CRAM-MD5 LOGIN PLAIN', bytes(auth))
+        self.assertEqual('CRAM-MD5 LOGIN PLAIN', str(auth))
 
     def test_invalid_mechanism(self):
         auth = AuthSession(SASLAuth(), self.io)
@@ -106,8 +106,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
-        self.assertEqual(b'535', reply.code)
-        self.assertEqual(b'5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_plain(self):
         self.sock.sendall(b'AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
@@ -116,8 +116,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf', u'jkl',
                                     b'PLAIN')
-        self.assertEqual(b'235', reply.code)
-        self.assertEqual(b'2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login(self):
         self.sock.sendall(b'AUTH LOGIN\r\n')
@@ -130,8 +130,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
-        self.assertEqual(b'235', reply.code)
-        self.assertEqual(b'2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_login_bad_username(self):
         self.sock.sendall(b'AUTH LOGIN\r\n')
@@ -142,8 +142,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
-        self.assertEqual(b'535', reply.code)
-        self.assertEqual(b'5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
     def test_client_crammd5(self):
         self.sock.sendall(b'AUTH CRAM-MD5\r\n')
@@ -154,8 +154,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'CRAM-MD5')
-        self.assertEqual(b'235', reply.code)
-        self.assertEqual(b'2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_xoauth2(self):
         self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
@@ -164,8 +164,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'XOAUTH2')
-        self.assertEqual(b'235', reply.code)
-        self.assertEqual(b'2.0.0 Ok', reply.message)
+        self.assertEqual('235', reply.code)
+        self.assertEqual('2.0.0 Ok', reply.message)
 
     def test_client_xoauth2_error(self):
         self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
@@ -176,8 +176,8 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         auth = AuthSession(SASLAuth(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'XOAUTH2')
-        self.assertEqual(b'535', reply.code)
-        self.assertEqual(b'5.0.0 Nope!', reply.message)
+        self.assertEqual('535', reply.code)
+        self.assertEqual('5.0.0 Nope!', reply.message)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

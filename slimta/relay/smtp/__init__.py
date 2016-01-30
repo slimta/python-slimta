@@ -44,7 +44,7 @@ class SmtpRelayError(RelayError):
 
     @staticmethod
     def factory(reply):
-        if reply.code[0:1] == b'5':
+        if reply.code[0] == '5':
             return SmtpPermanentRelayError(reply)
         else:
             return SmtpTransientRelayError(reply)

@@ -10,24 +10,24 @@ from slimta.envelope import Envelope
 class TestEnvelope(unittest.TestCase):
 
     def test_copy(self):
-        env1 = Envelope(b'sender@example.com', [b'rcpt1@example.com'])
+        env1 = Envelope('sender@example.com', ['rcpt1@example.com'])
         env1.parse(b"""\
 From: sender@example.com
 To: rcpt1@example.com
 
 test test
 """.replace(b'\n', b'\r\n'))
-        env2 = env1.copy(env1.recipients + [b'rcpt2@example.com'])
+        env2 = env1.copy(env1.recipients + ['rcpt2@example.com'])
         env2.headers.replace_header('To', 'rcpt1@example.com, rcpt2@example.com')
-        self.assertEqual(b'sender@example.com', env1.sender)
-        self.assertEqual([b'rcpt1@example.com'], env1.recipients)
+        self.assertEqual('sender@example.com', env1.sender)
+        self.assertEqual(['rcpt1@example.com'], env1.recipients)
         self.assertEqual(['rcpt1@example.com'], env1.headers.get_all('To'))
-        self.assertEqual(b'sender@example.com', env2.sender)
-        self.assertEqual([b'rcpt1@example.com', b'rcpt2@example.com'], env2.recipients)
+        self.assertEqual('sender@example.com', env2.sender)
+        self.assertEqual(['rcpt1@example.com', 'rcpt2@example.com'], env2.recipients)
         self.assertEqual(['rcpt1@example.com, rcpt2@example.com'], env2.headers.get_all('To'))
 
     def test_repr(self):
-        env = Envelope(b'sender@example.com')
+        env = Envelope('sender@example.com')
         s = repr(env)
         self.assertRegexpMatches(s, r"<Envelope at 0x[a-fA-F0-9]+, sender=b?'sender@example.com'>")
 

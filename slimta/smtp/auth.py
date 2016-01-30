@@ -47,7 +47,7 @@ class InvalidAuthString(ServerAuthError):
 
     def __init__(self):
         msg = 'Invalid authentication string'
-        reply = Reply(b'501', b'5.5.2 '+msg.encode('ascii'))
+        reply = Reply('501', '5.5.2 '+msg)
         super(InvalidAuthString, self).__init__(msg, reply)
 
 
@@ -55,7 +55,7 @@ class InvalidMechanismError(ServerAuthError):
 
     def __init__(self):
         msg = 'Invalid authentication mechanism'
-        reply = Reply(b'504', b'5.5.4 '+msg.encode('ascii'))
+        reply = Reply('504', '5.5.4 '+msg)
         super(InvalidMechanismError, self).__init__(msg, reply)
 
 
@@ -63,14 +63,14 @@ class AuthenticationCanceled(ServerAuthError):
 
     def __init__(self):
         msg = 'Authentication canceled by client'
-        reply = Reply(b'501', b'5.7.0 '+msg.encode('ascii'))
+        reply = Reply('501', '5.7.0 '+msg)
         super(AuthenticationCanceled, self).__init__(msg, reply)
 
 
 class UnexpectedAuthError(ServerAuthError):
 
     def __init__(self, exc):
-        reply = Reply(b'501', b'5.5.2 '+str(exc).encode('utf-8'))
+        reply = Reply('501', '5.5.2 '+str(exc))
         super(UnexpectedAuthError, self).__init__(str(exc), reply)
 
 
@@ -81,15 +81,12 @@ class AuthSession(object):
         self.auth = auth
         self.io = io
 
-    def __bytes__(self):
+    def __str__(self):
         available = self.server_mechanisms
         if available:
-            return b' '.join(sorted([mech.name for mech in available]))
+            return ' '.join(sorted([mech.name.decode() for mech in available]))
         else:
             raise ValueError('No mechanisms available')
-
-    def __str__(self):
-        return self.__bytes__().decode('ascii')
 
     def _parse_arg(self, arg):
         match = noarg_pattern.match(arg)
@@ -112,8 +109,8 @@ class AuthSession(object):
 
     def _server_challenge(self, challenge, response=None):
         if not response:
-            challenge_raw = base64.b64encode(challenge)
-            Reply(b'334', challenge_raw).send(self.io, flush=True)
+            challenge_raw = base64.b64encode(challenge).decode()
+            Reply('334', challenge_raw).send(self.io, flush=True)
             response = self.io.recv_line()
         if response == b'*':
             raise AuthenticationCanceled()
@@ -152,7 +149,7 @@ class AuthSession(object):
         self.io.flush_send()
         ret = Reply(command=b'AUTH')
         ret.recv(self.io)
-        if ret.code == b'334':
+        if ret.code == '334':
             return base64.b64decode(ret.message), ret
         return None, ret
 

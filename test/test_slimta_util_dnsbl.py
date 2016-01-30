@@ -23,7 +23,6 @@ class FakeAsyncResult(object):
         return self.answers
 
 
-
 class TestDnsbl(unittest.TestCase, MoxTestBase):
 
     def setUp(self):

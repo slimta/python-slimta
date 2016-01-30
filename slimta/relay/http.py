@@ -106,7 +106,7 @@ class HttpRelayClient(RelayPoolClient):
                 else:
                     encoded_value = value
                 self.conn.putheader(name.encode('iso-8859-1'), encoded_value)
-            self.conn.endheaders(msg_headers.encode('iso-8859-1'))
+            self.conn.endheaders(msg_headers)
             self.conn.send(msg_body)
             self._process_response(self.conn.getresponse(), result)
 

@@ -50,16 +50,22 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         code, message = io.recv_reply()
-        self.assertEqual(b'250', code)
-        self.assertEqual(b'Ok', message)
+        self.assertEqual('250', code)
+        self.assertEqual('Ok', message)
+
+    def test_recv_utf8(self):
+        self.sock.recv(IsA(int)).AndReturn(b'250 \xc3\xbf\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        code, message = io.recv_reply()
+        self.assertEqual('250', code)
+        self.assertEqual(u'\xff', message)
 
     def test_recv_nonutf8(self):
         self.sock.recv(IsA(int)).AndReturn(b'250 \xff\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
-        code, message = io.recv_reply()
-        self.assertEqual(b'250', code)
-        self.assertEqual(b'\xff', message)
+        self.assertRaises(BadReply, io.recv_reply)
 
     def test_recv_reply_multipart(self):
         self.sock.recv(IsA(int)).AndReturn(b'250 ')
@@ -67,16 +73,16 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         code, message = io.recv_reply()
-        self.assertEqual(b'250', code)
-        self.assertEqual(b'Ok', message)
+        self.assertEqual('250', code)
+        self.assertEqual('Ok', message)
 
     def test_recv_reply_multiline(self):
         self.sock.recv(IsA(int)).AndReturn(b'250-One\r\n250 Two\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
         code, message = io.recv_reply()
-        self.assertEqual(b'250', code)
-        self.assertEqual(b'One\r\nTwo', message)
+        self.assertEqual('250', code)
+        self.assertEqual('One\r\nTwo', message)
 
     def test_recv_reply_bad_code(self):
         self.sock.recv(IsA(int)).AndReturn(b'bad\r\n')
@@ -134,19 +140,19 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
     def test_send_reply(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_reply(Reply(b'100', b'Ok'))
+        io.send_reply(Reply('100', 'Ok'))
         self.assertEqual(b'100 Ok\r\n', io.send_buffer.getvalue())
 
     def test_send_reply_nonascii(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_reply(Reply(b'100', b'Ok\xff'))
-        self.assertEqual(b'100 Ok\xff\r\n', io.send_buffer.getvalue())
+        io.send_reply(Reply('100', u'Ok\xff'))
+        self.assertEqual(b'100 Ok\xc3\xbf\r\n', io.send_buffer.getvalue())
 
     def test_send_reply_multiline(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_reply(Reply(b'100', b'One\r\nTwo'))
+        io.send_reply(Reply('100', 'One\r\nTwo'))
         self.assertEqual(b'100-One\r\n100 Two\r\n', io.send_buffer.getvalue())
 
     def test_send_command(self):
@@ -160,7 +166,6 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         io = IO(self.sock)
         io.send_command(b'CMD\xff')
         self.assertEqual(b'CMD\xff\r\n', io.send_buffer.getvalue())
-
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

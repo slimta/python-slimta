@@ -34,9 +34,9 @@ __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
                     'tls_failure', 'invalid_credentials']
 
-message_esc_pattern = re.compile(br'^([245]\.\d\d?\d?\.\d\d?\d?)\s+')
-esc_pattern = re.compile(br'^([245])\.(\d\d?\d?)\.(\d\d?\d?)$')
-code_pattern = re.compile(br'^[12345]\d\d$')
+message_esc_pattern = re.compile(r'^([245]\.\d\d?\d?\.\d\d?\d?)\s+')
+esc_pattern = re.compile(r'^([245])\.(\d\d?\d?)\.(\d\d?\d?)$')
+code_pattern = re.compile(r'^[12345]\d\d$')
 
 
 class Reply(object):
@@ -95,8 +95,7 @@ class Reply(object):
         :rtype: str
 
         """
-        return '{0} {1}'.format(self.code.decode('ascii'),
-                                self.message.decode('ascii'))
+        return '{0} {1}'.format(self.code, self.message)
 
     def __bytes__(self):
         """Converts the reply into a single bytestring.
@@ -106,7 +105,8 @@ class Reply(object):
         :rtype: :py:obj:`bytes`
 
         """
-        return b' '.join((self.code, self.message))
+        return b' '.join((self.code.encode('ascii'),
+                          self.message.encode('utf-8')))
 
     def __bool__(self):
         """Defines the truth-testing operation for |Reply| objects. This will
@@ -163,8 +163,7 @@ class Reply(object):
         :rtype: True or False
 
         """
-        code_class = self.code[0:1]
-        return code_class in (b'4', b'5')
+        return self.code[0] in ('4', '5')
 
     @property
     def code(self):
@@ -186,7 +185,7 @@ class Reply(object):
         esc = self.enhanced_status_code
         msg = self._message
         if esc and msg:
-            return b' '.join((esc, msg))
+            return ' '.join((esc, msg))
         else:
             return msg
 
@@ -204,14 +203,14 @@ class Reply(object):
 
     @property
     def enhanced_status_code(self):
-        code_0 = self._code and self._code[0:1]
-        if code_0 in (b'2', b'4', b'5'):
+        code_0 = self._code and self._code[0]
+        if code_0 in ('2', '4', '5'):
             if self._esc:
-                return b'.'.join((code_0, self._esc[1], self._esc[2]))
+                return '.'.join((code_0, self._esc[1], self._esc[2]))
             elif self._esc is False:
                 return None
             else:
-                return b'.'.join((code_0, b'0', b'0'))
+                return '.'.join((code_0, '0', '0'))
 
     @enhanced_status_code.setter
     def enhanced_status_code(self, value):
@@ -230,30 +229,30 @@ class Reply(object):
 
 
 #: Reply sent when an unknown SMTP command is received by a server.
-unknown_command = Reply(b'500', b'5.5.2 Syntax error, command unrecognized')
+unknown_command = Reply('500', '5.5.2 Syntax error, command unrecognized')
 
 #: Reply sent when a parameter is sent that is not supported.
-unknown_parameter = Reply(b'504', b'5.5.4 Command parameter not implemented')
+unknown_parameter = Reply('504', '5.5.4 Command parameter not implemented')
 
 #: Reply sent when commands are sent out of standard SMTP sequence.
-bad_sequence = Reply(b'503', b'5.5.1 Bad sequence of commands')
+bad_sequence = Reply('503', '5.5.1 Bad sequence of commands')
 
 #: Reply sent when an expected parameter is invalid.
-bad_arguments = Reply(b'501', b'5.5.4 Syntax error in parameters or arguments')
+bad_arguments = Reply('501', '5.5.4 Syntax error in parameters or arguments')
 
 #: Reply sent when an unhandled exception is raised in a command handler.
-unhandled_error = Reply(b'421', b'4.3.0 Unhandled system error')
+unhandled_error = Reply('421', '4.3.0 Unhandled system error')
 
 #: Reply sent when a TLS negotiation error occurs.
-tls_failure = Reply(b'421', b'4.7.0 TLS negotiation failed')
+tls_failure = Reply('421', '4.7.0 TLS negotiation failed')
 
 #: Reply sent when the server times out waiting for data from the client.
-timed_out = Reply(b'421', b'4.4.2 Connection timed out')
+timed_out = Reply('421', '4.4.2 Connection timed out')
 timed_out.newline_first = True
 
 #: Reply sent when an authentication attempt resulted in invalid credentials.
 invalid_credentials = Reply(
-    b'535', b'5.7.8 Authentication credentials invalid')
+    '535', '5.7.8 Authentication credentials invalid')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

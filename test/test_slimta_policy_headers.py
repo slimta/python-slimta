@@ -1,5 +1,4 @@
 import unittest2 as unittest
-import re
 
 from slimta.policy.headers import AddDateHeader, AddMessageIdHeader, \
                                   AddReceivedHeader
@@ -19,11 +18,12 @@ class TestPolicyHeaders(unittest.TestCase):
 
     def test_add_date_header_existing(self):
         env = Envelope()
-        env.parse(b'Date: testing\r\n')
+        epoch = 'Thu, 01 Jan 1970 00:00:00 -0000'
+        env.parse(b'Date: '+epoch.encode()+b'\r\n')
         adh = AddDateHeader()
-        self.assertEqual('testing', env.headers['Date'])
+        self.assertEqual(epoch, env.headers['Date'])
         adh.apply(env)
-        self.assertEqual('testing', env.headers['Date'])
+        self.assertEqual(epoch, env.headers['Date'])
 
     def test_add_message_id_header(self):
         env = Envelope()

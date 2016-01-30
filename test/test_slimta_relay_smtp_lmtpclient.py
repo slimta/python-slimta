@@ -39,7 +39,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 8BITMIME\r\n')
@@ -51,7 +51,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test \x81\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set({b'rcpt@example.com': None})
+        result.set({'rcpt@example.com': None})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as=b'test')
         client._connect()
@@ -60,7 +60,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_badpipeline(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -77,7 +77,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_multircpt(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt1@example.com', b'rcpt2@example.com', b'rcpt3@example.com'])
+        env = Envelope('sender@example.com', ['rcpt1@example.com', 'rcpt2@example.com', 'rcpt3@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -85,9 +85,9 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n250 Ok\r\n550 Nope\r\n250 Ok\r\n354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n450 Yikes\r\n')
-        result.set({b'rcpt1@example.com': None,
-                    b'rcpt2@example.com': IsA(PermanentRelayError),
-                    b'rcpt3@example.com': IsA(TransientRelayError)})
+        result.set({'rcpt1@example.com': None,
+                    'rcpt2@example.com': IsA(PermanentRelayError),
+                    'rcpt3@example.com': IsA(TransientRelayError)})
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
@@ -98,7 +98,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_badrcpts(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -115,7 +115,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_rset_exception(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -133,7 +133,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_conversion(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')
@@ -144,7 +144,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         else:
             self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIENCg==\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set({b'rcpt@example.com': None})
+        result.set({'rcpt@example.com': None})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as=b'test', binary_encoder=encode_base64)
         client._connect()
@@ -153,7 +153,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_deliver_conversion_failure(self):
         result = self.mox.CreateMock(AsyncResult)
-        env = Envelope(b'sender@example.com', [b'rcpt@example.com'])
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO test\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 PIPELINING\r\n')

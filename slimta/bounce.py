@@ -110,7 +110,7 @@ class Bounce(Envelope):
     #: When bouncing a message that was going to multiple recipients, this
     #: string is used to join the list of recipients for the ``{recipients}``
     #: template key.
-    recipient_join = b'\r\n- '
+    recipient_join = '\r\n- '
 
     #: Template used to add text below the original message data. This template
     #: is processed the same way as ``header_template``.
@@ -153,7 +153,7 @@ class Bounce(Envelope):
         ctype = b'text/rfc822-headers' if headers_only else b'message/rfc822'
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
-                'recipients': rendered_rcpts,
+                'recipients': rendered_rcpts.encode('utf-8'),
                 'client_name': b'unknown',
                 'client_ip': b'unknown',
                 'dest_host': b'unknown',

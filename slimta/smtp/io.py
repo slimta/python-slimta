@@ -158,7 +158,10 @@ class IO(object):
                 input = self.recv_buffer
             body = b'\r\n'.join(message_lines)
 
-        return code, body
+        try:
+            return code.decode(), body.decode('utf-8')
+        except UnicodeDecodeError:
+            raise BadReply(b'\r\n'.join(message_lines))
 
     def recv_line(self):
         while True:
@@ -183,8 +186,8 @@ class IO(object):
         return None, None
 
     def send_reply(self, reply):
-        code = reply.code
-        message = reply.message
+        code = reply.code.encode('ascii')
+        message = reply.message.encode('utf-8')
         lines = []
         message = message+b'\r\n'
         for match in line_pattern.finditer(message):

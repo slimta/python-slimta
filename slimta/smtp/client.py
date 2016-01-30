@@ -71,6 +71,12 @@ class Client(object):
                 return None
             reply.recv(self.io)
 
+    def _encode(self, thing):
+        if 'SMTPUTF8' in self.extensions:
+            return thing.encode('utf-8')
+        else:
+            return thing.encode()
+
     def has_reply_waiting(self):
         """Checks if the underlying socket has data waiting to be received,
         which means a reply is waiting to be read.
@@ -154,7 +160,7 @@ class Client(object):
         self.io.send_command(command)
 
         self._flush_pipeline()
-        if ehlo.code == b'250':
+        if ehlo.code == '250':
             self.extensions.reset()
             ehlo.message = self.extensions.parse_string(ehlo.message)
 
@@ -203,7 +209,7 @@ class Client(object):
 
         """
         reply = self.custom_command(b'STARTTLS')
-        if reply.code == b'220':
+        if reply.code == '220':
             self.encrypt(tls)
         return reply
 
@@ -242,12 +248,12 @@ class Client(object):
         mailfrom = Reply(command=b'MAIL')
         self.reply_queue.append(mailfrom)
 
-        command = b''.join((b'MAIL FROM:<', address, b'>'))
-        if data_size is not None and b'SIZE' in self.extensions:
-            command += b' SIZE='+str(data_size).encode('ascii')
+        command = b''.join((b'MAIL FROM:<', self._encode(address), b'>'))
+        if data_size is not None and 'SIZE' in self.extensions:
+            command += b' SIZE='+str(data_size).encode()
         self.io.send_command(command)
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return mailfrom
@@ -267,10 +273,10 @@ class Client(object):
         rcptto = Reply(command=b'RCPT')
         self.reply_queue.append(rcptto)
 
-        command = b''.join((b'RCPT TO:<', address, b'>'))
+        command = b''.join((b'RCPT TO:<', self._encode(address), b'>'))
         self.io.send_command(command)
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return rcptto
@@ -304,7 +310,7 @@ class Client(object):
         data_sender = DataSender(*data)
         data_sender.send(self.io)
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return send_data
@@ -326,7 +332,7 @@ class Client(object):
 
         self.io.send_command(b'.')
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return send_data
@@ -389,7 +395,7 @@ class LmtpClient(Client):
         self.io.send_command(command)
 
         self._flush_pipeline()
-        if lhlo.code == b'250':
+        if lhlo.code == '250':
             self.rcpttos = []
             self.extensions.reset()
             lhlo.message = self.extensions.parse_string(lhlo.message)
@@ -404,7 +410,7 @@ class LmtpClient(Client):
     def send_data(self, *data):
         ret = []
         for address, rcptto_reply in self.rcpttos:
-            if rcptto_reply.code.startswith(b'2'):
+            if rcptto_reply.code.startswith('2'):
                 data_reply = Reply(command=b'[SEND_DATA]')
                 self.reply_queue.append(data_reply)
                 ret.append((address, data_reply))
@@ -413,7 +419,7 @@ class LmtpClient(Client):
         data_sender = DataSender(*data)
         data_sender.send(self.io)
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return ret
@@ -421,7 +427,7 @@ class LmtpClient(Client):
     def send_empty_data(self):
         ret = []
         for address, rcptto_reply in self.rcpttos:
-            if rcptto_reply.code.startswith(b'2'):
+            if rcptto_reply.code.startswith('2'):
                 data_reply = Reply(command=b'[SEND_DATA]')
                 self.reply_queue.append(data_reply)
                 ret.append((address, data_reply))
@@ -429,7 +435,7 @@ class LmtpClient(Client):
 
         self.io.send_command(b'.')
 
-        if b'PIPELINING' not in self.extensions:
+        if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
 
         return ret
