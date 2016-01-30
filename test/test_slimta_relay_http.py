@@ -62,7 +62,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         conn = self.client.conn = self.mox.CreateMockAnything()
         self.client.ehlo_as = 'test'
         conn.putrequest('POST', '/path/info')
-        conn.putheader(b'Content-Length', 31)
+        conn.putheader(b'Content-Length', '31')
         conn.putheader(b'Content-Type', b'message/rfc822')
         conn.putheader(b'X-Ehlo', b'test')
         conn.putheader(b'X-Envelope-Sender', b'c2VuZGVyQGV4YW1wbGUuY29t')

@@ -157,7 +157,7 @@ class Envelope(object):
             if not part.is_multipart():
                 payload = part.get_payload()
                 try:
-                    payload.encode('ascii')
+                    payload.encode()
                 except UnicodeError:
                     del part['Content-Transfer-Encoding']
                     encoder(part)

@@ -186,7 +186,7 @@ class IO(object):
         return None, None
 
     def send_reply(self, reply):
-        code = reply.code.encode('ascii')
+        code = reply.code.encode()
         message = reply.message.encode('utf-8')
         lines = []
         message = message+b'\r\n'

@@ -86,7 +86,7 @@ class SpamAssassin(QueuePolicy):
 
     def _build_request_str(self, header_data, message_data):
         reqfp = BytesIO()
-        data_len = str(len(header_data) + len(message_data)).encode('ascii')
+        data_len = str(len(header_data) + len(message_data)).encode()
         reqfp.write(b'SYMBOLS SPAMC/' + self.SPAMC_PROTOCOL_VER + b'\r\n')
         reqfp.write(b'Content-Length: ' + data_len + b'\r\n')
         reqfp.write(b'User: ' + self.SPAMC_USER + b'\r\n\r\n')

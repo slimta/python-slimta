@@ -33,7 +33,6 @@ from socket import getfqdn
 from base64 import b64encode
 
 import gevent
-import six
 from six.moves import urllib_parse
 
 from slimta import logging
@@ -71,15 +70,15 @@ class HttpRelayClient(RelayPoolClient):
                 self.conn = None
 
     def _build_headers(self, envelope, msg_headers, msg_body):
-        content_length = len(msg_headers) + len(msg_body)
+        content_length = str(len(msg_headers) + len(msg_body))
         headers = [('Content-Length', content_length),
                    ('Content-Type', 'message/rfc822'),
                    (self.relay.ehlo_header, self.ehlo_as),
                    (self.relay.sender_header,
-                    b64encode(envelope.sender.encode()))]
+                    b64encode(envelope.sender.encode('utf-8')))]
         for rcpt in envelope.recipients:
             headers.append((self.relay.recipient_header,
-                            b64encode(rcpt.encode())))
+                            b64encode(rcpt.encode('utf-8'))))
         return headers
 
     def _new_conn(self):
@@ -99,13 +98,8 @@ class HttpRelayClient(RelayPoolClient):
             log.request(self.conn, method, self.url.path, headers)
             self.conn.putrequest(method, self.url.path)
             for name, value in headers:
-                # https://www.python.org/dev/peps/pep-0333/#unicode-issues
-                # value is sometime an int/float
-                if isinstance(value, six.string_types):
-                    encoded_value = value.encode('iso-8859-1')
-                else:
-                    encoded_value = value
-                self.conn.putheader(name.encode('iso-8859-1'), encoded_value)
+                self.conn.putheader(name.encode('iso-8859-1'),
+                                    value.encode('iso-8859-1'))
             self.conn.endheaders(msg_headers)
             self.conn.send(msg_body)
             self._process_response(self.conn.getresponse(), result)

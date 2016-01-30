@@ -105,7 +105,7 @@ class Reply(object):
         :rtype: :py:obj:`bytes`
 
         """
-        return b' '.join((self.code.encode('ascii'),
+        return b' '.join((self.code.encode(),
                           self.message.encode('utf-8')))
 
     def __bool__(self):

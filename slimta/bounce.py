@@ -88,7 +88,7 @@ class Bounce(Envelope):
 
     #: The address to use as the sender of new bounce messages. Per SMTP RFCs,
     #: this should usually be an empty string.
-    sender = b''
+    sender = ''
 
     #: Template to use for the bounce message data, inserted directly before
     #: the original message data. The template is processed with

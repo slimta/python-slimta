@@ -83,7 +83,7 @@ class BytesFormat(object):
             index = int(value)
         except ValueError:
             if isinstance(value, bytes):
-                value = value.decode('ascii')
+                value = value.decode()
             return kwargs[value]
         else:
             return args[index]
@@ -106,7 +106,7 @@ class BytesFormat(object):
                         ret.append(b'{' + value + b'}')
                 else:
                     if not isinstance(result, bytes):
-                        result = result.encode('ascii')
+                        result = result.encode('utf-8')
                     ret.append(result)
         return b''.join(ret)
 

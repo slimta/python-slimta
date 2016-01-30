@@ -212,6 +212,9 @@ class Server(object):
                     break
                 except ConnectionLost:
                     raise
+                except UnicodeDecodeError:
+                    bad_arguments.send(self.io)
+                    raise
                 except Exception:
                     unhandled_error.send(self.io)
                     raise
