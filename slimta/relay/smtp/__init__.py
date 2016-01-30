@@ -37,13 +37,14 @@ __all__ = ['SmtpRelayError']
 class SmtpRelayError(RelayError):
 
     def __init__(self, type, reply):
-        command = reply.command or '[unknown command]'
-        msg = '{0} failure on {1}: {2}'.format(type, command, str(reply))
+        command = reply.command or b'[unknown command]'
+        msg = '{0} failure on {1}: {2}'.format(
+            type, command.decode('ascii'), str(reply))
         super(SmtpRelayError, self).__init__(msg, reply)
 
     @staticmethod
     def factory(reply):
-        if reply.code[0] == '5':
+        if reply.code[0:1] == b'5':
             return SmtpPermanentRelayError(reply)
         else:
             return SmtpTransientRelayError(reply)

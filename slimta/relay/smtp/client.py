@@ -80,27 +80,27 @@ class SmtpRelayClient(RelayPoolClient):
         self.binary_encoder = binary_encoder
         self.current_command = None
 
-    @current_command('[CONNECT]')
+    @current_command(b'[CONNECT]')
     def _connect(self):
         try:
             with Timeout(self.connect_timeout):
                 self.socket = self.socket_creator(self.address)
         except socket_error:
-            reply = Reply('451', '4.3.0 Connection failed',
+            reply = Reply(b'451', b'4.3.0 Connection failed',
                           command=self.current_command)
             raise SmtpRelayError.factory(reply)
         else:
             log.connect(self.socket, self.address)
         self.client = self._client_class(self.socket, self.tls_wrapper)
 
-    @current_command('[BANNER]')
+    @current_command(b'[BANNER]')
     def _banner(self):
         with Timeout(self.command_timeout):
             banner = self.client.get_banner()
         if banner.is_error():
             raise SmtpRelayError.factory(banner)
 
-    @current_command('EHLO')
+    @current_command(b'EHLO')
     def _ehlo(self):
         try:
             ehlo_as = self.ehlo_as(self.address)
@@ -111,14 +111,14 @@ class SmtpRelayClient(RelayPoolClient):
         if ehlo.is_error():
             raise SmtpRelayError.factory(ehlo)
 
-    @current_command('STARTTLS')
+    @current_command(b'STARTTLS')
     def _starttls(self):
         with Timeout(self.command_timeout):
             starttls = self.client.starttls(self.tls)
         if starttls.is_error() and self.tls_required:
             raise SmtpRelayError.factory(starttls)
 
-    @current_command('AUTH')
+    @current_command(b'AUTH')
     def _authenticate(self):
         try:
             credentials = self.credentials()
@@ -135,18 +135,18 @@ class SmtpRelayClient(RelayPoolClient):
         self._banner()
         self._ehlo()
         if self.tls and not self.tls_immediately:
-            if self.tls_required or 'STARTTLS' in self.client.extensions:
+            if self.tls_required or b'STARTTLS' in self.client.extensions:
                 self._starttls()
                 self._ehlo()
         if self.credentials:
             self._authenticate()
 
-    @current_command('RSET')
+    @current_command(b'RSET')
     def _rset(self):
         with Timeout(self.command_timeout):
             self.client.rset()
 
-    @current_command('MAIL')
+    @current_command(b'MAIL')
     def _mailfrom(self, sender):
         with Timeout(self.command_timeout):
             mailfrom = self.client.mailfrom(sender)
@@ -154,12 +154,12 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(mailfrom)
         return mailfrom
 
-    @current_command('RCPT')
+    @current_command(b'RCPT')
     def _rcptto(self, rcpt):
         with Timeout(self.command_timeout):
             return self.client.rcptto(rcpt)
 
-    @current_command('DATA')
+    @current_command(b'DATA')
     def _data(self):
         with Timeout(self.command_timeout):
             return self.client.data()
@@ -175,28 +175,28 @@ class SmtpRelayClient(RelayPoolClient):
         if data.is_error():
             raise SmtpRelayError.factory(data)
 
-    @current_command('[SEND_DATA]')
+    @current_command(b'[SEND_DATA]')
     def _send_empty_data(self):
         with Timeout(self.data_timeout):
             self.client.send_empty_data()
 
-    @current_command('[SEND_DATA]')
+    @current_command(b'[SEND_DATA]')
     def _send_message_data(self, envelope):
         header_data, message_data = envelope.flatten()
         with Timeout(self.data_timeout):
             send_data = self.client.send_data(
-                header_data.encode('ascii'), message_data)
+                header_data, message_data)
         self.client._flush_pipeline()
         if isinstance(send_data, Reply) and send_data.is_error():
             raise SmtpRelayError.factory(send_data)
         return send_data
 
     def _handle_encoding(self, envelope):
-        if '8BITMIME' not in self.client.extensions:
+        if b'8BITMIME' not in self.client.extensions:
             try:
                 envelope.encode_7bit(self.binary_encoder)
             except UnicodeError:
-                reply = Reply('554', '5.6.3 Conversion not allowed')
+                reply = Reply(b'554', b'5.6.3 Conversion not allowed')
                 raise SmtpRelayError.factory(reply)
 
     def _send_envelope(self, rcpt_results, envelope):
@@ -270,8 +270,8 @@ class SmtpRelayClient(RelayPoolClient):
             result.set_exception(e)
         except SmtpError as e:
             if not result.ready():
-                reply = Reply('421', '4.3.0 {0!s}'.format(e),
-                              command=self.current_command)
+                reply_msg = b'4.3.0 '+str(e).encode('utf-8')
+                reply = Reply(b'421', reply_msg, command=self.current_command)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Timeout:
