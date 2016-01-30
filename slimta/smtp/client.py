@@ -320,8 +320,6 @@ class Client(object):
         the server does *not* support PIPELINING, the returned reply object is
         populated immediately.
 
-        :param data: The message data.
-        :type data: :py:obj:`str` or :py:obj:`unicode`
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
                   not support PIPELINING.

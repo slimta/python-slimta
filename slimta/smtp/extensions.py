@@ -134,7 +134,7 @@ class Extensions(object):
 
         :param header: The first line of the resulting string, which can be a
                        free-form message response for the EHLO command.
-        :rtype: :py:obj:`bytes`
+        :rtype: str
 
         """
         lines = [header]
