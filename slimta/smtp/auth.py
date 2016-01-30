@@ -32,8 +32,8 @@ from .reply import Reply
 
 __all__ = ['ServerAuthError', 'AuthSession']
 
-noarg_pattern = re.compile(r'^([a-zA-Z0-9_-]+)$')
-witharg_pattern = re.compile(r'^([a-zA-Z0-9_-]+)\s+(.+)$')
+noarg_pattern = re.compile(br'^([a-zA-Z0-9_-]+)$')
+witharg_pattern = re.compile(br'^([a-zA-Z0-9_-]+)\s+(.+)$')
 
 
 class ServerAuthError(SmtpError):
@@ -47,7 +47,7 @@ class InvalidAuthString(ServerAuthError):
 
     def __init__(self):
         msg = 'Invalid authentication string'
-        reply = Reply('501', '5.5.2 '+msg)
+        reply = Reply(b'501', b'5.5.2 '+msg.encode('ascii'))
         super(InvalidAuthString, self).__init__(msg, reply)
 
 
@@ -55,7 +55,7 @@ class InvalidMechanismError(ServerAuthError):
 
     def __init__(self):
         msg = 'Invalid authentication mechanism'
-        reply = Reply('504', '5.5.4 '+msg)
+        reply = Reply(b'504', b'5.5.4 '+msg.encode('ascii'))
         super(InvalidMechanismError, self).__init__(msg, reply)
 
 
@@ -63,14 +63,14 @@ class AuthenticationCanceled(ServerAuthError):
 
     def __init__(self):
         msg = 'Authentication canceled by client'
-        reply = Reply('501', '5.7.0 '+msg)
+        reply = Reply(b'501', b'5.7.0 '+msg.encode('ascii'))
         super(AuthenticationCanceled, self).__init__(msg, reply)
 
 
 class UnexpectedAuthError(ServerAuthError):
 
     def __init__(self, exc):
-        reply = Reply('501', '5.5.2 '+str(exc))
+        reply = Reply(b'501', b'5.5.2 '+str(exc).encode('utf-8'))
         super(UnexpectedAuthError, self).__init__(str(exc), reply)
 
 
@@ -81,12 +81,15 @@ class AuthSession(object):
         self.auth = auth
         self.io = io
 
-    def __str__(self):
+    def __bytes__(self):
         available = self.server_mechanisms
         if available:
-            return ' '.join(sorted([mech.name.decode() for mech in available]))
+            return b' '.join(sorted([mech.name for mech in available]))
         else:
             raise ValueError('No mechanisms available')
+
+    def __str__(self):
+        return self.__bytes__().decode('ascii')
 
     def _parse_arg(self, arg):
         match = noarg_pattern.match(arg)
@@ -108,25 +111,21 @@ class AuthSession(object):
                 if self.io.encrypted or not getattr(mech, 'insecure', False)]
 
     def _server_challenge(self, challenge, response=None):
-        """
-        :type challenge: :py:obj:`str`
-        :type response: :py:obj:`str`
-        """
         if not response:
-            challenge_raw = base64.b64encode(challenge.encode()).decode()
-            Reply('334', challenge_raw).send(self.io, flush=True)
-            response = self.io.recv_line().decode()
-        if response == '*':
+            challenge_raw = base64.b64encode(challenge)
+            Reply(b'334', challenge_raw).send(self.io, flush=True)
+            response = self.io.recv_line()
+        if response == b'*':
             raise AuthenticationCanceled()
         try:
-            return base64.b64decode(response).decode()
+            return base64.b64decode(response)
         except TypeError:
             raise InvalidAuthString()
 
     def server_attempt(self, arg):
         mechanism_name, mechanism_arg = self._parse_arg(arg)
         for mechanism in self.server_mechanisms:
-            if mechanism.name.decode() == mechanism_name:
+            if mechanism.name == mechanism_name:
                 responses = []
                 while True:
                     try:
@@ -134,35 +133,31 @@ class AuthSession(object):
                     except AuthenticationError as exc:
                         raise UnexpectedAuthError(exc)
                     except ServerChallenge as chal:
-                        if mechanism_arg:
-                            decoded_mechanism_arg = mechanism_arg
-                        else:
-                            decoded_mechanism_arg = None
-                        resp = self._server_challenge(chal.challenge.decode(),
-                                                      decoded_mechanism_arg)
+                        resp = self._server_challenge(chal.challenge,
+                                                      mechanism_arg)
                         mechanism_arg = None
-                        chal.set_response(resp.encode())
+                        chal.set_response(resp)
                         responses.append(chal)
         raise InvalidMechanismError()
 
     def _client_respond(self, mech, response, first=False):
         if first:
-            command = 'AUTH {0}'.format(mech.name.decode())
+            command = b' '.join((b'AUTH', mech.name))
             if response:
-                response_raw = base64.b64encode(response).decode('ascii')
-                command = ' '.join((command, response_raw))
+                response_raw = base64.b64encode(response)
+                command = b' '.join((command, response_raw))
         else:
-            command = base64.b64encode(response).decode('ascii')
+            command = base64.b64encode(response)
         self.io.send_command(command)
         self.io.flush_send()
-        ret = Reply(command='AUTH')
+        ret = Reply(command=b'AUTH')
         ret.recv(self.io)
-        if ret.code == '334':
+        if ret.code == b'334':
             return base64.b64decode(ret.message), ret
         return None, ret
 
     def client_attempt(self, authcid, secret, authzid, mech_name):
-        mechanism = self.auth.get(mech_name.encode())
+        mechanism = self.auth.get(mech_name)
         if not mechanism:
             raise InvalidMechanismError()
         creds = AuthenticationCredentials(authcid, secret, authzid)

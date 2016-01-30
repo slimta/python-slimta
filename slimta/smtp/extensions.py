@@ -28,8 +28,8 @@ import re
 
 __all__ = ['Extensions']
 
-parse_pattern = re.compile(r'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')
-line_pattern = re.compile(r'(.*?)\r?\n')
+parse_pattern = re.compile(br'^\s*([a-zA-Z0-9][a-zA-Z0-9-]*)\s*(.*?)\s*$')
+line_pattern = re.compile(br'(.*?)\r?\n')
 
 
 class Extensions(object):
@@ -113,7 +113,7 @@ class Extensions(object):
 
         """
         header = None
-        string += '\r\n'
+        string += b'\r\n'
         for match in line_pattern.finditer(string):
             if not header:
                 header = match.group(1)
@@ -133,21 +133,26 @@ class Extensions(object):
 
         :param header: The first line of the resulting string, which can be a
                        free-form message response for the EHLO command.
-        :rtype: str
+        :rtype: :py:obj:`bytes`
 
         """
         lines = [header]
         for k, v in self.extensions.items():
             if v:
                 try:
-                    value_str = str(v)
+                    if isinstance(v, bytes):
+                        value = v
+                    elif hasattr(v, '__bytes__'):
+                        value = v.__bytes__()
+                    else:
+                        value = str(v).encode('ascii')
                 except ValueError:
                     pass
                 else:
-                    lines.append(' '.join((k, value_str)))
+                    lines.append(b' '.join((k, value)))
             else:
                 lines.append(k)
-        return '\r\n'.join(lines)
+        return b'\r\n'.join(lines)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
