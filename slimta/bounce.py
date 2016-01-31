@@ -141,12 +141,18 @@ class Bounce(Envelope):
     def _check_custom_templates(cls):
         if cls.header_template != default_header_template and \
                 not isinstance(cls.header_template, BytesFormat):
-            fix_crlf = re.sub(br'\r?\n', br'\r\n', cls.header_template)
-            cls.header_template = BytesFormat(fix_crlf, mode='remove')
+            template_str = cls.header_template
+            if not isinstance(template_str, bytes):
+                template_str = template_str.encode('ascii')
+            template_str = re.sub(br'\r?\n', br'\r\n', template_str)
+            cls.header_template = BytesFormat(template_str, mode='remove')
         if cls.footer_template != default_footer_template and \
                 not isinstance(cls.footer_template, BytesFormat):
-            fix_crlf = re.sub(br'\r?\n', br'\r\n', cls.footer_template)
-            cls.footer_template = BytesFormat(fix_crlf, mode='remove')
+            template_str = cls.footer_template
+            if not isinstance(template_str, bytes):
+                template_str = template_str.encode('ascii')
+            template_str = re.sub(br'\r?\n', br'\r\n', template_str)
+            cls.footer_template = BytesFormat(template_str, mode='remove')
 
     def _get_substitution_table(self, envelope, reply, headers_only):
         rendered_rcpts = self.recipient_join.join(envelope.recipients)

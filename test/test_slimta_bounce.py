@@ -19,13 +19,13 @@ test test\r
 """)
         reply = Reply('550', '5.0.0 Rejected')
 
-        Bounce.header_template = b"""\
+        Bounce.header_template = """\
 X-Reply-Code: {code}
 X-Reply-Message: {message}
 X-Orig-Sender: {sender}
 
 """
-        Bounce.footer_template = b"""\
+        Bounce.footer_template = """\
 
 EOM
 """
@@ -58,13 +58,13 @@ test test
 """)
         reply = Reply('550', '5.0.0 Rejected')
 
-        Bounce.header_template = b"""\
+        Bounce.header_template = """\
 X-Reply-Code: {code}
 X-Reply-Message: {message}
 X-Orig-Sender: {sender}
 
 """
-        Bounce.footer_template = b"""\
+        Bounce.footer_template = """\
 
 EOM
 """
