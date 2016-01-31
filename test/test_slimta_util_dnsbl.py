@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 
 from mox3.mox import MoxTestBase
@@ -23,7 +21,6 @@ class FakeAsyncResult(object):
 
     def get(self):
         return self.answers
-
 
 
 class TestDnsbl(unittest.TestCase, MoxTestBase):

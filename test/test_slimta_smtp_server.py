@@ -1,10 +1,7 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket, SSLError
 from pysasl import SASLAuth
-import six
 
 from slimta.smtp.server import Server
 from slimta.smtp.auth import AuthSession
@@ -32,8 +29,8 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         cmd, arg = s._recv_command()
-        self.assertEqual('CMD', cmd)
-        self.assertEqual('ARG', arg)
+        self.assertEqual(b'CMD', cmd)
+        self.assertEqual(b'ARG', arg)
 
     def test_get_message_data(self):
         expected_reply = b'250 2.6.0 Message accepted for delivery\r\n'
@@ -51,7 +48,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
             def TEST(self, arg):
                 return arg.lower()
         s = Server(None, TestHandler())
-        self.assertEqual('stuff', s._call_custom_handler('TEST', 'STUFF'))
+        self.assertEqual(b'stuff', s._call_custom_handler('TEST', b'STUFF'))
 
     def test_banner_quit(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
@@ -93,7 +90,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
-                               tls_wrapper=sock.tls_wrapper)
+                   tls_wrapper=sock.tls_wrapper)
         s.handle()
 
     def test_tls_immediately_sslerror(self):
@@ -103,7 +100,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
         s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
-                               tls_wrapper=sock.tls_wrapper)
+                   tls_wrapper=sock.tls_wrapper)
         s.handle()
 
     def test_ehlo(self):
@@ -117,7 +114,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.extensions.reset()
         s.extensions.add('TEST')
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        self.assertEqual(b'there', s.ehlo_as)
 
     def test_helo(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
@@ -128,7 +125,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        self.assertEqual(b'there', s.ehlo_as)
 
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
@@ -167,7 +164,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
-        self.assertEqual('there', s.ehlo_as)
+        self.assertEqual(b'there', s.ehlo_as)
 
     def test_auth(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
@@ -249,7 +246,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
-        s.ehlo_as = 'test'
+        s.ehlo_as = b'test'
         s.have_mailfrom = True
         s.handle()
         self.assertTrue(s.have_rcptto)
@@ -284,7 +281,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
-        s.ehlo_as = 'test'
+        s.ehlo_as = b'test'
         s.have_mailfrom = True
         s.have_rcptto = True
         s.handle()
@@ -299,7 +296,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
-        s.ehlo_as = 'test'
+        s.ehlo_as = b'test'
         s.have_mailfrom = True
         s.handle()
 
@@ -310,7 +307,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
-        s.ehlo_as = 'test'
+        s.ehlo_as = b'test'
         s.have_mailfrom = True
         s.have_rcptto = True
         self.assertRaises(ConnectionLost, s.handle)
@@ -329,7 +326,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         class TestHandlers(object):
             server = None
             def NOOP(self2, reply):
-                self.assertEqual('test', self2.server.ehlo_as)
+                self.assertEqual(b'test', self2.server.ehlo_as)
                 self.assertFalse(self2.server.have_mailfrom)
                 self.assertFalse(self2.server.have_rcptto)
         self.sock.sendall(b'220 ESMTP server\r\n')
@@ -344,7 +341,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         h = TestHandlers()
         s = h.server = Server(self.sock, h)
-        s.ehlo_as = 'test'
+        s.ehlo_as = b'test'
         s.have_mailfrom = True
         s.have_rcptto = True
         s.handle()
@@ -364,7 +361,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
             def TEST(self2, reply, arg, server):
                 self.assertTrue(server.have_mailfrom)
                 reply.code = '250'
-                reply.message = 'Doing '+arg
+                reply.message = 'Doing '+arg.decode()
         self.sock.sendall(b'220 ESMTP server\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'TEST stuff\r\n')
         self.sock.sendall(b'250 2.0.0 Doing stuff\r\n')
@@ -393,10 +390,11 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
 
     def test_gather_params(self):
         s = Server(None, None)
-        self.assertEqual({'ONE': '1'}, s._gather_params(' ONE=1'))
-        self.assertEqual({'TWO': True}, s._gather_params('TWO'))
-        self.assertEqual({'THREE': 'foo', 'FOUR': 'bar'}, s._gather_params(' THREE=foo FOUR=bar'))
-        self.assertEqual({'FIVE': True}, s._gather_params('five'))
+        self.assertEqual({b'ONE': b'1'}, s._gather_params(b' ONE=1'))
+        self.assertEqual({b'TWO': True}, s._gather_params(b'TWO'))
+        self.assertEqual({b'THREE': b'foo', b'FOUR': b'bar'},
+                         s._gather_params(b' THREE=foo FOUR=bar'))
+        self.assertEqual({b'FIVE': True}, s._gather_params(b'five'))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

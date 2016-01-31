@@ -29,7 +29,6 @@ from __future__ import absolute_import
 import os
 import os.path
 import sys
-from contextlib import contextmanager
 from pwd import getpwnam
 from grp import getgrnam
 

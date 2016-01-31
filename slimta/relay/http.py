@@ -33,15 +33,11 @@ from socket import getfqdn
 from base64 import b64encode
 
 import gevent
-from gevent import socket
-from gevent.queue import PriorityQueue, Empty
-from gevent.event import AsyncResult
-import six
-from six.moves import urllib_parse
 
 from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.http import get_connection
+from slimta.util.pycompat import urlparse
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
@@ -73,16 +69,19 @@ class HttpRelayClient(RelayPoolClient):
                 self.conn.close()
                 self.conn = None
 
+    def _b64encode(self, what):
+        return b64encode(what.encode('utf-8')).decode('ascii')
+
     def _build_headers(self, envelope, msg_headers, msg_body):
-        content_length = len(msg_headers) + len(msg_body)
+        content_length = str(len(msg_headers) + len(msg_body))
         headers = [('Content-Length', content_length),
                    ('Content-Type', 'message/rfc822'),
                    (self.relay.ehlo_header, self.ehlo_as),
                    (self.relay.sender_header,
-                    b64encode(envelope.sender.encode()))]
+                    self._b64encode(envelope.sender))]
         for rcpt in envelope.recipients:
             headers.append((self.relay.recipient_header,
-                            b64encode(rcpt.encode())))
+                            self._b64encode(rcpt)))
         return headers
 
     def _new_conn(self):
@@ -102,14 +101,9 @@ class HttpRelayClient(RelayPoolClient):
             log.request(self.conn, method, self.url.path, headers)
             self.conn.putrequest(method, self.url.path)
             for name, value in headers:
-                # https://www.python.org/dev/peps/pep-0333/#unicode-issues
-                # value is sometime an int/float
-                if isinstance(value, six.string_types):
-                    encoded_value = value.encode('iso-8859-1')
-                else:
-                    encoded_value = value
-                self.conn.putheader(name.encode('iso-8859-1'), encoded_value)
-            self.conn.endheaders(msg_headers.encode('iso-8859-1'))
+                self.conn.putheader(name.encode('iso-8859-1'),
+                                    value.encode('iso-8859-1'))
+            self.conn.endheaders(msg_headers)
             self.conn.send(msg_body)
             self._process_response(self.conn.getresponse(), result)
 
@@ -210,7 +204,7 @@ class HttpRelay(RelayPool):
     def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__(pool_size)
-        self.url = urllib_parse.urlsplit(url, 'http')
+        self.url = urlparse.urlsplit(url, 'http')
         self.tls = tls
         self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout

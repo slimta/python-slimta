@@ -30,4 +30,5 @@ class TestSmtpDataSender(unittest.TestCase):
         ret = b''.join(DataSender(b'.one\r\n..two\r\n'))
         self.assertEqual(b'..one\r\n...two\r\n.\r\n', ret)
 
+
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

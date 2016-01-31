@@ -1,5 +1,4 @@
 
-import six
 import unittest2 as unittest
 
 
@@ -10,7 +9,7 @@ class TestSlimtaCore(unittest.TestCase):
 
     def test_import_slimta_core_version(self):
         from slimta.core import __version__
-        self.assertIsInstance(__version__, six.string_types)
+        self.assertIsInstance(__version__, str)
 
     def test_import_slimta_core_slimtaerror(self):
         from slimta.core import SlimtaError

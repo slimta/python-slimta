@@ -26,14 +26,13 @@ import uuid
 import time
 from io import BytesIO
 
-
 from .envelope import Envelope
-from slimta.util.encoders import xmlcharref_encode
+from slimta.util.bytesformat import BytesFormat
 
 __all__ = ['Bounce']
 
 # {{{ default_header_template
-default_header_template = re.sub(r'\r?\n', r'\r\n', """\
+default_header_template = BytesFormat(re.sub(br'\r?\n', br'\r\n', b"""\
 From: MAILER-DAEMON
 To: {sender}
 Subject: Undelivered Mail Returned to Sender
@@ -63,14 +62,14 @@ Diagnostic-Code: smtp; {code} {message}
 --{boundary}
 Content-Type: {content_type}
 
-""")
+"""), mode='remove')
 # }}}
 
 # {{{ default_footer_template
-default_footer_template = re.sub(r'\r?\n', r'\r\n', """\
+default_footer_template = BytesFormat(re.sub(br'\r?\n', br'\r\n', b"""\
 
 --{boundary}--
-""")
+"""), mode='remove')
 # }}}
 
 
@@ -93,7 +92,7 @@ class Bounce(Envelope):
 
     #: Template to use for the bounce message data, inserted directly before
     #: the original message data. The template is processed with
-    #: :meth:`str.format` with the following keys:
+    #: :meth:`BytesFormat.format` with the following keys:
     #:
     #: * ``boundary`` -- A randomly generated MIME boundary string.
     #: * ``sender`` -- The sender of the original message.
@@ -132,22 +131,41 @@ class Bounce(Envelope):
     def __init__(self, envelope, reply, headers_only=False):
         super(Bounce, self).__init__(sender=self.sender,
                                      recipients=[envelope.sender])
+        self._check_custom_templates()
         self._build_message(envelope, reply, headers_only)
         self.timestamp = time.time()
         self.client = Bounce.client
         self.receiver = Bounce.receiver or envelope.receiver
 
+    @classmethod
+    def _check_custom_templates(cls):
+        if cls.header_template != default_header_template and \
+                not isinstance(cls.header_template, BytesFormat):
+            template_str = cls.header_template
+            if not isinstance(template_str, bytes):
+                template_str = template_str.encode('ascii')
+            template_str = re.sub(br'\r?\n', br'\r\n', template_str)
+            cls.header_template = BytesFormat(template_str, mode='remove')
+        if cls.footer_template != default_footer_template and \
+                not isinstance(cls.footer_template, BytesFormat):
+            template_str = cls.footer_template
+            if not isinstance(template_str, bytes):
+                template_str = template_str.encode('ascii')
+            template_str = re.sub(br'\r?\n', br'\r\n', template_str)
+            cls.footer_template = BytesFormat(template_str, mode='remove')
+
     def _get_substitution_table(self, envelope, reply, headers_only):
-        rendered_rcpts = self.recipient_join.join(envelope.recipients)
-        ctype = 'text/rfc822-headers' if headers_only else 'message/rfc822'
+        rendered_rcpts = self.recipient_join.join(envelope.recipients).encode(
+            'ascii', 'xmlcharrefreplace')
+        ctype = b'text/rfc822-headers' if headers_only else b'message/rfc822'
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
                 'recipients': rendered_rcpts,
-                'client_name': 'unknown',
-                'client_ip': 'unknown',
-                'dest_host': 'unknown',
-                'dest_port': 'unknown',
-                'protocol': 'SMTP',
+                'client_name': b'unknown',
+                'client_ip': b'unknown',
+                'dest_host': b'unknown',
+                'dest_port': b'unknown',
+                'protocol': b'SMTP',
                 'content_type': ctype,
                 'code': reply.code,
                 'message': reply.message}
@@ -155,14 +173,12 @@ class Bounce(Envelope):
     def _build_message(self, envelope, reply, headers_only):
         sub_table = self._get_substitution_table(envelope, reply, headers_only)
         new_payload = BytesIO()
-        new_payload.write(
-            xmlcharref_encode(self.header_template.format(**sub_table)))
+        new_payload.write(self.header_template.format(**sub_table))
         header_data, message_data = envelope.flatten()
-        new_payload.write(xmlcharref_encode(header_data))
+        new_payload.write(header_data)
         if not headers_only:
             new_payload.write(message_data)
-        new_payload.write(
-            xmlcharref_encode(self.footer_template.format(**sub_table)))
+        new_payload.write(self.footer_template.format(**sub_table))
         self.parse(new_payload.getvalue())
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

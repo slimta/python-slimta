@@ -21,17 +21,17 @@
 
 """Utilities to make logging consistent and easy in :mod:`slimta` packages."""
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 import threading
 
 import sys
 import traceback
 import re
-from six.moves import reprlib
 import logging
 from ast import literal_eval
 
+from slimta.util.pycompat import reprlib
 from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger

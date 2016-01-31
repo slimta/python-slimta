@@ -120,12 +120,13 @@ class Extensions(object):
             else:
                 ext_match = parse_pattern.match(match.group(1))
                 if ext_match:
+                    name = ext_match.group(1)
                     arg = ext_match.group(2)
                     if arg:
-                        self.add(ext_match.group(1), ext_match.group(2))
+                        self.add(name, arg)
                     else:
-                        self.add(ext_match.group(1))
-        return header or string
+                        self.add(name)
+        return header or string.rstrip('\r\n')
 
     def build_string(self, header):
         """Converts the object into a string that can be sent with the response

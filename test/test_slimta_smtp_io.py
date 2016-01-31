@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket
@@ -56,13 +53,19 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.assertEqual('250', code)
         self.assertEqual('Ok', message)
 
-    def test_recv_nonutf8(self):
-        self.sock.recv(IsA(int)).AndReturn(b'250 \xff\r\n')
+    def test_recv_utf8(self):
+        self.sock.recv(IsA(int)).AndReturn(b'250 \xc3\xbf\r\n')
         self.mox.ReplayAll()
         io = IO(self.sock)
         code, message = io.recv_reply()
         self.assertEqual('250', code)
-        self.assertEqual('�', message)
+        self.assertEqual(u'\xff', message)
+
+    def test_recv_nonutf8(self):
+        self.sock.recv(IsA(int)).AndReturn(b'250 \xff\r\n')
+        self.mox.ReplayAll()
+        io = IO(self.sock)
+        self.assertRaises(BadReply, io.recv_reply)
 
     def test_recv_reply_multipart(self):
         self.sock.recv(IsA(int)).AndReturn(b'250 ')
@@ -107,7 +110,7 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         command, arg = io.recv_command()
-        self.assertEqual('CMD', command)
+        self.assertEqual(b'CMD', command)
         self.assertEqual(None, arg)
 
     def test_recv_command_arg(self):
@@ -115,8 +118,8 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         io = IO(self.sock)
         command, arg = io.recv_command()
-        self.assertEqual('CMD', command)
-        self.assertEqual('arg', arg)
+        self.assertEqual(b'CMD', command)
+        self.assertEqual(b'arg', arg)
 
     def test_recv_command_bad(self):
         self.sock.recv(IsA(int)).AndReturn(b'cmd123r\n')
@@ -141,11 +144,10 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
         self.assertEqual(b'100 Ok\r\n', io.send_buffer.getvalue())
 
     def test_send_reply_nonascii(self):
-        # be strict on what we send
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_reply(Reply('100', 'Oké'))
-        self.assertEqual(b'100 Ok?\r\n', io.send_buffer.getvalue())
+        io.send_reply(Reply('100', u'Ok\xff'))
+        self.assertEqual(b'100 Ok\xc3\xbf\r\n', io.send_buffer.getvalue())
 
     def test_send_reply_multiline(self):
         self.mox.ReplayAll()
@@ -156,15 +158,14 @@ class TestSmtpIO(unittest.TestCase, MoxTestBase):
     def test_send_command(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_command('CMD')
+        io.send_command(b'CMD')
         self.assertEqual(b'CMD\r\n', io.send_buffer.getvalue())
 
     def test_send_command_nonascii(self):
         self.mox.ReplayAll()
         io = IO(self.sock)
-        io.send_command('CMDé')
-        self.assertEqual(b'CMD?\r\n', io.send_buffer.getvalue())
-
+        io.send_command(b'CMD\xff')
+        self.assertEqual(b'CMD\xff\r\n', io.send_buffer.getvalue())
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

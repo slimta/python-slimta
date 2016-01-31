@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 
 from slimta.smtp.extensions import Extensions
@@ -65,7 +63,7 @@ the header
 TEST STUFF
 EMPTY""")
         ret = self.ext.build_string('the header').replace('\r', '')
-        self.assertTrue(ret in possibilities)
+        self.assertTrue(ret in possibilities, ret)
 
     def test_build_string_valueerror(self):
         class MyExtension(object):

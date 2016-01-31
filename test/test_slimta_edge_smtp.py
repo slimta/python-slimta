@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
@@ -125,7 +123,7 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
         client_sock = create_connection(server.server.address)
         client = Client(client_sock)
         client.get_banner()
-        client.ehlo('there')
+        client.ehlo(b'there')
         client.mailfrom('sender@example.com')
         client.rcptto('rcpt@example.com')
         client.data()

@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
-import six
 
 from testfixtures import log_capture
 
@@ -20,12 +17,8 @@ class TestLogging(unittest.TestCase):
         logline(check, 'test', 'asdf', 'nodata')
 
     def test_logline_withdata(self):
-        if six.PY2:
-            check = self._check_logline(
-                'test:asdf:withdata one=1 two=u\'two\'')
-        else:
-            check = self._check_logline(
-                'test:asdf:withdata one=1 two=\'two\'')
+        check = self._check_logline(
+            'test:asdf:withdata one=1 two=\'two\'')
         logline(check, 'test', 'asdf', 'withdata', one=1, two='two')
 
     def test_parseline_nodata(self):

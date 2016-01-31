@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
-import six
 
 from testfixtures import log_capture
 
@@ -24,19 +21,13 @@ class TestSocketLogger(unittest.TestCase):
     def test_popen(self, l):
         p = FakeSubprocess(320, 0)
         self.log.popen(p, ['one', 'two'])
-        if six.PY2:
-            l.check((b'test', b'DEBUG', 'pid:320:popen args=[u\'one\', u\'two\']'))
-        else:
-            l.check(('test', 'DEBUG', 'pid:320:popen args=[\'one\', \'two\']'))
+        l.check(('test', 'DEBUG', 'pid:320:popen args=[\'one\', \'two\']'))
 
     @log_capture()
     def test_stdio(self, l):
         p = FakeSubprocess(828, 0)
         self.log.stdio(p, 'one', 'two', '')
-        if six.PY2:
-            l.check(('test', 'DEBUG', 'pid:828:stdio stderr=u\'\' stdin=u\'one\' stdout=u\'two\''))
-        else:
-            l.check(('test', 'DEBUG', 'pid:828:stdio stderr=\'\' stdin=\'one\' stdout=\'two\''))
+        l.check(('test', 'DEBUG', 'pid:828:stdio stderr=\'\' stdin=\'one\' stdout=\'two\''))
 
 
     @log_capture()

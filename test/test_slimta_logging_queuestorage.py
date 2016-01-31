@@ -1,10 +1,7 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
 import uuid
 
 from testfixtures import log_capture
-import six
 
 from slimta.logging import getQueueStorageLogger
 from slimta.envelope import Envelope
@@ -19,10 +16,7 @@ class TestSocketLogger(unittest.TestCase):
     def test_write(self, l):
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         self.log.write('123abc', env)
-        if six.PY2:
-            l.check((b'test', b'DEBUG', 'queue:123abc:write recipients=[u\'rcpt@example.com\'] sender=u\'sender...mple.com\''))
-        else:
-            l.check(('test', 'DEBUG', 'queue:123abc:write recipients=[\'rcpt@example.com\'] sender=\'sender@example.com\''))
+        l.check(('test', 'DEBUG', 'queue:123abc:write recipients=[\'rcpt@example.com\'] sender=\'sender@example.com\''))
 
     @log_capture()
     def test_update_meta(self, l):

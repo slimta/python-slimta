@@ -29,10 +29,6 @@ from __future__ import absolute_import
 
 import uuid
 
-import gevent
-from gevent import Greenlet
-from gevent.pool import Pool
-
 from slimta import logging
 from . import QueueStorage
 

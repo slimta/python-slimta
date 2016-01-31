@@ -1,17 +1,14 @@
-from __future__ import unicode_literals
-
 import unittest2 as unittest
-from mox3.mox import MoxTestBase, IsA, IgnoreArg
+from mox3.mox import MoxTestBase, IsA
 from gevent.event import AsyncResult
 from gevent import Timeout
-from six.moves import urllib_parse
 
 from slimta.envelope import Envelope
 from slimta.util.deque import BlockingDeque
+from slimta.util.pycompat import urlparse
 from slimta.smtp.reply import Reply
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.relay.http import HttpRelay, HttpRelayClient
-from slimta.http import HTTPConnection
 
 
 class TestHttpRelay(unittest.TestCase, MoxTestBase):
@@ -30,7 +27,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         class FakeRelay(object):
             queue = self.queue
             idle_timeout = None
-            url = urllib_parse.urlsplit('http://testurl:8025/path/info')
+            url = urlparse.urlsplit('http://testurl:8025/path/info')
             tls = None
             http_verb = 'POST'
             sender_header = 'X-Envelope-Sender'
@@ -64,7 +61,7 @@ class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
         conn = self.client.conn = self.mox.CreateMockAnything()
         self.client.ehlo_as = 'test'
         conn.putrequest('POST', '/path/info')
-        conn.putheader(b'Content-Length', 31)
+        conn.putheader(b'Content-Length', b'31')
         conn.putheader(b'Content-Type', b'message/rfc822')
         conn.putheader(b'X-Ehlo', b'test')
         conn.putheader(b'X-Envelope-Sender', b'c2VuZGVyQGV4YW1wbGUuY29t')

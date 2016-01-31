@@ -30,10 +30,6 @@ from __future__ import absolute_import
 
 import re
 
-import six
-
-from slimta.util.typecheck import check_argtype
-
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
                     'tls_failure', 'invalid_credentials']
@@ -61,7 +57,6 @@ class Reply(object):
 
         #: Holds the reply code, which can only be set to a string containing
         #: three digits.
-        check_argtype(code, six.string_types, 'code', or_none=True)
         self.code = code
 
         #: Holds the ENHANCEDSTATUSCODES_ string. This property is usually set
@@ -71,7 +66,6 @@ class Reply(object):
         #: Gets and sets the reply message. If you set this property with an
         #: ENHANCEDSTATUSCODES_ string prefixed, that string will be pulled out
         #: and set in the ``enhanced_status_code``.
-        check_argtype(message, six.string_types, 'message', or_none=True)
         self.message = message
 
         #: Boolean defining whether a newline should be sent before the reply,
@@ -102,6 +96,17 @@ class Reply(object):
 
         """
         return '{0} {1}'.format(self.code, self.message)
+
+    def __bytes__(self):
+        """Converts the reply into a single bytestring.
+
+        :returns: The code, ENHANCEDSTATUSCODES_ string, and the message,
+                  separated by spaces.
+        :rtype: :py:obj:`bytes`
+
+        """
+        return b' '.join((self.code.encode('ascii'),
+                          self.message.encode('utf-8')))
 
     def __bool__(self):
         """Defines the truth-testing operation for |Reply| objects. This will
@@ -158,8 +163,7 @@ class Reply(object):
         :rtype: True or False
 
         """
-        code_class = self.code[0]
-        return code_class == '4' or code_class == '5'
+        return self.code[0] in ('4', '5')
 
     @property
     def code(self):
@@ -199,13 +203,14 @@ class Reply(object):
 
     @property
     def enhanced_status_code(self):
-        if self._code and self._code[0] in ('2', '4', '5'):
+        code_0 = self._code and self._code[0]
+        if code_0 in ('2', '4', '5'):
             if self._esc:
-                return '.'.join((self._code[0], self._esc[1], self._esc[2]))
+                return '.'.join((code_0, self._esc[1], self._esc[2]))
             elif self._esc is False:
                 return None
             else:
-                return '.'.join((self._code[0], '0', '0'))
+                return '.'.join((code_0, '0', '0'))
 
     @enhanced_status_code.setter
     def enhanced_status_code(self, value):
@@ -246,7 +251,8 @@ timed_out = Reply('421', '4.4.2 Connection timed out')
 timed_out.newline_first = True
 
 #: Reply sent when an authentication attempt resulted in invalid credentials.
-invalid_credentials = Reply('535', '5.7.8 Authentication credentials invalid')
+invalid_credentials = Reply(
+    '535', '5.7.8 Authentication credentials invalid')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

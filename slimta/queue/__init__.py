@@ -31,15 +31,18 @@ from __future__ import absolute_import
 import time
 import bisect
 import collections
-from itertools import repeat, chain
+from itertools import repeat
+
+try:
+    from itertools import imap
+except ImportError:
+    imap = map
 
 import gevent
 from gevent import Greenlet
 from gevent.event import Event
 from gevent.lock import Semaphore
 from gevent.pool import Pool
-import six
-from six.moves import map
 
 from slimta.logging import log_exception
 from slimta.core import SlimtaError
@@ -289,7 +292,7 @@ class Queue(Greenlet):
 
     def _pool_imap(self, which, func, *iterables):
         pool = getattr(self, which+'_pool', gevent)
-        threads = map(pool.spawn, repeat(func), *iterables)
+        threads = imap(pool.spawn, repeat(func), *iterables)
         ret = []
         for thread in threads:
             thread.join()
@@ -322,7 +325,7 @@ class Queue(Greenlet):
         envelopes = self._run_policies(envelope)
         ids = self._pool_imap('store', self.store.write, envelopes,
                               repeat(now))
-        results = list(six.moves.zip(envelopes, ids))
+        results = list(zip(envelopes, ids))
         for env, id in results:
             if not isinstance(id, BaseException):
                 if self.relay:
@@ -441,15 +444,15 @@ class Queue(Greenlet):
     def _check_ready(self, now):
         last_i = 0
         for i, entry in enumerate(self.queued):
-            timestamp, id = entry
+            timestamp, entry_id = entry
             if now >= timestamp:
-                self._pool_spawn('store', self._dequeue, id)
+                self._pool_spawn('store', self._dequeue, entry_id)
                 last_i = i+1
             else:
                 break
         if last_i > 0:
             self.queued = self.queued[last_i:]
-            self.queued_ids = set([id for timestamp, id in self.queued])
+            self.queued_ids = set([id for _, id in self.queued])
 
     def _wait_store(self):
         while True:

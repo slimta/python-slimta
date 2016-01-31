@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import unittest2 as unittest
 
 from slimta.smtp.reply import Reply
@@ -8,12 +7,12 @@ from slimta.smtp.io import IO
 class TestSmtpReply(unittest.TestCase):
 
     def test_not_populated(self):
-        r = Reply(command='SOMECOMMAND')
+        r = Reply(command=b'SOMECOMMAND')
         self.assertEqual(None, r.code)
         self.assertEqual(None, r.message)
         self.assertEqual(None, r.enhanced_status_code)
         self.assertFalse(r)
-        self.assertEqual('SOMECOMMAND', r.command)
+        self.assertEqual(b'SOMECOMMAND', r.command)
 
     def test_eq(self):
         r1 = Reply('250', '2.1.0 Ok')
@@ -34,6 +33,10 @@ class TestSmtpReply(unittest.TestCase):
         r = Reply('250', '2.1.0 Ok')
         self.assertEqual('250 2.1.0 Ok', str(r))
 
+    def test_bytes(self):
+        r = Reply('250', '2.1.0 Ok')
+        self.assertEqual(b'250 2.1.0 Ok', bytes(r))
+
     def test_is_error(self):
         replies = [Reply(str(i)+'50', 'Test') for i in range(1, 6)]
         self.assertFalse(replies[0].is_error())
@@ -44,12 +47,12 @@ class TestSmtpReply(unittest.TestCase):
 
     def test_copy(self):
         r1 = Reply('250', '2.1.0 Ok')
-        r2 = Reply(command='RCPT')
+        r2 = Reply(command=b'RCPT')
         r2.copy(r1)
         self.assertEqual('250', r2.code)
         self.assertEqual('2.1.0', r2.enhanced_status_code)
         self.assertEqual('2.1.0 Ok', r2.message)
-        self.assertEqual('RCPT', r2.command)
+        self.assertEqual(b'RCPT', r2.command)
 
     def test_code_set(self):
         r = Reply()

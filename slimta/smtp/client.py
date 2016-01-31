@@ -21,7 +21,7 @@
 
 """An SMTP client library that supports PIPELINING commands."""
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 from gevent import Timeout
 from gevent.socket import wait_read
@@ -71,6 +71,12 @@ class Client(object):
                 return None
             reply.recv(self.io)
 
+    def _encode(self, thing):
+        if 'SMTPUTF8' in self.extensions:
+            return thing.encode('utf-8')
+        else:
+            return thing.encode('ascii')
+
     def has_reply_waiting(self):
         """Checks if the underlying socket has data waiting to be received,
         which means a reply is waiting to be read.
@@ -88,7 +94,7 @@ class Client(object):
         else:
             return True
 
-    def get_reply(self, command='[TIMEOUT]'):
+    def get_reply(self, command=b'[TIMEOUT]'):
         """Gets a reply from the server that was not triggered by the client
         sending a command. This is most useful for receiving timeout
         notifications.
@@ -110,7 +116,7 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        banner = Reply(command='[BANNER]')
+        banner = Reply(command=b'[BANNER]')
         banner.enhanced_status_code = False
         self.reply_queue.append(banner)
 
@@ -130,7 +136,7 @@ class Client(object):
         self.reply_queue.append(custom)
 
         if arg:
-            command = ' '.join((command, arg))
+            command = b' '.join((command, arg))
         self.io.send_command(command)
 
         self._flush_pipeline()
@@ -146,11 +152,11 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        ehlo = Reply(command='EHLO')
+        ehlo = Reply(command=b'EHLO')
         ehlo.enhanced_status_code = False
         self.reply_queue.append(ehlo)
 
-        command = 'EHLO '+ehlo_as
+        command = b'EHLO '+ehlo_as
         self.io.send_command(command)
 
         self._flush_pipeline()
@@ -168,11 +174,11 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        helo = Reply(command='HELO')
+        helo = Reply(command=b'HELO')
         helo.enhanced_status_code = False
         self.reply_queue.append(helo)
 
-        command = 'HELO '+helo_as
+        command = b'HELO '+helo_as
         self.io.send_command(command)
 
         self._flush_pipeline()
@@ -202,12 +208,12 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        reply = self.custom_command('STARTTLS')
+        reply = self.custom_command(b'STARTTLS')
         if reply.code == '220':
             self.encrypt(tls)
         return reply
 
-    def auth(self, authcid, secret, authzid=None, mechanism='PLAIN'):
+    def auth(self, authcid, secret, authzid=None, mechanism=b'PLAIN'):
         """Negotiates authentication for the current SMTP session. This
         transaction may involve several back-and-forth packets to the server,
         depending on the SASL mechanism used, and this function will only
@@ -239,12 +245,12 @@ class Client(object):
                   not support PIPELINING.
 
         """
-        mailfrom = Reply(command='MAIL')
+        mailfrom = Reply(command=b'MAIL')
         self.reply_queue.append(mailfrom)
 
-        command = 'MAIL FROM:<{0}>'.format(address)
+        command = b''.join((b'MAIL FROM:<', self._encode(address), b'>'))
         if data_size is not None and 'SIZE' in self.extensions:
-            command += ' SIZE='+str(data_size)
+            command += b' SIZE='+str(data_size).encode()
         self.io.send_command(command)
 
         if 'PIPELINING' not in self.extensions:
@@ -264,10 +270,10 @@ class Client(object):
                   not support PIPELINING.
 
         """
-        rcptto = Reply(command='RCPT')
+        rcptto = Reply(command=b'RCPT')
         self.reply_queue.append(rcptto)
 
-        command = 'RCPT TO:<{0}>'.format(address)
+        command = b''.join((b'RCPT TO:<', self._encode(address), b'>'))
         self.io.send_command(command)
 
         if 'PIPELINING' not in self.extensions:
@@ -283,7 +289,7 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        return self.custom_command('DATA')
+        return self.custom_command(b'DATA')
 
     def send_data(self, *data):
         """Processes and sends message data. At the end of the message data,
@@ -298,7 +304,7 @@ class Client(object):
                   not support PIPELINING.
 
         """
-        send_data = Reply(command='[SEND_DATA]')
+        send_data = Reply(command=b'[SEND_DATA]')
         self.reply_queue.append(send_data)
 
         data_sender = DataSender(*data)
@@ -314,17 +320,15 @@ class Client(object):
         the server does *not* support PIPELINING, the returned reply object is
         populated immediately.
 
-        :param data: The message data.
-        :type data: :py:obj:`str` or :py:obj:`unicode`
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
                   not support PIPELINING.
 
         """
-        send_data = Reply(command='[SEND_DATA]')
+        send_data = Reply(command=b'[SEND_DATA]')
         self.reply_queue.append(send_data)
 
-        self.io.send_command('.')
+        self.io.send_command(b'.')
 
         if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()
@@ -339,7 +343,7 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        return self.custom_command('RSET')
+        return self.custom_command(b'RSET')
 
     def quit(self):
         """Sends the QUIT command and waits for the response. After the
@@ -348,7 +352,7 @@ class Client(object):
         :returns: |Reply| object populated with the response.
 
         """
-        return self.custom_command('QUIT')
+        return self.custom_command(b'QUIT')
 
 
 class LmtpClient(Client):
@@ -381,11 +385,11 @@ class LmtpClient(Client):
         :returns: |Reply| object populated with the response.
 
         """
-        lhlo = Reply(command='LHLO')
+        lhlo = Reply(command=b'LHLO')
         lhlo.enhanced_status_code = False
         self.reply_queue.append(lhlo)
 
-        command = 'LHLO '+lhlo_as
+        command = b'LHLO '+lhlo_as
         self.io.send_command(command)
 
         self._flush_pipeline()
@@ -405,7 +409,7 @@ class LmtpClient(Client):
         ret = []
         for address, rcptto_reply in self.rcpttos:
             if rcptto_reply.code.startswith('2'):
-                data_reply = Reply(command='[SEND_DATA]')
+                data_reply = Reply(command=b'[SEND_DATA]')
                 self.reply_queue.append(data_reply)
                 ret.append((address, data_reply))
         self.rcpttos = []
@@ -422,12 +426,12 @@ class LmtpClient(Client):
         ret = []
         for address, rcptto_reply in self.rcpttos:
             if rcptto_reply.code.startswith('2'):
-                data_reply = Reply(command='[SEND_DATA]')
+                data_reply = Reply(command=b'[SEND_DATA]')
                 self.reply_queue.append(data_reply)
                 ret.append((address, data_reply))
         self.rcpttos = []
 
-        self.io.send_command('.')
+        self.io.send_command(b'.')
 
         if 'PIPELINING' not in self.extensions:
             self._flush_pipeline()

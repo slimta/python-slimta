@@ -25,13 +25,12 @@ certain situations (typically when a client sends various commands).
 
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 
 import re
 
 from gevent import Timeout
 from pysasl import SASLAuth
-from six.moves import range
 
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
@@ -42,13 +41,13 @@ from .reply import *  # NOQA
 
 __all__ = ['Server']
 
-from_pattern = re.compile(r'^[fF][rR][oO][mM]:\s*<')
-to_pattern = re.compile(r'^[tT][oO]:\s*<')
-param_keyword_pattern = re.compile(r'\b([a-zA-Z0-9][a-zA-Z0-9-]*)')
-param_value_pattern = re.compile(r'\=([\x21-\x3C\x3E-\x7F]+)')
+from_pattern = re.compile(br'^[fF][rR][oO][mM]:\s*<')
+to_pattern = re.compile(br'^[tT][oO]:\s*<')
+param_keyword_pattern = re.compile(br'\b([a-zA-Z0-9][a-zA-Z0-9-]*)')
+param_value_pattern = re.compile(br'\=([\x21-\x3C\x3E-\x7F]+)')
 
 
-def find_outside_quotes(haystack, needle, start_i=0, quotes='"'):
+def find_outside_quotes(haystack, needle, start_i=0, quotes=b'"'):
     quoted = None
     h_len = len(haystack)
     n_len = len(needle)
@@ -112,6 +111,7 @@ class Server(object):
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
+        self.extensions.add('SMTPUTF8')
         if tls and not tls_immediately:
             self.extensions.add('STARTTLS')
         if auth:
@@ -175,11 +175,12 @@ class Server(object):
             raise StopIteration()
 
     def _handle_command(self, which, arg):
-        method = '_command_'+which
+        which_str = which.decode('ascii')
+        method = '_command_'+which_str
         if hasattr(self, method):
             return getattr(self, method)(arg)
         else:
-            return self._command_custom(which, arg)
+            return self._command_custom(which_str, arg)
 
     def _call_custom_handler(self, which, *args):
         if hasattr(self.handlers, which):
@@ -197,7 +198,7 @@ class Server(object):
                 tls_failure.send(self.io, flush=True)
                 return
 
-        command, arg = 'BANNER_', None
+        command, arg = b'BANNER_', None
         while True:
             try:
                 try:
@@ -209,6 +210,9 @@ class Server(object):
                     self._call_custom_handler('CLOSE')
                     break
                 except ConnectionLost:
+                    raise
+                except UnicodeDecodeError:
+                    bad_arguments.send(self.io)
                     raise
                 except Exception:
                     unhandled_error.send(self.io)
@@ -256,7 +260,7 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello {0}'.format(ehlo_as))
+        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
         reply.enhanced_status_code = False
         self._call_custom_handler('EHLO', reply, ehlo_as)
 
@@ -276,7 +280,7 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello {0}'.format(ehlo_as))
+        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
         reply.enhanced_status_code = False
         self._call_custom_handler('HELO', reply, ehlo_as)
         reply.send(self.io)
@@ -344,11 +348,11 @@ class Server(object):
             return
 
         start = match.end(0)
-        end = find_outside_quotes(arg, '>', start)
+        end = find_outside_quotes(arg, b'>', start)
         if end == -1:
             bad_arguments.send(self.io)
             return
-        address = arg[start:end]
+        address = arg[start:end].decode('utf-8')
 
         if not self.ehlo_as:
             bad_sequence.send(self.io)
@@ -360,9 +364,9 @@ class Server(object):
 
         params = self._gather_params(arg[end+1:])
 
-        if 'SIZE' in params:
+        if b'SIZE' in params:
             try:
-                size = int(params['SIZE'])
+                size = int(params[b'SIZE'])
             except ValueError:
                 bad_arguments.send(self.io)
                 return
@@ -390,11 +394,11 @@ class Server(object):
             return
 
         start = match.end(0)
-        end = find_outside_quotes(arg, '>', start)
+        end = find_outside_quotes(arg, b'>', start)
         if end == -1:
             bad_arguments.send(self.io)
             return
-        address = arg[start:end]
+        address = arg[start:end].decode('utf-8')
 
         if not self.have_mailfrom:
             bad_sequence.send(self.io)
