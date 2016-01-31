@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Ian C. Good
+# Copyright (c) 2016 Ian C. Good
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,6 +18,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
+"""Package containing a variety of useful modules utilities that didn't really
+belong anywhere else.
+
+"""
+
+from __future__ import absolute_import
+
+__all__ = ['validate_tls']
+
+
+def validate_tls(tls, **overrides):
+    """Given a dictionary that could be used as keyword arguments to
+    :class:`ssl.wrap_socket`, checks the existence of any certificate files.
+
+    :param tls: Dictionary of TLS settings as might be passed in to an |Edge|
+                constructor.
+    :type tls: dict
+    :param overrides: May be used to override any of the elements of the
+                      ``tls`` dictionary.
+    :type overrides: keyword arguments
+    :returns: The new, validated ``tls`` dictionary.
+    :raises: OSError
+
+    """
+    if not tls:
+        return tls
+    tls_copy = tls.copy()
+    for arg in ('keyfile', 'certfile', 'ca_certs'):
+        if arg in tls_copy:
+            open(tls_copy[arg], 'r').close()
+    tls_copy.update(overrides)
+    return tls_copy
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

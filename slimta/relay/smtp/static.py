@@ -27,6 +27,7 @@ out.
 
 from __future__ import absolute_import
 
+from slimta.util import validate_tls
 from .client import SmtpRelayClient
 from .lmtpclient import LmtpRelayClient
 from ..pool import RelayPool
@@ -84,12 +85,13 @@ class StaticSmtpRelay(RelayPool):
     _default_class = SmtpRelayClient
 
     def __init__(self, host, port=25, pool_size=None, client_class=None,
-                 **client_kwargs):
+                 tls=None, **client_kwargs):
         super(StaticSmtpRelay, self).__init__(pool_size)
         self.client_class = client_class or self._default_class
         self.host = host
         self.port = port
         self.client_kwargs = client_kwargs
+        self.client_kwargs['tls'] = validate_tls(tls)
 
     def add_client(self):
         return self.client_class((self.host, self.port), self.queue,

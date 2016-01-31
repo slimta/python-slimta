@@ -32,6 +32,7 @@ import re
 from gevent import Timeout
 from pysasl import SASLAuth
 
+from slimta.util import validate_tls
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
 from .io import IO
@@ -122,11 +123,7 @@ class Server(object):
             auth_session = AuthSession(auth_obj, self.io)
             self.extensions.add('AUTH', auth_session)
 
-        if tls:
-            self.tls = tls.copy()
-            self.tls.setdefault('server_side', True)
-        else:
-            self.tls = None
+        self.tls = validate_tls(tls, server_side=True)
         self.tls_immediately = tls_immediately
 
         self.command_timeout = command_timeout

@@ -35,6 +35,7 @@ from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
 from slimta.logging import log_exception
 from slimta.smtp.reply import Reply
+from slimta.util import validate_tls
 from slimta.util.dns import DNSResolver, DNSError
 from .. import TransientRelayError, PermanentRelayError, Relay
 from .static import StaticSmtpRelay
@@ -157,12 +158,13 @@ class MxSmtpRelay(Relay):
 
     """
 
-    def __init__(self, **client_kwargs):
+    def __init__(self, tls=None, **client_kwargs):
         super(MxSmtpRelay, self).__init__()
         self._mx_records = {}
         self._force_mx = {}
         self._relayers = {}
         self._client_kwargs = client_kwargs
+        self._client_kwargs['tls'] = validate_tls(tls)
 
     def _get_rcpt_domain(self, envelope):
         rcpt = envelope.recipients[0]

@@ -37,6 +37,7 @@ import gevent
 from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.http import get_connection
+from slimta.util import validate_tls
 from slimta.util.pycompat import urlparse
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
@@ -205,7 +206,7 @@ class HttpRelay(RelayPool):
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__(pool_size)
         self.url = urlparse.urlsplit(url, 'http')
-        self.tls = tls
+        self.tls = validate_tls(tls)
         self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout
