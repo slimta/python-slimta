@@ -9,6 +9,8 @@
   what happened.
 - SMTP servers now advertize `SMTPUTF8` and clients will now use UTF-8
   addresses when connected to servers that advertize it.
+- When creating an edge or relay service, now checks for the existence of any
+  given TLS key or cert files before proceeding.
 
 ### Removed
 
