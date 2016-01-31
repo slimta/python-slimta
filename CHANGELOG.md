@@ -11,6 +11,7 @@
   addresses when connected to servers that advertize it.
 - When creating an edge or relay service, now checks for the existence of any
   given TLS key or cert files before proceeding.
+- Support for [proxy protocol][1] version 2 and version auto-detection.
 
 ### Removed
 

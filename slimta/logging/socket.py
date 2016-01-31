@@ -151,5 +151,12 @@ class SocketLogger(object):
         """
         self.log(socket.fileno(), 'ppinvalid', message=str(exc))
 
+    def proxyproto_local(self, sock):
+        """Logs a successful proxy protocol header that indicates a "local"
+        connection from the proxy itself, to perform a health check.
+
+        """
+        self.log(sock.fileno(), 'pplocal')
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
