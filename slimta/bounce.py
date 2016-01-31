@@ -155,11 +155,12 @@ class Bounce(Envelope):
             cls.footer_template = BytesFormat(template_str, mode='remove')
 
     def _get_substitution_table(self, envelope, reply, headers_only):
-        rendered_rcpts = self.recipient_join.join(envelope.recipients)
+        rendered_rcpts = self.recipient_join.join(envelope.recipients).encode(
+            'ascii', 'xmlcharrefreplace')
         ctype = b'text/rfc822-headers' if headers_only else b'message/rfc822'
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
-                'recipients': rendered_rcpts.encode('utf-8'),
+                'recipients': rendered_rcpts,
                 'client_name': b'unknown',
                 'client_ip': b'unknown',
                 'dest_host': b'unknown',
