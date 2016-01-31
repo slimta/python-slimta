@@ -33,33 +33,34 @@ class TestProxyProtocolV1(MoxTestBase):
     def test_read_pp_line(self):
         def _get_side_effect(data):
             def _side_effect(view, length):
-                view[0:length] = data
+                view[0:len(data)] = data
             return _side_effect
 
         sock = self.mox.CreateMock(socket.socket)
-        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'ab')).AndReturn(2)
-        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'cd')).AndReturn(2)
-        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'ef')).AndReturn(2)
-        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'g\r')).AndReturn(2)
+        sock.recv_into(IsA(memoryview), 7).WithSideEffects(_get_side_effect(b'bcde')).AndReturn(4)
+        sock.recv_into(IsA(memoryview), 3).WithSideEffects(_get_side_effect(b'fgh')).AndReturn(3)
+        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'ij')).AndReturn(2)
+        sock.recv_into(IsA(memoryview), 2).WithSideEffects(_get_side_effect(b'k\r')).AndReturn(2)
         sock.recv_into(IsA(memoryview), 1).WithSideEffects(_get_side_effect(b'\n')).AndReturn(1)
         self.mox.ReplayAll()
-        line = self.pp._ProxyProtocolV1__read_pp_line(sock)
-        self.assertEqual(b'abcdefg\r\n', line)
+        line = self.pp._ProxyProtocolV1__read_pp_line(sock, b'a')
+        self.assertEqual(b'abcdefghijk\r\n', line)
 
     def test_read_pp_line_eof(self):
         sock = self.mox.CreateMock(socket.socket)
         sock.recv_into(IsA(memoryview), 2).AndReturn(0)
         self.mox.ReplayAll()
         with self.assertRaises(AssertionError):
-            self.pp._ProxyProtocolV1__read_pp_line(sock)
+            self.pp._ProxyProtocolV1__read_pp_line(sock, b'')
 
     def test_read_pp_line_long(self):
         sock = self.mox.CreateMock(socket.socket)
-        for i in range(53):
+        sock.recv_into(IsA(memoryview), 8).AndReturn(8)
+        for i in range(49):
             sock.recv_into(IsA(memoryview), 2).AndReturn(2)
         sock.recv_into(IsA(memoryview), 1).AndReturn(1)
         self.mox.ReplayAll()
-        line = self.pp._ProxyProtocolV1__read_pp_line(sock)
+        line = self.pp._ProxyProtocolV1__read_pp_line(sock, b'')
         self.assertEqual(b'\x00'*107, line)
 
     def test_handle(self):
@@ -68,7 +69,7 @@ class TestProxyProtocolV1(MoxTestBase):
         pp = PPEdgeServer(self, sock, 13)
         self.mox.StubOutWithMock(pp, '_ProxyProtocolV1__read_pp_line')
         self.mox.StubOutWithMock(pp, 'parse_pp_line')
-        pp._ProxyProtocolV1__read_pp_line(sock).AndReturn(b'the line')
+        pp._ProxyProtocolV1__read_pp_line(sock, b'').AndReturn(b'the line')
         pp.parse_pp_line(b'the line').AndReturn((13, 14))
         self.mox.ReplayAll()
         pp.handle(sock, None)
@@ -79,7 +80,7 @@ class TestProxyProtocolV1(MoxTestBase):
         sock.fileno = lambda: -1
         pp = PPEdgeServer(self, sock, (None, None))
         self.mox.StubOutWithMock(pp, '_ProxyProtocolV1__read_pp_line')
-        pp._ProxyProtocolV1__read_pp_line(sock).AndRaise(AssertionError)
+        pp._ProxyProtocolV1__read_pp_line(sock, b'').AndRaise(AssertionError)
         self.mox.ReplayAll()
         pp.handle(sock, None)
         self.assertTrue(pp.handle_called)

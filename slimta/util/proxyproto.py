@@ -67,9 +67,15 @@ class ProxyProtocolV1(object):
     #: while reading the proxy protocol header.
     invalid_pp_dest_address = (None, None)
 
-    def __read_pp_line(self, sock):
+    def __read_pp_line(self, sock, initial):
         buf = bytearray(107)
-        read = memoryview(buf)[0:0].tobytes()
+        buf[0:len(initial)] = initial
+        read = initial
+        while len(read) < 8:
+            where = memoryview(buf)[len(read):]
+            read_n = sock.recv_into(where, 8-len(read))
+            assert read_n, 'Received EOF during proxy protocol header'
+            read = memoryview(buf)[0:len(read)+read_n].tobytes()
         while len(read) < len(buf):
             where = memoryview(buf)[len(read):]
             try_read = min(len(where), 1 if read.endswith(b'\r') else 2)
@@ -138,7 +144,7 @@ class ProxyProtocolV1(object):
 
         """
         try:
-            line = self.__read_pp_line(sock)
+            line = self.__read_pp_line(sock, b'')
             log.recv(sock, line)
             src_addr, _ = self.parse_pp_line(line)
         except AssertionError as exc:
