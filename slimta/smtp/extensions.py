@@ -141,11 +141,11 @@ class Extensions(object):
         for k, v in self.extensions.items():
             if v:
                 try:
-                    value = str(v)
+                    value_str = str(v)
                 except ValueError:
                     pass
                 else:
-                    lines.append(' '.join((k, value)))
+                    lines.append(' '.join((k, value_str)))
             else:
                 lines.append(k)
         return '\r\n'.join(lines)
