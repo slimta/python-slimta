@@ -7,11 +7,23 @@
 
 - `QueueError` objects may now set the `reply` attribute to tell edge services
   what happened.
+- SMTP servers now advertize `SMTPUTF8` and clients will now use UTF-8
+  addresses when connected to servers that advertize it.
+
+### Removed
+
+- Dependence on [six][4] for Python 2/3 compatibility.
 
 ### Changed
 
 - The builtin edges now use `451` codes when a `QueueError` occurs, rather than
   `550`.
+- The `Bounce` class header and footer templates may now be bytestrings.
+
+### Fixed
+
+- Correctly throws `PermanentRelayError` instead of `ZeroDivisionError` for
+  SMTP MX relays when DNS returns no results.
 
 ## [3.0] - 2015-12-19
 
@@ -47,5 +59,6 @@
 [1]: http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
 [2]: https://github.com/saghul/pycares
 [3]: http://www.dnspython.org/
+[4]: https://pythonhosted.org/six/
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
