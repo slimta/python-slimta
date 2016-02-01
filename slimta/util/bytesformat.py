@@ -111,6 +111,13 @@ class BytesFormat(object):
         return b''.join(ret)
 
     def format(self, *args, **kwargs):
+        """Substitutes in the given positional and keyword arguments into the
+        original template string, replacing occurrences of ``{...}`` with the
+        correct argument's value.
+
+        :rtype: :py:obj:`bytes`
+
+        """
         return self._format(args, kwargs)
 
     def __repr__(self):
