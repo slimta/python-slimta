@@ -1,5 +1,0 @@
-
-[report]
-exclude_lines =
-    declare_namespace
-
