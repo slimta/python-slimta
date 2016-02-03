@@ -250,6 +250,15 @@ class SmtpRelayClient(RelayPoolClient):
             if self.client:
                 self.client.io.close()
 
+    def _get_error_reply(self, exc):
+        try:
+            if self.client.last_error.code == '421':
+                return self.client.last_error
+        except Exception:
+            pass
+        return Reply('421', '4.3.0 '+str(exc),
+                     command=self.current_command)
+
     def _run(self):
         result, envelope = self.poll()
         if not result:
@@ -270,10 +279,7 @@ class SmtpRelayClient(RelayPoolClient):
             result.set_exception(e)
         except SmtpError as e:
             if not result.ready():
-                reply = self.client.last_error
-                if not reply or reply.code != '421':
-                    reply = Reply('421', '4.3.0 '+str(e),
-                                  command=self.current_command)
+                reply = self._get_error_reply(e)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Timeout:
