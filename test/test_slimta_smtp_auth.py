@@ -16,6 +16,7 @@ class TestSmtpAuth(unittest.TestCase, MoxTestBase):
         super(TestSmtpAuth, self).setUp()
         self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.io = IO(self.sock)
         self.make_msgid = email.utils.make_msgid = lambda: '<test@example.com>'
 

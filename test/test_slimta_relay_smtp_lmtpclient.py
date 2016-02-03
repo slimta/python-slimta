@@ -19,6 +19,7 @@ class TestLmtpRelayClient(unittest.TestCase, MoxTestBase):
         super(TestLmtpRelayClient, self).setUp()
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.queue = self.mox.CreateMock(BlockingDeque)
         self.tls_args = {'test': 'test'}
 

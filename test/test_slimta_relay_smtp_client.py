@@ -21,6 +21,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         super(TestSmtpRelayClient, self).setUp()
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.queue = self.mox.CreateMock(BlockingDeque)
         self.tls_args = {'test': 'test'}
 
@@ -63,84 +64,67 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
             client._ehlo()
 
     def test_starttls(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.sendall(b'STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
-        sock.sendall(b'STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn(b'420 Stop\r\n')
+        tls_wrapper = self.mox.CreateMockAnything()
+        self.sock.sendall(b'STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
+        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.sock.sendall(b'STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'420 Stop\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, tls=self.tls_args, tls_wrapper=sock.tls_wrapper, tls_required=True)
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, tls_required=True)
         client._connect()
         client._starttls()
         with self.assertRaises(TransientRelayError):
             client._starttls()
 
     def test_handshake_tls_immediately(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
-        sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
+        tls_wrapper = self.mox.CreateMockAnything()
+        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, tls=self.tls_args, tls_wrapper=sock.tls_wrapper, tls_immediately=True, ehlo_as=b'test')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, tls_immediately=True, ehlo_as=b'test')
         client._connect()
         client._handshake()
 
     def test_handshake_starttls(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 STARTTLS\r\n')
-        sock.sendall(b'STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
+        tls_wrapper = self.mox.CreateMockAnything()
+        self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 STARTTLS\r\n')
+        self.sock.sendall(b'STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
+        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, tls=self.tls_args, tls_wrapper=sock.tls_wrapper, ehlo_as=b'test')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, ehlo_as=b'test')
         client._connect()
         client._handshake()
 
     def test_handshake_authenticate(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
-        sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
-        sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
+        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as=b'test')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as=b'test')
         client._connect()
         client._handshake()
 
     def test_handshake_authenticate_callable(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
-        sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
-        sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
+        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
         def yield_creds():
             yield 'test@example.com'
             yield 'passwd'
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, credentials=yield_creds, ehlo_as=b'test')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=yield_creds, ehlo_as=b'test')
         client._connect()
         client._handshake()
 
@@ -153,17 +137,13 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client._rset()
 
     def test_handshake_authenticate_badcreds(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        def socket_creator(address):
-            return sock
-        sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
-        sock.sendall(b'EHLO test\r\n')
-        sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
-        sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
-        sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
+        self.sock.sendall(b'EHLO test\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 AUTH PLAIN\r\n')
+        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as=b'test')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as=b'test')
         client._connect()
         with self.assertRaises(PermanentRelayError):
             client._handshake()

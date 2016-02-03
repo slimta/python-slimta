@@ -50,13 +50,20 @@ log = logging.getSocketLogger(__name__)
 
 class IO(object):
 
-    def __init__(self, socket, tls_wrapper=None):
+    def __init__(self, socket, tls_wrapper=None, address=None):
         self.socket = socket
+        self._address = None
         if tls_wrapper:
             self._tls_wrapper = tls_wrapper
 
         self.send_buffer = BytesIO()
         self.recv_buffer = b''
+
+    @property
+    def address(self):
+        if not self._address:
+            self._address = self.socket.getpeername()
+        return self._address
 
     @property
     def encrypted(self):
