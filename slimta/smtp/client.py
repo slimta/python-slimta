@@ -58,6 +58,9 @@ class Client(object):
         self.io = IO(socket, tls_wrapper)
         self.reply_queue = []
 
+        #: |Reply| of the last error received from the server.
+        self.last_error = None
+
         #: :class:`Extensions` object of the client, populated once the EHLO
         #: command returns its response.
         self.extensions = Extensions()
@@ -70,6 +73,8 @@ class Client(object):
             except IndexError:
                 return None
             reply.recv(self.io)
+            if reply.is_error():
+                self.last_error = reply
 
     def _encode(self, thing):
         if 'SMTPUTF8' in self.extensions:
