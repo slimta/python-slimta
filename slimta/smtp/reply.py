@@ -49,11 +49,14 @@ class Reply(object):
                     ENHANCEDSTATUSCODES_ string.
     :param command: The command that is waiting for the reply, typically for
                     logging or debugging.
+    :param address: Information about the remote host that gave the reply, see
+                    :py:mod:`socket` for details.
 
     """
 
-    def __init__(self, code=None, message=None, command=None):
+    def __init__(self, code=None, message=None, command=None, address=None):
         self.command = command
+        self.address = address
 
         #: Holds the reply code, which can only be set to a string containing
         #: three digits.
@@ -142,6 +145,7 @@ class Reply(object):
 
         """
         self.code, self.message = io.recv_reply()
+        self.address = io.address
 
     def send(self, io, flush=False):
         """Sends the reply to the session.

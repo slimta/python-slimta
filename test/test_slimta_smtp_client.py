@@ -12,6 +12,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         super(TestSmtpClient, self).setUp()
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.tls_args = {'test': 'test'}
 
     def test_get_reply(self):
@@ -69,6 +70,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
         sock.fileno = lambda: -1
+        sock.getpeername = lambda: ('test', 0)
         sock.sendall(b'STARTTLS\r\n')
         sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
         sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
@@ -226,6 +228,7 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         super(TestLmtpClient, self).setUp()
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.tls_args = {'test': 'test'}
 
     def test_ehlo_invalid(self):

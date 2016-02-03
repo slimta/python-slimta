@@ -87,11 +87,12 @@ class SmtpRelayClient(RelayPoolClient):
                 self.socket = self.socket_creator(self.address)
         except socket_error:
             reply = Reply('451', '4.3.0 Connection failed',
-                          command=self.current_command)
+                          command=self.current_command, address=self.address)
             raise SmtpRelayError.factory(reply)
         else:
             log.connect(self.socket, self.address)
-        self.client = self._client_class(self.socket, self.tls_wrapper)
+        self.client = self._client_class(self.socket, self.tls_wrapper,
+                                         self.address)
 
     @current_command(b'[BANNER]')
     def _banner(self):
@@ -196,7 +197,9 @@ class SmtpRelayClient(RelayPoolClient):
             try:
                 envelope.encode_7bit(self.binary_encoder)
             except UnicodeError:
-                reply = Reply('554', '5.6.3 Conversion not allowed')
+                reply = Reply('554', '5.6.3 Conversion not allowed',
+                              command=b'[data conversion]',
+                              address=self.address)
                 raise SmtpRelayError.factory(reply)
 
     def _send_envelope(self, rcpt_results, envelope):
@@ -257,7 +260,7 @@ class SmtpRelayClient(RelayPoolClient):
         except Exception:
             pass
         return Reply('421', '4.3.0 '+str(exc),
-                     command=self.current_command)
+                     command=self.current_command, address=self.address)
 
     def _run(self):
         result, envelope = self.poll()
@@ -284,7 +287,8 @@ class SmtpRelayClient(RelayPoolClient):
                 result.set_exception(relay_error)
         except Timeout:
             if not result.ready():
-                reply = Reply(command=self.current_command).copy(timed_out)
+                reply = Reply(command=self.current_command,
+                              address=self.address).copy(timed_out)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Exception as e:

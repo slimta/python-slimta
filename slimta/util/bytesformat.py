@@ -105,7 +105,9 @@ class BytesFormat(object):
                     else:
                         ret.append(b'{' + value + b'}')
                 else:
-                    if not isinstance(result, bytes):
+                    try:
+                        result = bytes(result)
+                    except TypeError:
                         result = result.encode('utf-8')
                     ret.append(result)
         return b''.join(ret)

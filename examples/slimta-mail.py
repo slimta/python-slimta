@@ -69,7 +69,14 @@ def _start_inbound_edge(args, queue):
                     data_timeout=30.0)
     edge.start()
 
-    return edge
+    ssl_edge = SmtpEdge(('', args.inbound_ssl_port), queue,
+                        validator_class=EdgeValidators,
+                        auth=[b'PLAIN', b'LOGIN'],
+                        tls=tls, tls_immediately=True,
+                        command_timeout=20.0, data_timeout=30.0)
+    ssl_edge.start()
+
+    return edge, ssl_edge
 
 
 def _start_outbound_relay(args):
@@ -82,7 +89,7 @@ def _start_outbound_relay(args):
     return relay
 
 
-def _start_outbound_queue(args, relay):
+def _start_outbound_queue(args, relay, inbound_queue):
     from slimta.queue.dict import DictStorage
     from slimta.queue import Queue
     from slimta.policy.headers import AddDateHeader, \
@@ -93,7 +100,7 @@ def _start_outbound_queue(args, relay):
     meta_db = {}
 
     storage = DictStorage(envelope_db, meta_db)
-    queue = Queue(storage, relay)
+    queue = Queue(storage, relay, bounce_queue=inbound_queue)
     queue.start()
 
     queue.add_policy(AddDateHeader())
@@ -136,14 +143,7 @@ def _start_outbound_edge(args, queue):
                     command_timeout=20.0, data_timeout=30.0)
     edge.start()
 
-    ssl_edge = SmtpEdge(('', args.outbound_ssl_port), queue,
-                        validator_class=EdgeValidators,
-                        auth=[b'PLAIN', b'LOGIN'],
-                        tls=tls, tls_immediately=True,
-                        command_timeout=20.0, data_timeout=30.0)
-    ssl_edge.start()
-
-    return edge, ssl_edge
+    return edge
 
 
 def _get_tls_args(args):
@@ -186,12 +186,12 @@ def main():
     group.add_argument('--inbound-port', dest='inbound_port', type=int,
                        metavar='PORT', default=1025,
                        help='Listening port number for inbound mail')
+    group.add_argument('--inbound-ssl-port', dest='inbound_ssl_port',
+                       type=int, metavar='PORT', default=1465,
+                       help='Listening SSL-only port number for inbound mail')
     group.add_argument('--outbound-port', dest='outbound_port', type=int,
                        metavar='PORT', default=1587,
                        help='Listening port number for outbound mail')
-    group.add_argument('--outbound-ssl-port', dest='outbound_ssl_port',
-                       type=int, metavar='PORT', default=1465,
-                       help='Listening SSL-only port number for outbound mail')
 
     group = parser.add_argument_group('SSL/TLS Configuration')
     group.add_argument('--cert-file', dest='certfile', metavar='FILE',
@@ -215,13 +215,13 @@ def main():
 
     args = parser.parse_args()
 
-    relay = _start_inbound_relay(args)
-    queue = _start_inbound_queue(args, relay)
-    _start_inbound_edge(args, queue)
+    in_relay = _start_inbound_relay(args)
+    in_queue = _start_inbound_queue(args, in_relay)
+    _start_inbound_edge(args, in_queue)
 
-    relay = _start_outbound_relay(args)
-    queue = _start_outbound_queue(args, relay)
-    _start_outbound_edge(args, queue)
+    out_relay = _start_outbound_relay(args)
+    out_queue = _start_outbound_queue(args, out_relay, in_queue)
+    _start_outbound_edge(args, out_queue)
 
     _daemonize(args)
 
@@ -233,5 +233,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -51,11 +51,13 @@ class Client(object):
                         dictionary, creates a new encrypted socket, performs
                         the TLS handshake, and returns it. The default uses
                         :class:`~gevent.ssl.SSLSocket`.
+    :param address: Remote address associated with the socket, which will
+                    default to a call to :py:func:`~socket.socket.getpeername`.
 
     """
 
-    def __init__(self, socket, tls_wrapper=None):
-        self.io = IO(socket, tls_wrapper)
+    def __init__(self, socket, tls_wrapper=None, address=None):
+        self.io = IO(socket, tls_wrapper, address)
         self.reply_queue = []
 
         #: |Reply| of the last error received from the server.
@@ -371,8 +373,8 @@ class LmtpClient(Client):
 
     """
 
-    def __init__(self, socket, tls_wrapper=None):
-        super(LmtpClient, self).__init__(socket, tls_wrapper)
+    def __init__(self, socket, tls_wrapper=None, address=None):
+        super(LmtpClient, self).__init__(socket, tls_wrapper, address)
         self.rcpttos = []
 
     def ehlo(self, ehlo_as):

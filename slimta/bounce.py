@@ -56,8 +56,7 @@ Destination host responded:
 --{boundary}
 Content-Type: message/delivery-status
 
-Remote-MTA: dns; {client_name} [{client_ip}]
-Diagnostic-Code: smtp; {code} {message}
+{delivery_info}
 
 --{boundary}
 Content-Type: {content_type}
@@ -128,6 +127,15 @@ class Bounce(Envelope):
     #: |Envelope| itself.
     receiver = None
 
+    _received_from_mta = BytesFormat(
+        b"""Received-From-MTA: dns; {client_name} ({client_ip})""",
+        mode='remove')
+
+    _remote_mta = BytesFormat(b"""Remote-MTA: dns; {host}""", mode='remove')
+
+    _diagnostic_code = BytesFormat(
+        b"""Diagnostic-Code: smtp; {reply}""", mode='remove')
+
     def __init__(self, envelope, reply, headers_only=False):
         super(Bounce, self).__init__(sender=self.sender,
                                      recipients=[envelope.sender])
@@ -154,6 +162,21 @@ class Bounce(Envelope):
             template_str = re.sub(br'\r?\n', br'\r\n', template_str)
             cls.footer_template = BytesFormat(template_str, mode='remove')
 
+    def _get_delivery_info(self, envelope, reply):
+        ret = []
+        if envelope.client:
+            ret.append(self._received_from_mta.format(
+                client_name=envelope.client.get('name', 'unknown'),
+                client_ip=envelope.client.get('ip', 'unknown')))
+        if reply:
+            host = reply.address
+            if host:
+                if not isinstance(reply.address, (str, bytes)):
+                    host = reply.address[0]
+                ret.append(self._remote_mta.format(host=host))
+            ret.append(self._diagnostic_code.format(reply=reply))
+        return b'\r\n'.join(ret)
+
     def _get_substitution_table(self, envelope, reply, headers_only):
         rendered_rcpts = self.recipient_join.join(envelope.recipients).encode(
             'ascii', 'xmlcharrefreplace')
@@ -161,11 +184,10 @@ class Bounce(Envelope):
         return {'boundary': 'boundary_={0}'.format(uuid.uuid4().hex),
                 'sender': envelope.sender,
                 'recipients': rendered_rcpts,
-                'client_name': b'unknown',
-                'client_ip': b'unknown',
-                'dest_host': b'unknown',
-                'dest_port': b'unknown',
-                'protocol': b'SMTP',
+                'delivery_info': self._get_delivery_info(envelope, reply),
+                'client_name': envelope.client.get('name', b'unknown'),
+                'client_ip': envelope.client.get('ip', b'unknown'),
+                'protocol': envelope.client.get('protocol', b'unknown'),
                 'content_type': ctype,
                 'code': reply.code,
                 'message': reply.message}
@@ -180,5 +202,6 @@ class Bounce(Envelope):
             new_payload.write(message_data)
         new_payload.write(self.footer_template.format(**sub_table))
         self.parse(new_payload.getvalue())
+
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
