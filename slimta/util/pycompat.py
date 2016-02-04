@@ -56,7 +56,7 @@ httplib = httplib_mod
 reprlib = reprlib_mod
 
 
-if PY2:  # pragma: no cover
+if sys.version_info < (3, 4):  # pragma: no cover
     orig_HTTPConnection = httplib_mod.HTTPConnection
     orig_HTTPSConnection = httplib_mod.HTTPSConnection
 
