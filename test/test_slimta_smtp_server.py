@@ -114,7 +114,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.extensions.reset()
         s.extensions.add('TEST')
         s.handle()
-        self.assertEqual(b'there', s.ehlo_as)
+        self.assertEqual('there', s.ehlo_as)
 
     def test_helo(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
@@ -125,7 +125,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.handle()
-        self.assertEqual(b'there', s.ehlo_as)
+        self.assertEqual('there', s.ehlo_as)
 
     def test_starttls(self):
         sock = self.mox.CreateMockAnything()
@@ -164,7 +164,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
-        self.assertEqual(b'there', s.ehlo_as)
+        self.assertEqual('there', s.ehlo_as)
 
     def test_auth(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
