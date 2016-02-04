@@ -16,7 +16,8 @@ Python's great community.
 The `python-slimta` project is released under the [MIT License][4]. It requires
 Python 2.7+ or 3.3+.
 
-[![Build Status](http://ci.slimta.org/job/python-slimta/badge/icon)](http://ci.slimta.org/job/python-slimta/)
+[![Build Status](https://travis-ci.org/slimta/python-slimta.svg?branch=master)](https://travis-ci.org/slimta/python-slimta)
+[![Coverage Status](https://coveralls.io/repos/github/slimta/python-slimta/badge.svg?branch=master)](https://coveralls.io/github/slimta/python-slimta?branch=master)
 [![PyPI](https://img.shields.io/pypi/v/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
 [![PyPI](https://img.shields.io/pypi/pyversions/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
 [![PyPI](https://img.shields.io/pypi/l/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
