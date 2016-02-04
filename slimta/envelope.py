@@ -71,7 +71,7 @@ class Envelope(object):
         #: message headers.
         self.headers = headers
 
-        #: String of message data, not including headers.
+        #: Bytestring of message data, not including headers.
         self.message = message
 
         #: Dictionary of information about the client that sent the message.
@@ -143,7 +143,7 @@ class Envelope(object):
     def flatten(self):
         """Produces two strings representing the headers and message body.
 
-        :returns: Tuple of two strings: ``(header_data, message_data)``
+        :returns: Tuple of two bytestrings: ``(header_data, message_data)``
 
         """
         header_data = self._msg_generator(self.headers)

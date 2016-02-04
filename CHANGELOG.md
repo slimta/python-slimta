@@ -7,8 +7,8 @@
 
 - `QueueError` objects may now set the `reply` attribute to tell edge services
   what happened.
-- SMTP servers now advertize `SMTPUTF8` and clients will now use UTF-8
-  addresses when connected to servers that advertize it.
+- SMTP servers now advertize `SMTPUTF8` and clients will now use UTF-8 sender
+  and recipient addresses when connected to servers that advertize it.
 - When creating an edge or relay service, now checks for the existence of any
   given TLS key or cert files before proceeding.
 - Support for [proxy protocol][1] version 2 and version auto-detection.
@@ -22,6 +22,8 @@
 - The builtin edges now use `451` codes when a `QueueError` occurs, rather than
   `550`.
 - The `Bounce` class header and footer templates may now be bytestrings.
+- `Envelope.flatten` now returns bytestrings on Python 3, to avoid unnecessary
+  encoding and decoding of message data.
 
 ### Fixed
 
