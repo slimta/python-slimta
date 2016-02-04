@@ -257,7 +257,8 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
+        ehlo_as = ehlo_as.decode('utf-8')
+        reply = Reply('250', 'Hello '+ehlo_as)
         reply.enhanced_status_code = False
         self._call_custom_handler('EHLO', reply, ehlo_as)
 
@@ -277,7 +278,8 @@ class Server(object):
             bad_sequence.send(self.io)
             return
 
-        reply = Reply('250', 'Hello '+ehlo_as.decode('ascii'))
+        ehlo_as = ehlo_as.decode('utf-8')
+        reply = Reply('250', 'Hello '+ehlo_as)
         reply.enhanced_status_code = False
         self._call_custom_handler('HELO', reply, ehlo_as)
         reply.send(self.io)

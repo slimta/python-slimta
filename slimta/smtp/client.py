@@ -163,6 +163,8 @@ class Client(object):
         ehlo.enhanced_status_code = False
         self.reply_queue.append(ehlo)
 
+        if not isinstance(ehlo_as, bytes):
+            ehlo_as = ehlo_as.encode('ascii')
         command = b'EHLO '+ehlo_as
         self.io.send_command(command)
 
@@ -185,6 +187,8 @@ class Client(object):
         helo.enhanced_status_code = False
         self.reply_queue.append(helo)
 
+        if not isinstance(helo_as, bytes):
+            helo_as = helo_as.encode('ascii')
         command = b'HELO '+helo_as
         self.io.send_command(command)
 
@@ -396,6 +400,8 @@ class LmtpClient(Client):
         lhlo.enhanced_status_code = False
         self.reply_queue.append(lhlo)
 
+        if not isinstance(lhlo_as, bytes):
+            lhlo_as = lhlo_as.encode('ascii')
         command = b'LHLO '+lhlo_as
         self.io.send_command(command)
 

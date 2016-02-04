@@ -49,7 +49,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 EXTEN\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
-        reply = client.ehlo(b'there')
+        reply = client.ehlo('there')
         self.assertEqual('250', reply.code)
         self.assertEqual('Hello there', reply.message)
         self.assertEqual(b'EHLO', reply.command)
@@ -62,7 +62,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
-        reply = client.helo(b'there')
+        reply = client.helo('there')
         self.assertEqual('250', reply.code)
         self.assertEqual('Hello', reply.message)
         self.assertEqual(b'HELO', reply.command)
@@ -233,11 +233,11 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
 
     def test_ehlo_invalid(self):
         client = LmtpClient(self.sock)
-        self.assertRaises(NotImplementedError, client.ehlo, b'there')
+        self.assertRaises(NotImplementedError, client.ehlo, 'there')
 
     def test_helo_invalid(self):
         client = LmtpClient(self.sock)
-        self.assertRaises(NotImplementedError, client.helo, b'there')
+        self.assertRaises(NotImplementedError, client.helo, 'there')
 
     def test_lhlo(self):
         self.sock.sendall(b'LHLO there\r\n')
@@ -245,7 +245,7 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250 EXTEN\r\n')
         self.mox.ReplayAll()
         client = LmtpClient(self.sock)
-        reply = client.lhlo(b'there')
+        reply = client.lhlo('there')
         self.assertEqual('250', reply.code)
         self.assertEqual('Hello there', reply.message)
         self.assertEqual(b'LHLO', reply.command)
