@@ -1,7 +1,7 @@
 
 # Change Log
 
-## [3.1] - _Unreleased_
+## [3.1] - 2016-02-04
 
 ### Added
 
