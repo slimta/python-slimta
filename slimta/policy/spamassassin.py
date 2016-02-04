@@ -75,14 +75,7 @@ class SpamAssassin(QueuePolicy):
     def __init__(self, address=None, timeout=None, socket_creator=None):
         self.address = address or ('127.0.0.1', 783)
         self.timeout = timeout
-        self.custom_socket_creator = socket_creator
-
-    def _socket_creator(self, address):
-        if self.custom_socket_creator:
-            return self.custom_socket_creator(address)
-        socket = create_connection(address)
-        log.connect(socket, address)
-        return socket
+        self._socket_creator = socket_creator or create_connection
 
     def _build_request_str(self, header_data, message_data):
         reqfp = BytesIO()
@@ -121,7 +114,7 @@ class SpamAssassin(QueuePolicy):
 
     def _recv_response(self, socket):
         first_line, headers, body = self._recv_all(socket)
-        symbols = symbols_pattern.findall(body)
+        symbols = [s.decode('ascii') for s in symbols_pattern.findall(body)]
         match = first_line_pattern.match(first_line)
         if not match:
             raise SpamAssassinError()
@@ -136,7 +129,7 @@ class SpamAssassin(QueuePolicy):
         without adding the spam headers.
 
         :param message: Message to scan.
-        :type message: :py:obj:`str` or :class:`~slimta.envelope.Envelope`
+        :type message: :py:obj:`bytes` or :class:`~slimta.envelope.Envelope`
         :returns: Tuple of a spammy boolean followed by a list of the symbols
                   matched in the scan.
 
@@ -150,6 +143,7 @@ class SpamAssassin(QueuePolicy):
         socket = None
         try:
             socket = self._socket_creator(self.address)
+            log.connect(socket, self.address)
             self._send_request(socket, header_data, message_data)
             return self._recv_response(socket)
         finally:
@@ -159,9 +153,10 @@ class SpamAssassin(QueuePolicy):
 
     def apply(self, envelope):
         spammy, symbols = self.scan(envelope)
+        del envelope.headers['X-Spam-Status']
         if spammy:
             envelope.headers['X-Spam-Status'] = 'YES'
-            envelope.headers['X-Spam-Symbols'] = ','.join(symbols)
+            envelope.headers['X-Spam-Symbols'] = ', '.join(symbols)
         else:
             envelope.headers['X-Spam-Status'] = 'NO'
 
