@@ -1,0 +1,13 @@
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+install:
+  - travis_retry pip install -r test/requirements.txt
+  - travis_retry pip install coveralls
+  - travis_retry pip install -e .
+script: py.test --cov=slimta
+after_success:
+  - coveralls

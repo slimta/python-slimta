@@ -1,7 +1,6 @@
-nose
+pytest
+pytest-cov
 unittest2
 mox3
 testfixtures
-coverage
-nosexcover
 flake8

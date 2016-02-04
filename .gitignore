@@ -1,11 +1,11 @@
 build/
 dist/
+.cache/
 *.egg-info/
 .venv*/
 .coverage
 nosetests.xml
 coverage.xml
-examples/*.db
 examples/cert.pem
 *.pyc
 *.pyo
