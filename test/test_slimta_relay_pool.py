@@ -6,13 +6,13 @@ from slimta.relay.pool import RelayPool, RelayPoolClient
 from slimta.envelope import Envelope
 
 
-class TestPool(RelayPool):
+class FakePool(RelayPool):
 
     def add_client(self):
-        return TestClient(self.queue)
+        return FakeClient(self.queue)
 
 
-class TestClient(RelayPoolClient):
+class FakeClient(RelayPoolClient):
 
     def _run(self):
         ret = self.poll()
@@ -24,7 +24,7 @@ class TestClient(RelayPoolClient):
 class TestRelayPool(unittest.TestCase):
 
     def test_add_remove_client(self):
-        pool = TestPool()
+        pool = FakePool()
         pool.queue.append(True)
         pool._add_client()
         pool_copy = pool.pool.copy()
@@ -34,7 +34,7 @@ class TestRelayPool(unittest.TestCase):
         self.assertFalse(pool.pool)
 
     def test_add_remove_client_morequeued(self):
-        pool = TestPool()
+        pool = FakePool()
         pool.queue.append(True)
         pool.queue.append(True)
         pool._add_client()
@@ -50,7 +50,7 @@ class TestRelayPool(unittest.TestCase):
 
     def test_attempt(self):
         env = Envelope()
-        pool = TestPool()
+        pool = FakePool()
         ret = pool.attempt(env, 0)
         self.assertEqual('test', ret)
 
