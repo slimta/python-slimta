@@ -118,7 +118,7 @@ class EdgeServer(Edge, gevent.Greenlet):
 
     def __init__(self, listener, queue, pool=None, hostname=None):
         super(EdgeServer, self).__init__(queue, hostname)
-        spawn = pool or 'default'
+        spawn = 'default' if pool is None else pool
         self.server = StreamServer(listener, self._handle, spawn=spawn)
 
     def _handle(self, socket, address):
