@@ -97,7 +97,7 @@ class PtrLookup(gevent.Greenlet):
     def _run(self):
         try:
             hostname, _, _ = socket.gethostbyaddr(self.ip)
-        except (socket.herror, gevent.GreenletExit):
+        except (socket.herror, socket.gaierror, gevent.GreenletExit):
             pass
         except Exception:
             logging.log_exception(__name__, query=self.ip)
