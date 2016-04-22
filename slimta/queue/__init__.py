@@ -438,8 +438,9 @@ class Queue(Greenlet):
             envelope, attempts = self.store.get(id)
         except KeyError:
             return
-        self.active_ids.add(id)
-        self._pool_spawn('relay', self._attempt, id, envelope, attempts)
+        if id not in self.active_ids:
+            self.active_ids.add(id)
+            self._pool_spawn('relay', self._attempt, id, envelope, attempts)
 
     def _check_ready(self, now):
         last_i = 0
