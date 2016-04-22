@@ -42,6 +42,7 @@ class SocketLogger(object):
     def __init__(self, log):
         from slimta.logging import logline
         self.log = partial(logline, log.debug, 'fd')
+        self.log_error = partial(logline, log.error, 'fd')
 
     def send(self, socket, data):
         """Logs a socket :meth:`~socket.socket.send()` operation along with the
@@ -129,6 +130,23 @@ class SocketLogger(object):
 
         """
         self.log(socket.fileno(), 'close')
+
+    def error(self, socket, exc, address=None):
+        """Logs a :py:exc:`socket.error` exception. Logged at the ``ERROR``
+        level and does not include a stack trace.
+
+        :param socket: The socket that threw the error, if available.
+        :param exc: The exception that was thrown.
+        :param address: The remote address that threw the error, if available.
+
+        """
+        kwargs = {'message': str(exc), 'args': exc.args}
+        fileno = 'none'
+        if socket:
+            fileno = socket.fileno()
+        if address:
+            kwargs['address'] = address
+        self.log_error(fileno, 'error', **kwargs)
 
     def proxyproto_success(self, socket, src_addr):
         """Logs a successful proxy protocol header, with the new source address

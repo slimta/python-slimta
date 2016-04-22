@@ -33,14 +33,6 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
         client._connect()
 
-    def test_connect_failure(self):
-        def socket_creator(address):
-            raise socket_error(None, None)
-        self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=socket_creator)
-        with self.assertRaises(TransientRelayError):
-            client._connect()
-
     def test_banner(self):
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'420 Not Welcome\r\n')
@@ -398,6 +390,22 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         with self.assertRaises(ValueError):
             client._run()
         with self.assertRaises(ValueError):
+            result.get_nowait()
+
+    def test_run_socket_error(self):
+        result = AsyncResult()
+        env = Envelope('sender@example.com', ['rcpt@example.com'])
+        env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
+        queue = BlockingDeque()
+        queue.append((result, env))
+        self.sock.recv(IsA(int)).AndRaise(socket_error(None, None))
+        self.sock.sendall(b'QUIT\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
+        self.sock.close()
+        self.mox.ReplayAll()
+        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client._run()
+        with self.assertRaises(TransientRelayError):
             result.get_nowait()
 
     def test_run_smtperror(self):

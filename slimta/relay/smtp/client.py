@@ -28,7 +28,7 @@ from gevent import Timeout
 from gevent.socket import create_connection
 
 from slimta.smtp import SmtpError
-from slimta.smtp.reply import Reply, timed_out
+from slimta.smtp.reply import Reply, timed_out, connection_failed
 from slimta.smtp.client import Client
 from slimta import logging
 from ..pool import RelayPoolClient
@@ -82,15 +82,9 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'[CONNECT]')
     def _connect(self):
-        try:
-            with Timeout(self.connect_timeout):
-                self.socket = self.socket_creator(self.address)
-        except socket_error:
-            reply = Reply('451', '4.3.0 Connection failed',
-                          command=self.current_command, address=self.address)
-            raise SmtpRelayError.factory(reply)
-        else:
-            log.connect(self.socket, self.address)
+        with Timeout(self.connect_timeout):
+            self.socket = self.socket_creator(self.address)
+        log.connect(self.socket, self.address)
         self.client = self._client_class(self.socket, self.tls_wrapper,
                                          self.address)
 
@@ -289,6 +283,13 @@ class SmtpRelayClient(RelayPoolClient):
             if not result.ready():
                 reply = Reply(command=self.current_command,
                               address=self.address).copy(timed_out)
+                relay_error = SmtpRelayError.factory(reply)
+                result.set_exception(relay_error)
+        except socket_error as exc:
+            log.error(self.socket, exc, self.address)
+            if not result.ready():
+                reply = Reply(command=self.current_command,
+                              address=self.address).copy(connection_failed)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
         except Exception as e:
