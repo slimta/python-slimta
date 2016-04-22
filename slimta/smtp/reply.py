@@ -34,7 +34,7 @@ from slimta.util import pycompat
 
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
-                    'tls_failure', 'invalid_credentials']
+                    'connection_failed', 'tls_failure', 'invalid_credentials']
 
 message_esc_pattern = re.compile(r'^([245]\.\d\d?\d?\.\d\d?\d?)\s+')
 esc_pattern = re.compile(r'^([245])\.(\d\d?\d?)\.(\d\d?\d?)$')
@@ -254,6 +254,9 @@ unhandled_error = Reply('421', '4.3.0 Unhandled system error')
 
 #: Reply sent when a TLS negotiation error occurs.
 tls_failure = Reply('421', '4.7.0 TLS negotiation failed')
+
+#: Reply sent when a connection fails unexpectedly.
+connection_failed = Reply('451', '4.3.0 Connection failed')
 
 #: Reply sent when the server times out waiting for data from the client.
 timed_out = Reply('421', '4.4.2 Connection timed out')
