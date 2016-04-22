@@ -2,6 +2,7 @@ import unittest2 as unittest
 
 from slimta.smtp.reply import Reply
 from slimta.smtp.io import IO
+from slimta.util.pycompat import PY3
 
 
 class TestSmtpReply(unittest.TestCase):
@@ -30,12 +31,16 @@ class TestSmtpReply(unittest.TestCase):
         self.assertEqual(expected, repr(r))
 
     def test_str(self):
-        r = Reply('250', '2.1.0 Ok')
-        self.assertEqual('250 2.1.0 Ok', str(r))
+        if PY3:
+            r = Reply('250', '2.1.0 Ok \U0001f44d')
+            self.assertEqual('250 2.1.0 Ok \U0001f44d', str(r))
+        else:
+            r = Reply('250', u'2.1.0 Ok \U0001f44d')
+            self.assertEqual('250 2.1.0 Ok \xf0\x9f\x91\x8d', str(r))
 
     def test_bytes(self):
-        r = Reply('250', '2.1.0 Ok')
-        self.assertEqual(b'250 2.1.0 Ok', bytes(r))
+        r = Reply('250', u'2.1.0 Ok \U0001f44d')
+        self.assertEqual(b'250 2.1.0 Ok \xf0\x9f\x91\x8d', bytes(r))
 
     def test_is_error(self):
         replies = [Reply(str(i)+'50', 'Test') for i in range(1, 6)]
