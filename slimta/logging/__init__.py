@@ -38,7 +38,7 @@ from .queuestorage import QueueStorageLogger
 from .http import HttpLogger
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
-           'getHttpLogger', 'log_exception']
+           'getHttpLogger', 'log_exception', 'parseline']
 
 threading._DummyThread._Thread__stop = lambda x: 42
 
