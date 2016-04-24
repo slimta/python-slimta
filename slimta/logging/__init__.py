@@ -45,8 +45,8 @@ threading._DummyThread._Thread__stop = lambda x: 42
 
 def getSocketLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`SocketLogger` object to provide limited and consistent logging
-    output for socket operations.
+    :class:`~slimta.logging.socket.SocketLogger` object to provide limited and
+    consistent logging output for socket operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`~slimta.logging.socket.SocketLogger`
@@ -58,7 +58,8 @@ def getSocketLogger(name):
 
 def getSubprocessLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`SubprocessLogger` object to provide limited and consistent
+    :class:`~slimta.logging.subprocess.SubprocessLogger` object to provide
+    limited and consistent
     logging output for subprocess operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
@@ -71,8 +72,8 @@ def getSubprocessLogger(name):
 
 def getQueueStorageLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`QueueStorageLogger` object to provide limited and consistent
-    logging output for |QueueStorage| operations.
+    :class:`~slimta.logging.queuestorage.QueueStorageLogger` object to provide
+    limited and consistent logging output for |QueueStorage| operations.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`~slimta.logging.queuestorage.QueueStorageLogger`
@@ -84,8 +85,9 @@ def getQueueStorageLogger(name):
 
 def getHttpLogger(name):
     """Wraps the result of :py:func:`logging.getLogger()` in a
-    :class:`HttpLogger` object to provide limited and consistent logging output
-    for WSGI-style requests and responses and other HTTP-related logs.
+    :class:`~slimta.logging.http.HttpLogger` object to provide limited and
+    consistent logging output for WSGI-style requests and responses and other
+    HTTP-related logs.
 
     :param name: ``name`` as passed in to :py:func:`logging.getLogger()`.
     :rtype: :class:`~slimta.logging.http.HttpLogger`
@@ -165,9 +167,9 @@ def parseline(line):
     """Given a log line generated from :mod:`slimta.logging`, return a
     four-tuple of the following:
 
-    #. The log type -- e.g. `'socket'`
+    #. The log type -- e.g. ``'socket'``
     #. The log ID based on type -- e.g. a file descriptor or PID
-    #. The log operation -- e.g. `'connect' or `'popen'`
+    #. The log operation -- e.g. ``'connect'`` or ``'popen'``
     #. The log data, a dictionary of relevant information
 
     :param line: The log line to parse, with or without new-line characters.
