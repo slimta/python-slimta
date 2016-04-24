@@ -108,16 +108,17 @@ def log_exception(name, **kwargs):
     type, value, tb = sys.exc_info()
     if not value:
         return
-    exc_repr = reprlib.Repr()
-    exc_repr.maxstring = 1000
+    tb_repr = reprlib.Repr()
+    tb_repr.maxstring = 10000
     logger = logging.getLogger(name)
     data = kwargs.copy()
     data['message'] = str(value)
-    data['traceback'] = traceback.format_exception(type, value, tb)
     data['args'] = value.args
-    data_str = ' '.join(['='.join((key, exc_repr.repr(val)))
+    tb_str = traceback.format_exception(type, value, tb)
+    data_str = ' '.join(['='.join((key, log_repr.repr(val)))
                          for key, val in sorted(data.items())])
-    logger.error('exception:{0}:unhandled {1}'.format(type.__name__, data_str))
+    logger.error('exception:{0}:unhandled {1} traceback={2}'.format(
+        type.__name__, data_str, tb_repr.repr(tb_str)))
 
 
 log_repr = reprlib.Repr()
@@ -133,7 +134,7 @@ def logline(log, type, typeid, operation, **data):
         log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 
 
-parseline_pattern = re.compile(r'^([^:]+):([^:]+):(\S+) ?(.*)$')
+parseline_pattern = re.compile(r'^([^:]+):([^:]+):(\S+) ?')
 data_item_pattern = re.compile('^([^=]+)=')
 
 
@@ -161,10 +162,23 @@ def _parseline_data(remaining, data):
 
 
 def parseline(line):
+    """Given a log line generated from :mod:`slimta.logging`, return a
+    four-tuple of the following:
+
+    #. The log type -- e.g. `'socket'`
+    #. The log ID based on type -- e.g. a file descriptor or PID
+    #. The log operation -- e.g. `'connect' or `'popen'`
+    #. The log data, a dictionary of relevant information
+
+    :param line: The log line to parse, with or without new-line characters.
+    :raises: ValueError
+
+    """
     match = parseline_pattern.match(line)
     if not match:
         raise ValueError(line)
-    type, id, op, data_str = match.groups()
+    type, id, op = match.groups()
+    data_str = line[match.end(0):]
     return type, id, op, _parseline_data(data_str, {})
 
 
