@@ -33,7 +33,7 @@ import time
 
 from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
-from slimta.logging import log_exception
+from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.util import validate_tls
 from slimta.util.dns import DNSResolver, DNSError
@@ -225,7 +225,7 @@ class MxSmtpRelay(Relay):
                 reply = Reply('550', '5.1.2 '+msg)
                 raise PermanentRelayError(msg, reply)
             except DNSError:
-                log_exception(__name__)
+                logging.log_exception(__name__)
                 msg = 'DNS lookup failed'
                 reply = Reply('451', '4.4.3 '+msg)
                 raise TransientRelayError(msg, reply)

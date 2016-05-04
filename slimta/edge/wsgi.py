@@ -61,7 +61,7 @@ import re
 from base64 import b64decode
 from wsgiref.headers import Headers
 
-from slimta.logging import log_exception
+from slimta import logging
 from slimta.http.wsgi import WsgiServer
 from slimta.envelope import Envelope
 from slimta.smtp.reply import Reply
@@ -169,7 +169,7 @@ class WsgiEdge(Edge, WsgiServer):
             start_response(res.status, res.headers)
             return res.data
         except Exception as exc:
-            log_exception(__name__)
+            logging.log_exception(__name__)
             msg = '{0!s}\n'.format(exc)
             content_length = str(len(msg))
             headers = [('Content-Length', content_length),
