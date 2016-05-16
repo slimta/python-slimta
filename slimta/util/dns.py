@@ -33,7 +33,7 @@ import gevent
 from gevent import select
 from gevent.event import AsyncResult
 
-from slimta.logging import log_exception
+from slimta import logging
 
 __all__ = ['DNSError', 'DNSResolver']
 
@@ -125,7 +125,7 @@ class DNSResolver(object):
                 for fd in wlist:
                     cls._channel.process_fd(pycares.ARES_SOCKET_BAD, fd)
         except Exception:
-            log_exception(__name__)
+            logging.log_exception(__name__)
             cls._channel.cancel()
             cls._channel = None
             raise
