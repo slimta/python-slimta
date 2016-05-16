@@ -174,8 +174,8 @@ class HttpRelay(RelayPool):
                       to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
     :param tls: Dictionary of TLS settings passed directly as keyword arguments
-                to :class:`gevent.ssl.SSLSocket`. This parameter is optional
-                unless ``https:`` is given in ``url``.
+                to :class:`gevent.ssl.SSLSocket`. ``False`` will explicitly
+                disable TLS.
     :param ehlo_as: The string to send as the EHLO string in a header. Defaults
                     to the FQDN of the system. This may also be given as a
                     function that will be executed with no arguments at the

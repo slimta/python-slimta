@@ -33,6 +33,7 @@ import sys
 
 from gevent.pywsgi import WSGIServer as GeventWSGIServer
 
+from slimta.util import validate_tls
 from slimta import logging
 
 __all__ = ['WsgiServer']
@@ -59,11 +60,12 @@ class WsgiServer(object):
                      use for new greenlets.
         :param tls: Optional dictionary of TLS settings passed directly as
                     keyword arguments to :class:`gevent.ssl.SSLSocket`.
+                    ``False`` will explicitly disable TLS.
         :rtype: :class:`gevent.pywsgi.WSGIServer`
 
         """
         spawn = pool or 'default'
-        tls = tls or {}
+        tls = validate_tls(tls)
         return GeventWSGIServer(listener, self, log=sys.stdout, spawn=spawn,
                                 **tls)
 

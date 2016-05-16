@@ -136,11 +136,11 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(auth)
 
     def _handshake(self):
-        if self.tls and self.tls_immediately:
+        if self.tls is not False and self.tls_immediately:
             self.client.encrypt(self.tls)
         self._banner()
         self._ehlo()
-        if self.tls and not self.tls_immediately:
+        if self.tls is not False and not self.client.io.encrypted:
             if self.tls_required or 'STARTTLS' in self.client.extensions:
                 self._starttls()
                 self._ehlo()

@@ -80,7 +80,8 @@ class Server(object):
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
     :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
+                will explicitly disable TLS.
     :param tls_immediately: If True, the socket will be encrypted
                             immediately.
     :param tls_wrapper: Optional function that takes a socket and the ``tls``
@@ -109,11 +110,14 @@ class Server(object):
         self.ehlo_as = None
         self.authed = False
 
+        self.tls = validate_tls(tls, server_side=True)
+        self.tls_immediately = tls_immediately
+
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
         self.extensions.add('SMTPUTF8')
-        if tls and not tls_immediately:
+        if self.tls is not False and not tls_immediately:
             self.extensions.add('STARTTLS')
         if auth:
             if isinstance(auth, list):
@@ -122,9 +126,6 @@ class Server(object):
                 auth_obj = SASLAuth()
             auth_session = AuthSession(auth_obj, self.io)
             self.extensions.add('AUTH', auth_session)
-
-        self.tls = validate_tls(tls, server_side=True)
-        self.tls_immediately = tls_immediately
 
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
@@ -190,7 +191,7 @@ class Server(object):
         :raises: :class:`~slimta.smtp.ConnectionLost` or unhandled exceptions.
 
         """
-        if self.tls and self.tls_immediately:
+        if self.tls is not False and self.tls_immediately:
             if not self._encrypt_session():
                 tls_failure.send(self.io, flush=True)
                 return
