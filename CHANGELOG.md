@@ -1,6 +1,30 @@
 
 # Change Log
 
+## [3.2] - 2016-05-16
+
+### Added
+
+- The [`parseline`][5] function is now exposed and documented.
+- The `slimta.logging.log_exception` function may now be replaced with custom
+  functions, for special error handling scenarios.
+
+### Changed
+
+- Unit tests are now run with `py.test` instead of `nosetests`.
+- Exception log lines will now include up to 10,000 characters of the traceback
+  string.
+- Socket errors are no longer logged as unhandled errors and do not include a
+  traceback.
+- `socket.gaierror` failures are now caught and ignored during PTR lookup.
+
+### Fixed
+
+- Correctly set an empty greenlet pool in `EdgeServer` constructor.
+- Corrected a potential duplicate relay scenario in `Queue`.
+- `Reply` encoding and decoding now works correctly in Python 2.x.
+- Fixed `httplib` imports in Python 3.3.
+
 ## [3.1] - 2016-02-04
 
 ### Added
@@ -65,5 +89,8 @@
 [2]: https://github.com/saghul/pycares
 [3]: http://www.dnspython.org/
 [4]: https://pythonhosted.org/six/
+[5]: https://docs.slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
+[3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
+
