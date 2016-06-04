@@ -104,7 +104,18 @@ class SmtpRelayClient(RelayPoolClient):
         with Timeout(self.command_timeout):
             ehlo = self.client.ehlo(ehlo_as)
         if ehlo.is_error():
+            if ehlo.code == '500':
+                return self._helo(ehlo_as)
             raise SmtpRelayError.factory(ehlo)
+        return ehlo
+
+    @current_command(b'HELO')
+    def _helo(self, ehlo_as):
+        with Timeout(self.command_timeout):
+            helo = self.client.helo(ehlo_as)
+        if helo.is_error():
+            raise SmtpRelayError.factory(helo)
+        return helo
 
     @current_command(b'STARTTLS')
     def _starttls(self):

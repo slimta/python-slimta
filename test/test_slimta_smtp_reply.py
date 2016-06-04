@@ -42,6 +42,11 @@ class TestSmtpReply(unittest.TestCase):
         r = Reply('250', u'2.1.0 Ok \U0001f44d')
         self.assertEqual(b'250 2.1.0 Ok \xf0\x9f\x91\x8d', bytes(r))
 
+    def test_contains(self):
+        r = Reply('220', 'ESMTP')
+        self.assertTrue(b'ESMTP' in r)
+        self.assertTrue('ESMTP' in r)
+
     def test_is_error(self):
         replies = [Reply(str(i)+'50', 'Test') for i in range(1, 6)]
         self.assertFalse(replies[0].is_error())
