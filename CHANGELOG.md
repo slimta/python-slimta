@@ -1,6 +1,14 @@
 
 # Change Log
 
+## Unreleased
+
+### Changed
+
+- The `tls` option to many different class constructors now defaults (with
+  ``None``) to enabling TLS with no custom configuration. It can be given
+  explicitly ``False`` to disable TLS.
+
 ## [3.2] - 2016-05-16
 
 ### Added
