@@ -17,7 +17,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.tls_args = {'server_side': True}
 
     def test_starttls_extension(self):
-        s = Server(None, None)
+        s = Server(None, None, tls=False)
         self.assertFalse('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=False)
         self.assertTrue('STARTTLS' in s.extensions)
@@ -385,7 +385,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(self.sock, None)
+        s = Server(self.sock, None, tls=False)
         s.handle()
 
     def test_gather_params(self):

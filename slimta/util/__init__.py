@@ -43,13 +43,15 @@ def validate_tls(tls, **overrides):
     :raises: OSError
 
     """
-    if not tls:
+    if tls is False:
         return tls
+    elif tls is None or tls is True:
+        return {}
     tls_copy = tls.copy()
+    tls_copy.update(overrides)
     for arg in ('keyfile', 'certfile', 'ca_certs'):
         if arg in tls_copy:
             open(tls_copy[arg], 'r').close()
-    tls_copy.update(overrides)
     return tls_copy
 
 

@@ -46,7 +46,8 @@ class StaticSmtpRelay(RelayPool):
                       to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
     :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
+                will explicitly disable TLS.
     :param tls_required: If given and True, it should be considered a delivery
                          failure if TLS cannot be negotiated by the client.
     :param connect_timeout: Timeout in seconds to wait for a client connection
