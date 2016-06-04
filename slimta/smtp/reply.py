@@ -124,6 +124,18 @@ class Reply(object):
         """
         return self.code is not None
 
+    def __contains__(self, substr):
+        """Checks if the full reply string contains the given sub-string.
+
+        :param substr: The sub-string to check for.
+        :rtype: True or False
+
+        """
+        if isinstance(substr, bytes):
+            return substr in bytes(self)
+        else:
+            return substr in str(self)
+
     # Python 2 compat.
     if pycompat.PY2:
         __nonzero__ = __bool__
