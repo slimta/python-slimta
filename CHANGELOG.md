@@ -3,6 +3,10 @@
 
 ## Unreleased
 
+### Added
+
+- New `slimta.util` functions for limiting outbound connections to IPv4.
+
 ### Changed
 
 - The `tls` option to many different class constructors now defaults (with
