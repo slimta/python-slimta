@@ -26,7 +26,10 @@ belong anywhere else.
 
 from __future__ import absolute_import
 
-__all__ = ['validate_tls']
+from gevent import socket
+
+__all__ = ['validate_tls', 'build_ipv4_socket_creator',
+           'create_connection_ipv4']
 
 
 def validate_tls(tls, **overrides):
@@ -53,6 +56,48 @@ def validate_tls(tls, **overrides):
         if arg in tls_copy:
             open(tls_copy[arg], 'r').close()
     return tls_copy
+
+
+def build_ipv4_socket_creator(only_ports=None):
+    """Returns a function that will act like
+    :py:func:`socket.create_connection` but only using IPv4 addresses. This
+    function can be used as the ``socket_creator`` argument to some classes
+    like :class:`~slimta.relay.smtp.mx.MxSmtpRelay`.
+
+    :param only_ports: If given, can be a list to limit which ports are
+                       restricted to IPv4. Connections to all other ports may
+                       be IPv6.
+
+    """
+    def socket_creator(*args, **kwargs):
+        return create_connection_ipv4(*args, only_ports=only_ports, **kwargs)
+    return socket_creator
+
+
+def create_connection_ipv4(address, timeout=None, source_address=None,
+                           only_ports=None):
+    """Attempts to mimick to :py:func:`socket.create_connection`, but
+    connections are only made to IPv4 addresses.
+
+    :param only_ports: If given, can be a list to limit which ports are
+                       restricted to IPv4. Connections to all other ports may
+                       be IPv6.
+
+    """
+    host, port = address
+    if only_ports and port not in only_ports:
+        return socket.create_connection(address, timeout, source_address)
+    last_exc = None
+    for res in socket.getaddrinfo(host, port, socket.AF_INET):
+        _, _, _, _, sockaddr = res
+        try:
+            return socket.create_connection(sockaddr,  timeout, source_address)
+        except socket.error as exc:
+            last_exc = exc
+    if last_exc is not None:
+        raise last_exc
+    else:
+        raise socket.error('getaddrinfo returns an empty list')
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
