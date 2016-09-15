@@ -328,7 +328,7 @@ class Queue(Greenlet):
         results = list(zip(envelopes, ids))
         for env, id in results:
             if not isinstance(id, BaseException):
-                if self.relay:
+                if self.relay and id not in self.active_ids:
                     self.active_ids.add(id)
                     self._pool_spawn('relay', self._attempt, id, env, 0)
             elif not isinstance(id, QueueError):
