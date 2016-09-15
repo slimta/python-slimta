@@ -13,6 +13,10 @@
   ``None``) to enabling TLS with no custom configuration. It can be given
   explicitly ``False`` to disable TLS.
 
+### Fixed
+
+- Fixed a possible race condition on enqueue.
+
 ## [3.2] - 2016-05-16
 
 ### Added
