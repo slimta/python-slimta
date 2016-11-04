@@ -49,7 +49,7 @@ def validate_tls(tls, **overrides):
     if tls is False:
         return tls
     elif tls is None or tls is True:
-        return {}
+        tls = {}
     tls_copy = tls.copy()
     tls_copy.update(overrides)
     for arg in ('keyfile', 'certfile', 'ca_certs'):

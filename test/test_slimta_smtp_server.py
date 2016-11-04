@@ -14,10 +14,12 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         super(TestSmtpServer, self).setUp()
         self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
-        self.tls_args = {'server_side': True}
+        self.tls_args = {'certfile': '/dev/null', 'server_side': True}
 
     def test_starttls_extension(self):
         s = Server(None, None, tls=False)
+        self.assertFalse('STARTTLS' in s.extensions)
+        s = Server(None, None, tls={}, tls_immediately=False)
         self.assertFalse('STARTTLS' in s.extensions)
         s = Server(None, None, tls=self.tls_args, tls_immediately=False)
         self.assertTrue('STARTTLS' in s.extensions)
