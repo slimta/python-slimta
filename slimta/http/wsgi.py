@@ -60,7 +60,6 @@ class WsgiServer(object):
                      use for new greenlets.
         :param tls: Optional dictionary of TLS settings passed directly as
                     keyword arguments to :class:`gevent.ssl.SSLSocket`.
-                    ``False`` will explicitly disable TLS.
         :rtype: :class:`gevent.pywsgi.WSGIServer`
 
         """
