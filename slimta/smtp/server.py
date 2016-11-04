@@ -80,15 +80,14 @@ class Server(object):
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
     :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
-                will explicitly disable TLS.
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, the socket will be encrypted
                             immediately.
+    :type tls_immediately: True or False
     :param tls_wrapper: Optional function that takes a socket and the ``tls``
                         dictionary, creates a new encrypted socket, performs
                         the TLS handshake, and returns it. The default uses
                         :class:`~gevent.ssl.SSLSocket`.
-    :type tls_immediately: True or False
     :param command_timeout: Optional timeout waiting for a command to be
                             sent from the client.
     :param data_timeout: Optional timeout waiting for data to be sent from
@@ -117,7 +116,7 @@ class Server(object):
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
         self.extensions.add('SMTPUTF8')
-        if self.tls is not False and not tls_immediately:
+        if self.tls and not tls_immediately:
             self.extensions.add('STARTTLS')
         if auth:
             if isinstance(auth, list):
@@ -191,7 +190,7 @@ class Server(object):
         :raises: :class:`~slimta.smtp.ConnectionLost` or unhandled exceptions.
 
         """
-        if self.tls is not False and self.tls_immediately:
+        if self.tls and self.tls_immediately:
             if not self._encrypt_session():
                 tls_failure.send(self.io, flush=True)
                 return

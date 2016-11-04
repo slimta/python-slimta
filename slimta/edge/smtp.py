@@ -213,8 +213,7 @@ class SmtpEdge(EdgeServer):
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
     :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
-                will explicitly disable TLS.
+                keyword arguments to :class:`gevent.ssl.SSLSocket`.
     :param tls_immediately: If True, connections will be encrypted
                             immediately before the SMTP banner.
     :param command_timeout: Seconds before the connection times out waiting

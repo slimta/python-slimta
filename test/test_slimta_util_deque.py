@@ -12,7 +12,7 @@ class TestBlockingDeque(unittest.TestCase, MoxTestBase):
     def setUp(self):
         super(TestBlockingDeque, self).setUp()
         self.deque = BlockingDeque()
-        self.deque.sema = self.mox.CreateMock(Semaphore)
+        self.deque.sema = self.mox.CreateMockAnything()
 
     def test_append(self):
         self.deque.sema.release()
