@@ -116,7 +116,7 @@ class Server(object):
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
         self.extensions.add('SMTPUTF8')
-        if self.tls and not tls_immediately:
+        if self._enable_tls() and not tls_immediately:
             self.extensions.add('STARTTLS')
         if auth:
             if isinstance(auth, list):
@@ -128,6 +128,9 @@ class Server(object):
 
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
+
+    def _enable_tls(self):
+        return self.tls and 'certfile' in self.tls
 
     @property
     def encrypted(self):
@@ -190,7 +193,7 @@ class Server(object):
         :raises: :class:`~slimta.smtp.ConnectionLost` or unhandled exceptions.
 
         """
-        if self.tls and self.tls_immediately:
+        if self._enable_tls() and self.tls_immediately:
             if not self._encrypt_session():
                 tls_failure.send(self.io, flush=True)
                 return
