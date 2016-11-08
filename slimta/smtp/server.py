@@ -259,14 +259,14 @@ class Server(object):
         if not self.bannered:
             bad_sequence.send(self.io)
             return
+        elif not ehlo_as:
+            bad_arguments.send(self.io)
+            return
 
-        if ehlo_as is None:
-            reply = bad_arguments
-        else:
-            ehlo_as = ehlo_as.decode('utf-8')
-            reply = Reply('250', 'Hello '+ehlo_as)
-            reply.enhanced_status_code = False
-            self._call_custom_handler('EHLO', reply, ehlo_as)
+        ehlo_as = ehlo_as.decode('utf-8')
+        reply = Reply('250', 'Hello '+ehlo_as)
+        reply.enhanced_status_code = False
+        self._call_custom_handler('EHLO', reply, ehlo_as)
 
         # Add extension list to message, if successful.
         if reply.code == '250':
@@ -283,14 +283,14 @@ class Server(object):
         if not self.bannered:
             bad_sequence.send(self.io)
             return
+        elif not ehlo_as:
+            bad_arguments.send(self.io)
+            return
 
-        if ehlo_as is None:
-            reply = bad_arguments
-        else:
-            ehlo_as = ehlo_as.decode('utf-8')
-            reply = Reply('250', 'Hello '+ehlo_as)
-            reply.enhanced_status_code = False
-            self._call_custom_handler('HELO', reply, ehlo_as)
+        ehlo_as = ehlo_as.decode('utf-8')
+        reply = Reply('250', 'Hello '+ehlo_as)
+        reply.enhanced_status_code = False
+        self._call_custom_handler('HELO', reply, ehlo_as)
 
         reply.send(self.io)
         self._check_close_code(reply)
