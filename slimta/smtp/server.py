@@ -259,6 +259,9 @@ class Server(object):
         if not self.bannered:
             bad_sequence.send(self.io)
             return
+        elif not ehlo_as:
+            bad_arguments.send(self.io)
+            return
 
         ehlo_as = ehlo_as.decode('utf-8')
         reply = Reply('250', 'Hello '+ehlo_as)
@@ -280,11 +283,15 @@ class Server(object):
         if not self.bannered:
             bad_sequence.send(self.io)
             return
+        elif not ehlo_as:
+            bad_arguments.send(self.io)
+            return
 
         ehlo_as = ehlo_as.decode('utf-8')
         reply = Reply('250', 'Hello '+ehlo_as)
         reply.enhanced_status_code = False
         self._call_custom_handler('HELO', reply, ehlo_as)
+
         reply.send(self.io)
         self._check_close_code(reply)
 
