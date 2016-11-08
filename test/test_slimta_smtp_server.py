@@ -118,6 +118,30 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.handle()
         self.assertEqual('there', s.ehlo_as)
 
+    def test_ehlo_empty(self):
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'EHLO\r\n')
+        self.sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.handle()
+        self.assertEqual(None, s.ehlo_as)
+
+    def test_ehlo_empty_with_helo(self):
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'EHLO\r\n')
+        self.sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'HELO there\r\n')
+        self.sock.sendall(b'250 Hello there\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.handle()
+        self.assertEqual('there', s.ehlo_as)
+
     def test_helo(self):
         self.sock.sendall(b'220 ESMTP server\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'HELO there\r\n')
@@ -126,6 +150,32 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
         s = Server(self.sock, None)
+        s.handle()
+        self.assertEqual('there', s.ehlo_as)
+
+    def test_helo_empty(self):
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'HELO\r\n')
+        self.sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.handle()
+        self.assertEqual(None, s.ehlo_as)
+
+    def test_helo_empty_with_ehlo(self):
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'HELO\r\n')
+        self.sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'EHLO there\r\n')
+        self.sock.sendall(b'250-Hello there\r\n250 TEST\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.mox.ReplayAll()
+        s = Server(self.sock, None)
+        s.extensions.reset()
+        s.extensions.add('TEST')
         s.handle()
         self.assertEqual('there', s.ehlo_as)
 
