@@ -31,8 +31,7 @@ from gevent.socket import SHUT_WR, SHUT_RD
 __all__ = ['socket_error_log_level', 'SocketLogger']
 
 #: The log level for logging :py:exc:`socket.error` exceptions. The default log
-#: level is `logging.ERROR
-# <https://docs.python.org/library/logging.html#logging-levels>`_.
+#: level is ``logging.ERROR``.
 socket_error_log_level = logging.ERROR
 
 
