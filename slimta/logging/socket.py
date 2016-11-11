@@ -28,7 +28,7 @@ from functools import partial
 
 from gevent.socket import SHUT_WR, SHUT_RD
 
-__all__ = ['SocketLogger']
+__all__ = ['socket_error_log_level', 'SocketLogger']
 
 #: The log level for logging :py:exc:`socket.error` exceptions. The default log
 #: level is `logging.ERROR
