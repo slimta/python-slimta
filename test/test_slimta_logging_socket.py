@@ -1,8 +1,11 @@
 import unittest2 as unittest
+import errno
+import logging
 import socket
 
 from testfixtures import log_capture
 
+import slimta.logging.socket
 from slimta.logging import getSocketLogger
 
 
@@ -76,6 +79,16 @@ class TestSocketLogger(unittest.TestCase):
         sock = FakeSocket(771)
         self.log.close(sock)
         l.check(('test', 'DEBUG', 'fd:771:close'))
+
+    @log_capture()
+    def test_error(self, l):
+        sock = FakeSocket(680)
+        exc = OSError(errno.EPIPE, 'Broken pipe')
+        self.log.error(sock, exc, 'testaddress')
+        slimta.logging.socket.socket_error_log_level = logging.WARNING
+        self.log.error(sock, exc)
+        l.check(('test', 'ERROR', 'fd:680:error address=\'testaddress\' args=(32, \'Broken pipe\') message=\'[Errno 32] Broken pipe\''),
+        		('test', 'WARNING', 'fd:680:error args=(32, \'Broken pipe\') message=\'[Errno 32] Broken pipe\''))
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -23,11 +23,17 @@
 
 from __future__ import absolute_import
 
+import logging
 from functools import partial
 
 from gevent.socket import SHUT_WR, SHUT_RD
 
 __all__ = ['SocketLogger']
+
+#: The log level for logging :py:exc:`socket.error` exceptions. The default log
+#: level is `logging.ERROR
+# <https://docs.python.org/library/logging.html#logging-levels>`_.
+socket_error_log_level = logging.ERROR
 
 
 class SocketLogger(object):
@@ -39,10 +45,14 @@ class SocketLogger(object):
 
     """
 
-    def __init__(self, log):
+    def __init__(self, logger):
         from slimta.logging import logline
-        self.log = partial(logline, log.debug, 'fd')
-        self.log_error = partial(logline, log.error, 'fd')
+        self.logger = logger
+        self.log = partial(logline, logger.debug, 'fd')
+        self.log_error = partial(logline, self._log_error, 'fd')
+
+    def _log_error(self, *args, **kwargs):
+        return self.logger.log(socket_error_log_level, *args, **kwargs)
 
     def send(self, socket, data):
         """Logs a socket :meth:`~socket.socket.send()` operation along with the
