@@ -18,6 +18,7 @@
 ### Fixed
 
 - Fixed a possible race condition on enqueue.
+- Fixed exception when given empty EHLO/HELO string.
 
 ## [3.2] - 2016-05-16
 
