@@ -6,12 +6,14 @@
 ### Added
 
 - New `slimta.util` functions for limiting outbound connections to IPv4.
+- New [`socket_error_log_level`][6] variable for better log level control.
 
 ### Changed
 
 - The `tls` option to many different class constructors now defaults (with
-  ``None``) to enabling TLS with no custom configuration. It can be given
-  explicitly ``False`` to disable TLS.
+  `None`) to enabling TLS with no custom configuration. It can be given
+  explicitly `False` to disable TLS. This does not apply to server-side TLS,
+  which requires a dictionary with at least the `certfile` key.
 
 ### Fixed
 
@@ -106,7 +108,7 @@
 [3]: http://www.dnspython.org/
 [4]: https://pythonhosted.org/six/
 [5]: https://docs.slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
+[6]: https://docs.slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
-
