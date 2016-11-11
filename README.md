@@ -21,6 +21,8 @@ Python 2.7+ or 3.3+.
 [![PyPI](https://img.shields.io/pypi/v/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
 [![PyPI](https://img.shields.io/pypi/pyversions/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
 [![PyPI](https://img.shields.io/pypi/l/python-slimta.svg)](https://pypi.python.org/pypi/python-slimta)
+[![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=icgood&url=https%3A%2F%2Fgithub.com%2Fslimta%2Fpython-slimta&title=python-slimta&language=python&tags=github&category=software)
+
 
 Getting Started
 ===============
