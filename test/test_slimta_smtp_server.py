@@ -14,6 +14,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         super(TestSmtpServer, self).setUp()
         self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
+        self.sock.getpeername = lambda: ('test', 0)
         self.context = self.mox.CreateMock(SSLContext)
         self.context.session_stats = lambda: {}
 
@@ -83,23 +84,19 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         s.handle()
 
     def test_tls_immediately(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        self.context.wrap_socket(sock, server_side=True).AndReturn(sock)
-        sock.sendall(b'220 ESMTP server\r\n')
-        sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
-        sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.context.wrap_socket(self.sock, server_side=True).AndReturn(self.sock)
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, context=self.context, tls_immediately=True)
+        s = Server(self.sock, None, context=self.context, tls_immediately=True)
         s.handle()
 
     def test_tls_immediately_sslerror(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        self.context.wrap_socket(sock, server_side=True).AndRaise(SSLError())
-        sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
+        self.context.wrap_socket(self.sock, server_side=True).AndRaise(SSLError())
+        self.sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, context=self.context, tls_immediately=True)
+        s = Server(self.sock, None, context=self.context, tls_immediately=True)
         s.handle()
 
     def test_ehlo(self):
@@ -177,39 +174,35 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.assertEqual('there', s.ehlo_as)
 
     def test_starttls(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        sock.sendall(b'220 ESMTP server\r\n')
-        sock.recv(IsA(int)).AndReturn(b'EHLO there\r\n')
-        sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
-        sock.sendall(b'220 2.7.0 Go ahead\r\n')
-        self.context.wrap_socket(sock, server_side=True).AndReturn(sock)
-        sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
-        sock.sendall(b'221 2.0.0 Bye\r\n')
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'EHLO there\r\n')
+        self.sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
+        self.sock.sendall(b'220 2.7.0 Go ahead\r\n')
+        self.context.wrap_socket(self.sock, server_side=True).AndReturn(self.sock)
+        self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
+        self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, context=self.context)
+        s = Server(self.sock, None, context=self.context)
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
         self.assertEqual(None, s.ehlo_as)
 
     def test_starttls_bad(self):
-        sock = self.mox.CreateMockAnything()
-        sock.fileno = lambda: -1
-        sock.sendall(b'220 ESMTP server\r\n')
-        sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
-        sock.sendall(b'503 5.5.1 Bad sequence of commands\r\n')
-        sock.recv(IsA(int)).AndReturn(b'STARTTLS badarg\r\n')
-        sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
-        sock.recv(IsA(int)).AndReturn(b'EHLO there\r\n')
-        sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
-        sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
-        sock.sendall(b'220 2.7.0 Go ahead\r\n')
-        self.context.wrap_socket(sock, server_side=True).AndRaise(SSLError())
-        sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
+        self.sock.sendall(b'220 ESMTP server\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
+        self.sock.sendall(b'503 5.5.1 Bad sequence of commands\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'STARTTLS badarg\r\n')
+        self.sock.sendall(b'501 5.5.4 Syntax error in parameters or arguments\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'EHLO there\r\n')
+        self.sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
+        self.sock.sendall(b'220 2.7.0 Go ahead\r\n')
+        self.context.wrap_socket(self.sock, server_side=True).AndRaise(SSLError())
+        self.sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, context=self.context)
+        s = Server(self.sock, None, context=self.context)
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
