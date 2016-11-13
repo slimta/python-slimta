@@ -1,19 +1,15 @@
 import unittest2 as unittest
 from mox3.mox import MoxTestBase
-from gevent import socket, ssl
+from gevent import socket
 
 from slimta.http import HTTPConnection, HTTPSConnection, get_connection
 
 
 class TestHTTPConnection(unittest.TestCase, MoxTestBase):
 
-    def test_connect(self):
-        self.mox.StubOutWithMock(socket, 'create_connection')
-        socket.create_connection(('testhost', 8025), 7, None).AndReturn(9)
-        self.mox.ReplayAll()
+    def test_init(self):
         conn = HTTPConnection('testhost', 8025, timeout=7)
-        conn.connect()
-        self.assertEqual(9, conn.sock)
+        self.assertEqual(conn._create_connection, socket.create_connection)
 
 
 class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
