@@ -4,6 +4,7 @@ import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent.socket import socket, error as socket_error
+from gevent.ssl import SSLContext
 from gevent.event import AsyncResult
 
 from slimta.util import pycompat
@@ -23,7 +24,8 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.fileno = lambda: -1
         self.sock.getpeername = lambda: ('test', 0)
         self.queue = self.mox.CreateMock(BlockingDeque)
-        self.tls_args = {'test': 'test'}
+        self.context = self.mox.CreateMock(SSLContext)
+        self.context.session_stats = lambda: {}
 
     def _socket_creator(self, address):
         return self.sock
@@ -56,42 +58,39 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
             client._ehlo()
 
     def test_starttls(self):
-        tls_wrapper = self.mox.CreateMockAnything()
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'420 Stop\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, tls_required=True)
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, tls_required=True)
         client._connect()
         client._starttls()
         with self.assertRaises(TransientRelayError):
             client._starttls()
 
     def test_handshake_tls_immediately(self):
-        tls_wrapper = self.mox.CreateMockAnything()
-        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, tls_immediately=True, ehlo_as='there')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, tls_immediately=True, ehlo_as='there')
         client._connect()
         client._handshake()
 
     def test_handshake_starttls(self):
-        tls_wrapper = self.mox.CreateMockAnything()
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 STARTTLS\r\n')
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        tls_wrapper(self.sock, self.tls_args).AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, tls=self.tls_args, tls_wrapper=tls_wrapper, ehlo_as='there')
+        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, ehlo_as='there')
         client._connect()
         client._handshake()
 

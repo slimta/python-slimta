@@ -31,11 +31,11 @@ from __future__ import absolute_import
 
 import time
 
+from gevent import ssl
 from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
 from slimta import logging
 from slimta.smtp.reply import Reply
-from slimta.util import validate_tls
 from slimta.util.dns import DNSResolver, DNSError
 from .. import TransientRelayError, PermanentRelayError, Relay
 from .static import StaticSmtpRelay
@@ -127,9 +127,12 @@ class MxSmtpRelay(Relay):
 
     All arguments are optional.
 
-    :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
-                will explicitly disable TLS.
+    :param context: Used to wrap sockets with SSL encryption, when ``STARTTLS``
+                    is advertised, rather than the default context.
+    :type context: :py:class:`~ssl.SSLContext`
+    :param tls_immediately: If True, the socket will be encrypted
+                            immediately on connection rather than looking for
+                            the ``STARTTLS`` extension.
     :param tls_required: If given and True, it should be considered a delivery
                          failure if TLS cannot be negotiated by the client.
     :param connect_timeout: Timeout in seconds to wait for a client connection
@@ -159,13 +162,14 @@ class MxSmtpRelay(Relay):
 
     """
 
-    def __init__(self, tls=None, **client_kwargs):
+    def __init__(self, context=None, **client_kwargs):
         super(MxSmtpRelay, self).__init__()
         self._mx_records = {}
         self._force_mx = {}
         self._relayers = {}
         self._client_kwargs = client_kwargs
-        self._client_kwargs['tls'] = validate_tls(tls)
+        self._client_kwargs['context'] = context or \
+            ssl.create_default_context()
 
     def _get_rcpt_domain(self, envelope):
         rcpt = envelope.recipients[0]

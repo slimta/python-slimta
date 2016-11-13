@@ -50,11 +50,10 @@ log = logging.getSocketLogger(__name__)
 
 class IO(object):
 
-    def __init__(self, socket, tls_wrapper=None, address=None):
+    def __init__(self, socket, context=None, address=None):
         self.socket = socket
-        self._address = None
-        if tls_wrapper:
-            self._tls_wrapper = tls_wrapper
+        self._address = address
+        self._context = context
 
         self.send_buffer = BytesIO()
         self.recv_buffer = b''
@@ -102,15 +101,21 @@ class IO(object):
             raise ConnectionLost()
         return data
 
-    def _tls_wrapper(self, socket, tls):
-        sslsock = SSLSocket(socket, **tls)
-        sslsock.do_handshake()
-        return sslsock
-
-    def encrypt_socket(self, tls):
-        log.encrypt(self.socket, tls)
+    def encrypt_socket_client(self, context=None):
+        hostname = self.address[0]
+        context = context or ssl.create_default_context()
+        log.encrypt(self.socket, context)
         try:
-            self.socket = self._tls_wrapper(self.socket, tls)
+            self.socket = context.wrap_socket(self.socket,
+                                              server_hostname=hostname)
+            return True
+        except SSLError:
+            return False
+
+    def encrypt_socket_server(self, context):
+        log.encrypt(self.socket, context)
+        try:
+            self.socket = context.wrap_socket(self.socket, server_side=True)
             return True
         except SSLError:
             return False

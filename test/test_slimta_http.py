@@ -9,29 +9,17 @@ class TestHTTPConnection(unittest.TestCase, MoxTestBase):
 
     def test_connect(self):
         self.mox.StubOutWithMock(socket, 'create_connection')
-        socket.create_connection(('testhost', 8025), 7).AndReturn(9)
+        socket.create_connection(('testhost', 8025), 7, None).AndReturn(9)
         self.mox.ReplayAll()
-        conn = HTTPConnection('testhost', 8025, 7)
+        conn = HTTPConnection('testhost', 8025, timeout=7)
         conn.connect()
         self.assertEqual(9, conn.sock)
 
 
 class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
 
-    def test_connect(self):
-        self.mox.StubOutWithMock(socket, 'create_connection')
-        self.mox.StubOutWithMock(ssl, 'SSLSocket')
-        sslsock = self.mox.CreateMockAnything()
-        socket.create_connection(('testhost', 8025), 7).AndReturn(9)
-        ssl.SSLSocket(9, var='val').AndReturn(sslsock)
-        sslsock.do_handshake()
-        self.mox.ReplayAll()
-        conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, 7)
-        conn.connect()
-        self.assertEqual(sslsock, conn.sock)
-
     def test_close(self):
-        conn = HTTPSConnection('testhost', 8025, {'var': 'val'}, 7)
+        conn = HTTPSConnection('testhost', 8025)
         conn.sock = self.mox.CreateMockAnything()
         conn.sock.unwrap()
         conn.sock.close()

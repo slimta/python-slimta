@@ -33,7 +33,6 @@ from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from slimta.util.ptrlookup import PtrLookup
-from slimta.util import validate_tls
 from . import EdgeServer
 
 __all__ = ['SmtpEdge', 'SmtpValidators']
@@ -212,10 +211,12 @@ class SmtpEdge(EdgeServer):
     :param auth: If True, enable authentication with default mechanisms. May
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
-    :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param context: Enables SSL encryption on connected sockets using the
+                    information given in the context.
+    :type context: :py:class:`~ssl.SSLContext`
     :param tls_immediately: If True, connections will be encrypted
-                            immediately before the SMTP banner.
+                            immediately before the SMTP banner, rather than
+                            advertising the ``STARTTLS`` extension.
     :param command_timeout: Seconds before the connection times out waiting
                             for a command.
     :param data_timeout: Seconds before the connection times out while
@@ -228,7 +229,7 @@ class SmtpEdge(EdgeServer):
 
     def __init__(self, listener, queue, pool=None, max_size=None,
                  validator_class=None, auth=False,
-                 tls=None, tls_immediately=False,
+                 context=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None,
                  hostname=None):
         super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
@@ -237,7 +238,7 @@ class SmtpEdge(EdgeServer):
         self.data_timeout = data_timeout
         self.validator_class = validator_class
         self.auth = auth
-        self.tls = validate_tls(tls)
+        self.context = context
         self.tls_immediately = tls_immediately
 
     def handle(self, socket, address):
@@ -245,7 +246,7 @@ class SmtpEdge(EdgeServer):
         try:
             handlers = SmtpSession(address, self.validator_class, self.handoff)
             smtp_server = Server(socket, handlers, self.auth,
-                                 self.tls, self.tls_immediately,
+                                 self.context, self.tls_immediately,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)
             if self.max_size:

@@ -58,8 +58,7 @@ class SmtpRelayClient(RelayPoolClient):
     _client_class = Client
 
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
-                 tls=None, tls_immediately=False,
-                 tls_required=False, tls_wrapper=None,
+                 context=None, tls_immediately=False, tls_required=False,
                  connect_timeout=10.0, command_timeout=10.0,
                  data_timeout=None, idle_timeout=None,
                  credentials=None, binary_encoder=None):
@@ -69,10 +68,9 @@ class SmtpRelayClient(RelayPoolClient):
         self.socket = None
         self.client = None
         self.ehlo_as = ehlo_as or hostname
-        self.tls = tls
+        self.context = context
         self.tls_immediately = tls_immediately
         self.tls_required = tls_required
-        self.tls_wrapper = tls_wrapper
         self.connect_timeout = connect_timeout
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
@@ -85,8 +83,7 @@ class SmtpRelayClient(RelayPoolClient):
         with Timeout(self.connect_timeout):
             self.socket = self.socket_creator(self.address)
         log.connect(self.socket, self.address)
-        self.client = self._client_class(self.socket, self.tls_wrapper,
-                                         self.address)
+        self.client = self._client_class(self.socket, self.address)
 
     @current_command(b'[BANNER]')
     def _banner(self):
@@ -120,7 +117,7 @@ class SmtpRelayClient(RelayPoolClient):
     @current_command(b'STARTTLS')
     def _starttls(self):
         with Timeout(self.command_timeout):
-            starttls = self.client.starttls(self.tls)
+            starttls = self.client.starttls(self.context)
         if starttls.is_error() and self.tls_required:
             raise SmtpRelayError.factory(starttls)
 
@@ -136,11 +133,13 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(auth)
 
     def _handshake(self):
-        if self.tls is not False and self.tls_immediately:
-            self.client.encrypt(self.tls)
-        self._banner()
-        self._ehlo()
-        if self.tls is not False and not self.client.io.encrypted:
+        if self.tls_immediately:
+            self.client.encrypt(self.context)
+            self._banner()
+            self._ehlo()
+        else:
+            self._banner()
+            self._ehlo()
             if self.tls_required or 'STARTTLS' in self.client.extensions:
                 self._starttls()
                 self._ehlo()

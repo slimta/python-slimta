@@ -1,6 +1,7 @@
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket
+from gevent.ssl import SSLContext
 
 from slimta.smtp.client import Client, LmtpClient
 from slimta.smtp.reply import Reply
@@ -13,7 +14,8 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
         self.sock.getpeername = lambda: ('test', 0)
-        self.tls_args = {'test': 'test'}
+        self.context = self.mox.CreateMock(SSLContext)
+        self.context.session_stats = lambda: {}
 
     def test_get_reply(self):
         self.sock.recv(IsA(int)).AndReturn(b'421 Test\r\n')
@@ -73,10 +75,10 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         sock.getpeername = lambda: ('test', 0)
         sock.sendall(b'STARTTLS\r\n')
         sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
+        self.context.wrap_socket(sock, server_hostname='test').AndReturn(sock)
         self.mox.ReplayAll()
-        client = Client(sock, tls_wrapper=sock.tls_wrapper)
-        reply = client.starttls(self.tls_args)
+        client = Client(sock)
+        reply = client.starttls(self.context)
         self.assertEqual('220', reply.code)
         self.assertEqual('2.0.0 Go ahead', reply.message)
         self.assertEqual(b'STARTTLS', reply.command)
@@ -229,7 +231,6 @@ class TestLmtpClient(unittest.TestCase, MoxTestBase):
         self.sock = self.mox.CreateMock(socket)
         self.sock.fileno = lambda: -1
         self.sock.getpeername = lambda: ('test', 0)
-        self.tls_args = {'test': 'test'}
 
     def test_ehlo_invalid(self):
         client = LmtpClient(self.sock)

@@ -28,34 +28,7 @@ from __future__ import absolute_import
 
 from gevent import socket
 
-__all__ = ['validate_tls', 'build_ipv4_socket_creator',
-           'create_connection_ipv4']
-
-
-def validate_tls(tls, **overrides):
-    """Given a dictionary that could be used as keyword arguments to
-    :class:`ssl.wrap_socket`, checks the existence of any certificate files.
-
-    :param tls: Dictionary of TLS settings as might be passed in to an |Edge|
-                constructor.
-    :type tls: dict
-    :param overrides: May be used to override any of the elements of the
-                      ``tls`` dictionary.
-    :type overrides: keyword arguments
-    :returns: The new, validated ``tls`` dictionary.
-    :raises: OSError
-
-    """
-    if tls is False:
-        return tls
-    elif tls is None or tls is True:
-        tls = {}
-    tls_copy = tls.copy()
-    tls_copy.update(overrides)
-    for arg in ('keyfile', 'certfile', 'ca_certs'):
-        if arg in tls_copy:
-            open(tls_copy[arg], 'r').close()
-    return tls_copy
+__all__ = ['build_ipv4_socket_creator', 'create_connection_ipv4']
 
 
 def build_ipv4_socket_creator(only_ports=None):

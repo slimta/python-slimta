@@ -23,7 +23,7 @@
 
 from __future__ import absolute_import
 
-from gevent import Timeout
+from gevent import ssl, Timeout
 from gevent.socket import wait_read
 
 from pysasl import SASLAuth
@@ -47,17 +47,13 @@ class Client(object):
     available by the server.
 
     :param socket: Connected socket to use for the client.
-    :param tls_wrapper: Optional function that takes a socket and the ``tls``
-                        dictionary, creates a new encrypted socket, performs
-                        the TLS handshake, and returns it. The default uses
-                        :class:`~gevent.ssl.SSLSocket`.
     :param address: Remote address associated with the socket, which will
                     default to a call to :py:func:`~socket.socket.getpeername`.
 
     """
 
-    def __init__(self, socket, tls_wrapper=None, address=None):
-        self.io = IO(socket, tls_wrapper, address)
+    def __init__(self, socket, address=None):
+        self.io = IO(socket, address)
         self.reply_queue = []
 
         #: |Reply| of the last error received from the server.
@@ -196,32 +192,34 @@ class Client(object):
 
         return helo
 
-    def encrypt(self, tls):
-        """Encrypts the underlying socket with the information given by
-        ``tls``.  This call should only be used directly against servers that
-        expect to be immediately encrypted. If encryption is negotiated with
-        :meth:`starttls()` there is no need to call this method.
+    def encrypt(self, context=None):
+        """Encrypts the underlying socket. This call should only be used
+        directly against servers that expect to be immediately encrypted. If
+        encryption is negotiated with :meth:`starttls()` there is no need to
+        call this method.
 
-        :param tls: Dictionary of keyword arguments for
-                    :class:`~gevent.ssl.SSLSocket`.
+        :param context: Used to wrap sockets with SSL encryption, rather than
+                        the default context.
+        :type context: :py:class:`~ssl.SSLContext`
 
         """
-        self.io.encrypt_socket(tls)
+        self.io.encrypt_socket_client(context)
 
-    def starttls(self, tls):
+    def starttls(self, context=None):
         """Sends the STARTTLS command with identifier string and waits for the
-        reply. When the reply is received and the code is 220, the socket is
-        encrypted with the parameters in ``tls``. This should be followed by a
-        another call to :meth:`ehlo()`.
+        reply. When the reply is received and the code is 220, the socket
+        encryption is negotiated. This should be followed by a another call to
+        :meth:`ehlo()`.
 
-        :param tls: Dictionary of keyword arguments for
-                    :class:`~gevent.ssl.SSLSocket`.
+        :param context: Used to wrap sockets with SSL encryption, rather than
+                        the default context.
+        :type context: :py:class:`~ssl.SSLContext`
         :returns: |Reply| object populated with the response.
 
         """
         reply = self.custom_command(b'STARTTLS')
         if reply.code == '220':
-            self.encrypt(tls)
+            self.encrypt(context)
         return reply
 
     def auth(self, authcid, secret, authzid=None, mechanism=b'PLAIN'):
@@ -377,8 +375,8 @@ class LmtpClient(Client):
 
     """
 
-    def __init__(self, socket, tls_wrapper=None, address=None):
-        super(LmtpClient, self).__init__(socket, tls_wrapper, address)
+    def __init__(self, socket, address=None):
+        super(LmtpClient, self).__init__(socket, address)
         self.rcpttos = []
 
     def ehlo(self, ehlo_as):

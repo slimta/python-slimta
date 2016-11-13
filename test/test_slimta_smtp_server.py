@@ -1,6 +1,6 @@
 import unittest2 as unittest
 from mox3.mox import MoxTestBase, IsA
-from gevent.ssl import SSLSocket, SSLError
+from gevent.ssl import SSLSocket, SSLContext, SSLError
 from pysasl import SASLAuth
 
 from slimta.smtp.server import Server
@@ -14,16 +14,15 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         super(TestSmtpServer, self).setUp()
         self.sock = self.mox.CreateMock(SSLSocket)
         self.sock.fileno = lambda: -1
-        self.tls_args = {'certfile': '/dev/null', 'server_side': True}
+        self.context = self.mox.CreateMock(SSLContext)
+        self.context.session_stats = lambda: {}
 
     def test_starttls_extension(self):
-        s = Server(None, None, tls=False)
+        s = Server(None, None)
         self.assertFalse('STARTTLS' in s.extensions)
-        s = Server(None, None, tls={}, tls_immediately=False)
-        self.assertFalse('STARTTLS' in s.extensions)
-        s = Server(None, None, tls=self.tls_args, tls_immediately=False)
+        s = Server(None, None, context=self.context)
         self.assertTrue('STARTTLS' in s.extensions)
-        s = Server(None, None, tls=self.tls_args, tls_immediately=True)
+        s = Server(None, None, context=self.context, tls_immediately=True)
         self.assertFalse('STARTTLS' in s.extensions)
 
     def test_recv_command(self):
@@ -86,23 +85,21 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
     def test_tls_immediately(self):
         sock = self.mox.CreateMockAnything()
         sock.fileno = lambda: -1
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
+        self.context.wrap_socket(sock, server_side=True).AndReturn(sock)
         sock.sendall(b'220 ESMTP server\r\n')
         sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
         sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
-                   tls_wrapper=sock.tls_wrapper)
+        s = Server(sock, None, context=self.context, tls_immediately=True)
         s.handle()
 
     def test_tls_immediately_sslerror(self):
         sock = self.mox.CreateMockAnything()
         sock.fileno = lambda: -1
-        sock.tls_wrapper(sock, self.tls_args).AndRaise(SSLError())
+        self.context.wrap_socket(sock, server_side=True).AndRaise(SSLError())
         sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, tls=self.tls_args, tls_immediately=True,
-                   tls_wrapper=sock.tls_wrapper)
+        s = Server(sock, None, context=self.context, tls_immediately=True)
         s.handle()
 
     def test_ehlo(self):
@@ -187,11 +184,11 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
         sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
         sock.sendall(b'220 2.7.0 Go ahead\r\n')
-        sock.tls_wrapper(sock, self.tls_args).AndReturn(sock)
+        self.context.wrap_socket(sock, server_side=True).AndReturn(sock)
         sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
         sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
+        s = Server(sock, None, context=self.context)
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
@@ -209,10 +206,10 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         sock.sendall(b'250-Hello there\r\n250 STARTTLS\r\n')
         sock.recv(IsA(int)).AndReturn(b'STARTTLS\r\n')
         sock.sendall(b'220 2.7.0 Go ahead\r\n')
-        sock.tls_wrapper(sock, self.tls_args).AndRaise(SSLError())
+        self.context.wrap_socket(sock, server_side=True).AndRaise(SSLError())
         sock.sendall(b'421 4.7.0 TLS negotiation failed\r\n')
         self.mox.ReplayAll()
-        s = Server(sock, None, tls=self.tls_args, tls_wrapper=sock.tls_wrapper)
+        s = Server(sock, None, context=self.context)
         s.extensions.reset()
         s.extensions.add('STARTTLS')
         s.handle()
@@ -437,7 +434,7 @@ class TestSmtpServer(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'QUIT\r\n')
         self.sock.sendall(b'221 2.0.0 Bye\r\n')
         self.mox.ReplayAll()
-        s = Server(self.sock, None, tls=False)
+        s = Server(self.sock, None)
         s.handle()
 
     def test_gather_params(self):

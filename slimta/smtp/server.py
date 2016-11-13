@@ -32,7 +32,6 @@ import re
 from gevent import Timeout
 from pysasl import SASLAuth
 
-from slimta.util import validate_tls
 from . import SmtpError, ConnectionLost
 from .datareader import DataReader
 from .io import IO
@@ -79,15 +78,11 @@ class Server(object):
     :param auth: If True, enable authentication with default mechanisms. May
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
-    :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`.
+    :param context: Enables SSL encryption on connected sockets using the
+                    information given in the context.
     :param tls_immediately: If True, the socket will be encrypted
-                            immediately.
-    :type tls_immediately: True or False
-    :param tls_wrapper: Optional function that takes a socket and the ``tls``
-                        dictionary, creates a new encrypted socket, performs
-                        the TLS handshake, and returns it. The default uses
-                        :class:`~gevent.ssl.SSLSocket`.
+                            immediately on connection rather than advertising
+                            ``STARTTLS``.
     :param command_timeout: Optional timeout waiting for a command to be
                             sent from the client.
     :param data_timeout: Optional timeout waiting for data to be sent from
@@ -96,12 +91,12 @@ class Server(object):
     """
 
     def __init__(self, socket, handlers, auth=False,
-                 tls=None, tls_immediately=False, tls_wrapper=None,
+                 context=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
 
-        self.io = IO(socket, tls_wrapper)
+        self.io = IO(socket)
 
         self.bannered = False
         self.have_mailfrom = None
@@ -109,14 +104,14 @@ class Server(object):
         self.ehlo_as = None
         self.authed = False
 
-        self.tls = validate_tls(tls, server_side=True)
+        self.context = context
         self.tls_immediately = tls_immediately
 
         self.extensions.add('8BITMIME')
         self.extensions.add('PIPELINING')
         self.extensions.add('ENHANCEDSTATUSCODES')
         self.extensions.add('SMTPUTF8')
-        if self._enable_tls() and not tls_immediately:
+        if self.context and not tls_immediately:
             self.extensions.add('STARTTLS')
         if auth:
             if isinstance(auth, list):
@@ -128,9 +123,6 @@ class Server(object):
 
         self.command_timeout = command_timeout
         self.data_timeout = data_timeout or command_timeout
-
-    def _enable_tls(self):
-        return self.tls and 'certfile' in self.tls
 
     @property
     def encrypted(self):
@@ -165,7 +157,7 @@ class Server(object):
         self.have_rcptto = None
 
     def _encrypt_session(self):
-        if not self.io.encrypt_socket(self.tls):
+        if not self.io.encrypt_socket_server(self.context):
             return False
         self._call_custom_handler('TLSHANDSHAKE')
         return True
@@ -193,7 +185,7 @@ class Server(object):
         :raises: :class:`~slimta.smtp.ConnectionLost` or unhandled exceptions.
 
         """
-        if self._enable_tls() and self.tls_immediately:
+        if self.context and self.tls_immediately:
             if not self._encrypt_session():
                 tls_failure.send(self.io, flush=True)
                 return

@@ -27,7 +27,8 @@ out.
 
 from __future__ import absolute_import
 
-from slimta.util import validate_tls
+from gevent import ssl
+
 from .client import SmtpRelayClient
 from .lmtpclient import LmtpRelayClient
 from ..pool import RelayPool
@@ -45,9 +46,12 @@ class StaticSmtpRelay(RelayPool):
     :param pool_size: At most this many simultaneous connections will be open
                       to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
-    :param tls: Optional dictionary of TLS settings passed directly as
-                keyword arguments to :class:`gevent.ssl.SSLSocket`. ``False``
-                will explicitly disable TLS.
+    :param context: Used to wrap sockets with SSL encryption, rather than the
+                    default context.
+    :type context: :py:class:`~ssl.SSLContext`
+    :param tls_immediately: If True, the socket will be encrypted
+                            immediately on connection rather than looking for
+                            the ``STARTTLS`` extension.
     :param tls_required: If given and True, it should be considered a delivery
                          failure if TLS cannot be negotiated by the client.
     :param connect_timeout: Timeout in seconds to wait for a client connection
@@ -86,17 +90,18 @@ class StaticSmtpRelay(RelayPool):
     _default_class = SmtpRelayClient
 
     def __init__(self, host, port=25, pool_size=None, client_class=None,
-                 tls=None, **client_kwargs):
+                 context=None, **client_kwargs):
         super(StaticSmtpRelay, self).__init__(pool_size)
-        self.client_class = client_class or self._default_class
         self.host = host
         self.port = port
-        self.client_kwargs = client_kwargs
-        self.client_kwargs['tls'] = validate_tls(tls)
+        self._client_class = client_class or self._default_class
+        self._client_kwargs = client_kwargs
+        self._client_kwargs['context'] = context or \
+            ssl.create_default_context()
 
     def add_client(self):
-        return self.client_class((self.host, self.port), self.queue,
-                                 **self.client_kwargs)
+        return self._client_class((self.host, self.port), self.queue,
+                                 **self._client_kwargs)
 
 
 class StaticLmtpRelay(StaticSmtpRelay):

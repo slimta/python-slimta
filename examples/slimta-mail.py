@@ -4,6 +4,8 @@ import sys
 import logging
 import os.path
 
+from gevent import ssl
+
 # The following lines replace many standard library modules with versions that
 # use gevent for concurrency. This is NOT required by slimta, but may help
 # you avoid mistakes that can have harsh performance implications!
@@ -61,10 +63,10 @@ def _start_inbound_edge(args, queue):
                 reply.message = \
                     '5.7.1 Recipient <{0}> Not allowed'.format(recipient)
 
-    tls = _get_tls_args(args)
+    context = _get_ssl_context_server(args)
 
     edge = SmtpEdge(('', args.inbound_port), queue, max_size=10240,
-                    validator_class=EdgeValidators, tls=tls,
+                    validator_class=EdgeValidators, context=context,
                     command_timeout=20.0,
                     data_timeout=30.0)
     edge.start()
@@ -72,7 +74,7 @@ def _start_inbound_edge(args, queue):
     ssl_edge = SmtpEdge(('', args.inbound_ssl_port), queue,
                         validator_class=EdgeValidators,
                         auth=[b'PLAIN', b'LOGIN'],
-                        tls=tls, tls_immediately=True,
+                        context=context, tls_immediately=True,
                         command_timeout=20.0, data_timeout=30.0)
     ssl_edge.start()
 
@@ -82,10 +84,11 @@ def _start_inbound_edge(args, queue):
 def _start_outbound_relay(args):
     from slimta.relay.smtp.mx import MxSmtpRelay
 
-    tls = _get_tls_args(args)
+    context = _get_ssl_context_client(args)
 
-    relay = MxSmtpRelay(tls=tls, connect_timeout=20.0, command_timeout=10.0,
-                        data_timeout=20.0, idle_timeout=10.0)
+    relay = MxSmtpRelay(connect_timeout=20.0, command_timeout=10.0,
+                        data_timeout=20.0, idle_timeout=10.0,
+                        context=context)
     return relay
 
 
@@ -135,9 +138,9 @@ def _start_outbound_edge(args, queue):
                 reply.code = '550'
                 reply.message = '5.7.1 Sender <{0}> Not allowed'.format(sender)
 
-    tls = _get_tls_args(args)
+    context = _get_ssl_context_server(args)
 
-    edge = SmtpEdge(('', args.outbound_port), queue, tls=tls,
+    edge = SmtpEdge(('', args.outbound_port), queue, context=context,
                     validator_class=EdgeValidators,
                     auth=[b'PLAIN', b'LOGIN'],
                     command_timeout=20.0, data_timeout=30.0)
@@ -146,16 +149,18 @@ def _start_outbound_edge(args, queue):
     return edge
 
 
-def _get_tls_args(args):
-    try:
-        open(args.keyfile, 'r').close()
-        open(args.certfile, 'r').close()
-    except IOError:
-        logging.warn('Could not find TLS key or cert file, disabling TLS.')
-        return None
+def _get_ssl_context_server(args):
+    ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ctx.load_cert_chain(keyfile=os.path.realpath(args.keyfile),
+                        certfile=os.path.realpath(args.certfile))
+    return ctx
 
-    return {'keyfile': os.path.realpath(args.keyfile),
-            'certfile': os.path.realpath(args.certfile)}
+
+def _get_ssl_context_client(args):
+    ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+    ctx.load_cert_chain(keyfile=os.path.realpath(args.keyfile),
+                        certfile=os.path.realpath(args.certfile))
+    return ctx
 
 
 def _daemonize(args):
