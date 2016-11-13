@@ -159,7 +159,7 @@ def _get_tls_args(args):
 
 
 def _daemonize(args):
-    from slimta import system
+    from slimta.util import system
     from gevent import sleep
 
     if args.daemon:
