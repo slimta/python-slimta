@@ -1,7 +1,7 @@
 
 # Change Log
 
-## Unreleased
+## [4.0] - 2016-11-13
 
 ### Added
 
@@ -10,15 +10,22 @@
 
 ### Changed
 
-- The `tls` option to many different class constructors now defaults (with
-  `None`) to enabling TLS with no custom configuration. It can be given
-  explicitly `False` to disable TLS. This does not apply to server-side TLS,
-  which requires a dictionary with at least the `certfile` key.
+- Constructors and functions that took a `tls` dictionary now take a `context`
+  argument that should be an [`SSLContext`][7] object. This allows finer
+  control of encryption behavior, as well as the ability to pre-load sensitive
+  certificate data before daemonization.
+- Client connections will now be opportunistic and try to use TLS if it is
+  available, even if a key or cert have not been configured.
+- The `AUTH` SMTP extension will now advertise insecure authentication
+  mechanisms without TLS, but trying to use them will fail.
+- Moved the `slimta.system` module to `slimta.util.system` to de-clutter the
+  top-level namespace.
 
 ### Fixed
 
 - Fixed a possible race condition on enqueue.
 - Fixed exception when given empty EHLO/HELO string.
+- Fixed the fallback from EHLO to HELO in certain situations.
 
 ## [3.2] - 2016-05-16
 
@@ -110,6 +117,7 @@
 [4]: https://pythonhosted.org/six/
 [5]: https://docs.slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
 [6]: https://docs.slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
+[7]: https://docs.python.org/2.7/library/ssl.html#ssl.SSLContext
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
