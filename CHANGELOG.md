@@ -121,3 +121,4 @@
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
+[4.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A4.0
