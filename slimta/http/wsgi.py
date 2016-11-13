@@ -33,7 +33,6 @@ import sys
 
 from gevent.pywsgi import WSGIServer as GeventWSGIServer
 
-from slimta.util import validate_tls
 from slimta import logging
 
 __all__ = ['WsgiServer']
@@ -50,7 +49,7 @@ class WsgiServer(object):
 
     """
 
-    def build_server(self, listener, pool=None, tls=None):
+    def build_server(self, listener, pool=None, ssl_args=None):
         """Constructs and returns a WSGI server engine, configured to use the
         current object as its application.
 
@@ -58,15 +57,15 @@ class WsgiServer(object):
                          and port upon which to listen for connections.
         :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                      use for new greenlets.
-        :param tls: Optional dictionary of TLS settings passed directly as
-                    keyword arguments to :class:`gevent.ssl.SSLSocket`.
+        :param ssl_args: Optional dictionary of TLS settings, causing sockets
+                         to be encrypted on connection.
         :rtype: :class:`gevent.pywsgi.WSGIServer`
 
         """
         spawn = pool or 'default'
-        tls = validate_tls(tls)
+        ssl_args = ssl_args or {}
         return GeventWSGIServer(listener, self, log=sys.stdout, spawn=spawn,
-                                **tls)
+                                **ssl_args)
 
     def handle(self, environ, start_response):
         """Overridden by sub-classes to handle WSGI requests and generate a

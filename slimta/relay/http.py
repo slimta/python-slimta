@@ -37,7 +37,6 @@ import gevent
 from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.http import get_connection
-from slimta.util import validate_tls
 from slimta.util.pycompat import urlparse
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
@@ -86,7 +85,7 @@ class HttpRelayClient(RelayPoolClient):
         return headers
 
     def _new_conn(self):
-        self.conn = get_connection(self.url, self.relay.tls)
+        self.conn = get_connection(self.url, self.relay.context)
         try:
             self.ehlo_as = self.relay.ehlo_as()
         except TypeError:
@@ -173,9 +172,9 @@ class HttpRelay(RelayPool):
     :param pool_size: At most this many simultaneous connections will be open
                       to the destination. If this limit is reached and no
                       connections are idle, new attempts will block.
-    :param tls: Dictionary of TLS settings passed directly as keyword arguments
-                to :class:`gevent.ssl.SSLSocket`. ``False`` will explicitly
-                disable TLS.
+    :param context: Used to wrap sockets with SSL encryption, when ``https``
+                    URLs are used, rather than the default context.
+    :type context: :py:class:`~ssl.SSLContext`
     :param ehlo_as: The string to send as the EHLO string in a header. Defaults
                     to the FQDN of the system. This may also be given as a
                     function that will be executed with no arguments at the
@@ -202,11 +201,11 @@ class HttpRelay(RelayPool):
     #: The header name used to send the EHLO string.
     ehlo_header = 'X-Ehlo'
 
-    def __init__(self, url, pool_size=None, tls=None, ehlo_as=None,
+    def __init__(self, url, pool_size=None, context=None, ehlo_as=None,
                  timeout=None, idle_timeout=None):
         super(HttpRelay, self).__init__(pool_size)
         self.url = urlparse.urlsplit(url, 'http')
-        self.tls = validate_tls(tls)
+        self.context = context
         self.ehlo_as = ehlo_as or getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout

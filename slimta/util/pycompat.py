@@ -56,33 +56,4 @@ httplib = httplib_mod
 reprlib = reprlib_mod
 
 
-if sys.version_info < (3, 4):  # pragma: no cover
-    orig_HTTPConnection = httplib_mod.HTTPConnection
-    orig_HTTPSConnection = httplib_mod.HTTPSConnection
-
-    class _StrictHTTPConnection(orig_HTTPConnection):
-
-        _init_args = ('host', 'port', 'timeout', 'source_address')
-
-        def __init__(self, *args, **kwargs):
-            for i, arg in enumerate(args):
-                kwargs.setdefault(self._init_args[i], arg)
-            kwargs['strict'] = True
-            orig_HTTPConnection.__init__(self, **kwargs)
-
-    class _StrictHTTPSConnection(orig_HTTPSConnection):
-
-        _init_args = ('host', 'port', 'key_file', 'cert_file', 'timeout',
-                      'source_address', 'context')
-
-        def __init__(self, *args, **kwargs):
-            for i, arg in enumerate(args):
-                kwargs.setdefault(self._init_args[i], arg)
-            kwargs['strict'] = True
-            orig_HTTPSConnection.__init__(self, **kwargs)
-
-    httplib.HTTPConnection = _StrictHTTPConnection
-    httplib.HTTPSConnection = _StrictHTTPSConnection
-
-
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -92,7 +92,7 @@ class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
         self.mox.StubOutWithMock(DNSResolver, 'query')
         DNSResolver.query('example.com', 'MX').AndRaise(DNSError(ARES_ENOTFOUND))
         DNSResolver.query('example.com', 'A').AndReturn(FakeAsyncResult(a_ret))
-        mx.new_static_relay('1.2.3.4', 25).AndReturn(static)
+        mx.new_static_relay('example.com', 25).AndReturn(static)
         static.attempt(env, 0)
         self.mox.ReplayAll()
         mx.attempt(env, 0)

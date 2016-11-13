@@ -22,6 +22,12 @@ class FakeSocket(object):
         return self.peer
 
 
+class FakeContext(object):
+
+    def session_stats(self):
+        return {'hits': 13}
+
+
 class TestSocketLogger(unittest.TestCase):
 
     def setUp(self):
@@ -59,10 +65,9 @@ class TestSocketLogger(unittest.TestCase):
     @log_capture()
     def test_encrypt(self, l):
         sock = FakeSocket(445)
-        self.log.encrypt(sock, {'keyfile': 'test', 'server_side': True})
-        self.log.encrypt(sock, {'certfile': 'test'})
-        l.check(('test', 'DEBUG', 'fd:445:encrypt certfile=None keyfile=\'test\' server_side=True'),
-                ('test', 'DEBUG', 'fd:445:encrypt certfile=\'test\' keyfile=None server_side=False'))
+        context = FakeContext()
+        self.log.encrypt(sock, context)
+        l.check(('test', 'DEBUG', 'fd:445:encrypt hits=13'))
 
     @log_capture()
     def test_shutdown(self, l):

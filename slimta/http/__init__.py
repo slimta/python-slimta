@@ -32,7 +32,7 @@ from __future__ import absolute_import
 
 from socket import error as socket_error
 
-from gevent import socket, ssl
+from gevent import socket
 
 from slimta.util.pycompat import httplib, urlparse
 
@@ -46,37 +46,20 @@ class HTTPConnection(httplib.HTTPConnection):
 
     """
 
-    def connect(self):
-        if hasattr(self, 'source_address') and self.source_address:
-            self.sock = socket.create_connection((self.host, self.port),
-                                                 self.timeout,
-                                                 self.source_address)
-        else:
-            self.sock = socket.create_connection((self.host, self.port),
-                                                 self.timeout)
-        if self._tunnel_host:
-            self._tunnel()
+    def __init__(self, host, port=None, *args, **kwargs):
+        httplib.HTTPConnection.__init__(self, host, port, *args, **kwargs)
+        self._create_connection = socket.create_connection
 
 
-class HTTPSConnection(HTTPConnection):
+class HTTPSConnection(httplib.HTTPSConnection):
     """Modified version of the :py:class:`httplib.HTTPSConnection` class that
-    uses gevent sockets and the more functional ``tls`` parameter.
-
-    :param tls: This keyword argument contains the keyword arguments passed
-                into :class:`~gevent.ssl.SSLSocket` when the connection is
-                encrypted.
+    uses gevent sockets.
 
     """
 
-    def __init__(self, host, port=443, tls=None, *args, **kwargs):
-        self.tls = tls or {}
-        port = port or 443
-        HTTPConnection.__init__(self, host, port, *args, **kwargs)
-
-    def connect(self):
-        HTTPConnection.connect(self)
-        self.sock = ssl.SSLSocket(self.sock, **self.tls)
-        self.sock.do_handshake()
+    def __init__(self, host, port=None, *args, **kwargs):
+        httplib.HTTPSConnection.__init__(self, host, port, *args, **kwargs)
+        self._create_connection = socket.create_connection
 
     def close(self):
         if self.sock:
@@ -85,17 +68,18 @@ class HTTPSConnection(HTTPConnection):
             except socket_error as e:
                 if e.errno != 0:
                     raise
-        HTTPConnection.close(self)
+        httplib.HTTPSConnection.close(self)
 
 
-def get_connection(url, tls=None):
+def get_connection(url, context=None):
     """This convenience functions returns a :class:`HTTPConnection` or
     :class:`HTTPSConnection` based on the information contained in URL.
 
     :param url: URL string to create a connection for. Alternatively, passing
                 in the results of :py:func:`urlparse.urlsplit` works as well.
-    :param tls: When the URL scheme is ``https``, this is passed in as the
-                ``tls`` parameter to :class:`HTTPSConnection`.
+    :param context: Used to wrap sockets with SSL encryption, when the URL
+                    scheme is ``https``.
+    :type context: :py:class:`~ssl.SSLContext`
 
     """
     if isinstance(url, (str, bytes)):
@@ -103,7 +87,7 @@ def get_connection(url, tls=None):
     host = url.netloc or 'localhost'
 
     if url.scheme == 'https':
-        conn = HTTPSConnection(host, tls=tls)
+        conn = HTTPSConnection(host, context=context)
     else:
         conn = HTTPConnection(host)
     return conn
