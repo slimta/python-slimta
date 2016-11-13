@@ -50,10 +50,9 @@ log = logging.getSocketLogger(__name__)
 
 class IO(object):
 
-    def __init__(self, socket, context=None, address=None):
+    def __init__(self, socket, address=None):
         self.socket = socket
         self._address = address
-        self._context = context
 
         self.send_buffer = BytesIO()
         self.recv_buffer = b''

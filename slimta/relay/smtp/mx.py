@@ -81,7 +81,7 @@ class MxRecord(object):
         now = time.time()
         ret = []
         for rdata in answer:
-            ret.append((0, str(rdata.host)))
+            ret.append((0, self.domain))
             expiration = max(expiration, now + rdata.ttl)
         return ret, expiration
 
