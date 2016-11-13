@@ -26,7 +26,7 @@ from socket import error as socket_error
 from errno import ECONNRESET, EPIPE
 from io import BytesIO
 
-from gevent.ssl import SSLSocket, SSLError
+from gevent.ssl import SSLSocket, SSLError, create_default_context
 
 from slimta import logging
 from . import ConnectionLost, BadReply
@@ -102,13 +102,14 @@ class IO(object):
 
     def encrypt_socket_client(self, context=None):
         hostname = self.address[0]
-        context = context or ssl.create_default_context()
+        context = context or create_default_context()
         log.encrypt(self.socket, context)
         try:
             self.socket = context.wrap_socket(self.socket,
                                               server_hostname=hostname)
             return True
-        except SSLError:
+        except SSLError as exc:
+            log.error(self.socket, exc, self.address)
             return False
 
     def encrypt_socket_server(self, context):
@@ -116,7 +117,8 @@ class IO(object):
         try:
             self.socket = context.wrap_socket(self.socket, server_side=True)
             return True
-        except SSLError:
+        except SSLError as exc:
+            log.error(self.socket, exc, self.address)
             return False
 
     def buffered_recv(self):
