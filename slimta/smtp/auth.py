@@ -51,6 +51,14 @@ class InvalidAuthString(ServerAuthError):
         super(InvalidAuthString, self).__init__(msg, reply)
 
 
+class InsecureMechanismError(ServerAuthError):
+
+    def __init__(self):
+        msg = 'Insecure authentication mechanism requires SSL'
+        reply = Reply('504', '5.5.4 '+msg)
+        super(InsecureMechanismError, self).__init__(msg, reply)
+
+
 class InvalidMechanismError(ServerAuthError):
 
     def __init__(self):
@@ -100,8 +108,7 @@ class AuthSession(object):
 
     @property
     def server_mechanisms(self):
-        return [mech for mech in self.auth.server_mechanisms
-                if self.io.encrypted or not getattr(mech, 'insecure', False)]
+        return [mech for mech in self.auth.server_mechanisms]
 
     @property
     def client_mechanisms(self):
@@ -124,6 +131,9 @@ class AuthSession(object):
         mechanism_name, mechanism_arg = self._parse_arg(arg)
         for mechanism in self.server_mechanisms:
             if mechanism.name == mechanism_name:
+                insecure = getattr(mechanism, 'insecure', False)
+                if insecure and not self.io.encrypted:
+                    raise InsecureMechanismError()
                 responses = []
                 while True:
                     try:
