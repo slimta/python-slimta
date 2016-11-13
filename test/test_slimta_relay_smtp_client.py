@@ -32,14 +32,14 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
 
     def test_connect(self):
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
 
     def test_banner(self):
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'420 Not Welcome\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._banner()
         with self.assertRaises(TransientRelayError):
@@ -51,7 +51,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'420 Goodbye\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         with self.assertRaises(TransientRelayError):
@@ -60,23 +60,23 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
     def test_starttls(self):
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='addr').AndReturn(self.sock)
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'420 Stop\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, tls_required=True)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, context=self.context, tls_required=True)
         client._connect()
         client._starttls()
         with self.assertRaises(TransientRelayError):
             client._starttls()
 
     def test_handshake_tls_immediately(self):
-        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='addr').AndReturn(self.sock)
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, tls_immediately=True, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, context=self.context, tls_immediately=True, ehlo_as='there')
         client._connect()
         client._handshake()
 
@@ -86,11 +86,11 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'250-Hello\r\n250 STARTTLS\r\n')
         self.sock.sendall(b'STARTTLS\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'220 Go ahead\r\n')
-        self.context.wrap_socket(self.sock, server_hostname='test').AndReturn(self.sock)
+        self.context.wrap_socket(self.sock, server_hostname='addr').AndReturn(self.sock)
         self.sock.sendall(b'EHLO there\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Hello\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, context=self.context, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, context=self.context, ehlo_as='there')
         client._connect()
         client._handshake()
 
@@ -101,7 +101,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
         client._connect()
         client._handshake()
 
@@ -115,7 +115,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         def yield_creds():
             yield 'test@example.com'
             yield 'passwd'
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=yield_creds, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=yield_creds, ehlo_as='there')
         client._connect()
         client._handshake()
 
@@ -123,7 +123,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._rset()
 
@@ -134,7 +134,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
         client._connect()
         with self.assertRaises(PermanentRelayError):
             client._handshake()
@@ -145,7 +145,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'MAIL FROM:<sender>\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'550 Not Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._mailfrom('sender')
         with self.assertRaises(PermanentRelayError):
@@ -155,7 +155,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'RCPT TO:<recipient>\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._rcptto('recipient')
 
@@ -167,7 +167,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'550 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
         client._connect()
         client._send_message_data(env)
         with self.assertRaises(PermanentRelayError):
@@ -188,7 +188,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test \x81\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -205,7 +205,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'.\r\nRSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'550 Yikes\r\n250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -225,7 +225,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -243,7 +243,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'.\r\nRSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'550 Yikes\r\n250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -261,7 +261,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndRaise(ConnectionLost)
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         with self.assertRaises(ConnectionLost):
@@ -283,7 +283,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
             self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIENCg==\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there', binary_encoder=encode_base64)
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there', binary_encoder=encode_base64)
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -298,7 +298,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.sendall(b'RSET\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._ehlo()
         client._deliver(result, env)
@@ -310,7 +310,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._disconnect()
 
@@ -319,7 +319,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndRaise(socket_error(None, None))
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
         client._disconnect()
 
@@ -340,7 +340,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._run()
         self.assertEqual({'rcpt@example.com': Reply('250', 'Ok')}, result.get_nowait())
 
@@ -369,7 +369,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there', idle_timeout=0.0)
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there', idle_timeout=0.0)
         client._run()
         self.assertEqual({'rcpt1@example.com': Reply('250', 'Ok')}, result1.get_nowait())
         self.assertEqual({'rcpt2@example.com': Reply('250', 'Ok')}, result2.get_nowait())
@@ -385,7 +385,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         with self.assertRaises(ValueError):
             client._run()
         with self.assertRaises(ValueError):
@@ -402,7 +402,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._run()
         with self.assertRaises(TransientRelayError):
             result.get_nowait()
@@ -418,7 +418,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._run()
         with self.assertRaises(TransientRelayError):
             result.get_nowait()
@@ -434,7 +434,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._run()
         with self.assertRaises(TransientRelayError):
             result.get_nowait()
@@ -450,7 +450,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
         self.sock.recv(IsA(int)).AndReturn(b'221 Goodbye\r\n')
         self.sock.close()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, socket_creator=self._socket_creator, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._run()
         with self.assertRaises(PermanentRelayError):
             result.get_nowait()
@@ -458,7 +458,7 @@ class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
     def test_run_nomessages(self):
         queue = BlockingDeque()
         self.mox.ReplayAll()
-        client = SmtpRelayClient('addr', queue, idle_timeout=0)
+        client = SmtpRelayClient(('addr', 0), queue, idle_timeout=0)
         client._run()
 
 
