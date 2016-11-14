@@ -26,6 +26,8 @@
 - Fixed a possible race condition on enqueue.
 - Fixed exception when given empty EHLO/HELO string.
 - Fixed the fallback from EHLO to HELO in certain situations.
+- The [`session.auth`][8] variable now correctly contains the tuple described
+  in the documentation.
 
 ## [3.2] - 2016-05-16
 
@@ -118,6 +120,7 @@
 [5]: https://docs.slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
 [6]: https://docs.slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
 [7]: https://docs.python.org/2.7/library/ssl.html#ssl.SSLContext
+[8]: https://docs.slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpValidators.session
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
