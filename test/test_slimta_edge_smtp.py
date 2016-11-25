@@ -90,16 +90,21 @@ class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
             h.HAVE_DATA(reply, None, ValueError())
 
     def test_have_data(self):
+        class PtrLookup(object):
+            def finish(self, *args):
+                return 'localhost'
         env = Envelope()
         handoff = self.mox.CreateMockAnything()
         handoff(env).AndReturn([(env, 'testid')])
         self.mox.ReplayAll()
         h = SmtpSession(('127.0.0.1', 0), None, handoff)
         h.envelope = env
+        h._ptr_lookup = PtrLookup()
         reply = Reply('250')
         h.HAVE_DATA(reply, b'', None)
         self.assertEqual('250', reply.code)
         self.assertEqual('2.6.0 Message accepted for delivery', reply.message)
+        self.assertEqual('localhost', env.client['host'])
 
     def test_have_data_queueerror(self):
         env = Envelope()
