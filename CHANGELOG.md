@@ -1,6 +1,12 @@
 
 # Change Log
 
+## Unreleased
+
+### Fixed
+
+- The result of the reverse IP lookup was never consumed in [`SmtpEdge`][9].
+
 ## [4.0] - 2016-11-13
 
 ### Added
@@ -121,6 +127,7 @@
 [6]: https://docs.slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
 [7]: https://docs.python.org/2.7/library/ssl.html#ssl.SSLContext
 [8]: https://docs.slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpValidators.session
+[9]: https://docs.slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpEdge
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
