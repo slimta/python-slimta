@@ -101,6 +101,7 @@ class SmtpSession(object):
         self.envelope = None
         self.ehlo_as = None
         self.auth = None
+        self._ptr_lookup = None
 
     def _call_validator(self, command, *args):
         method = 'handle_'+command
@@ -173,6 +174,8 @@ class SmtpSession(object):
         if reply.code != '250':
             return
 
+        if self._ptr_lookup is not None:
+            self.reverse_address = self._ptr_lookup.finish()
         self.envelope.client['ip'] = self.address[0]
         self.envelope.client['host'] = self.reverse_address
         self.envelope.client['name'] = self.ehlo_as
