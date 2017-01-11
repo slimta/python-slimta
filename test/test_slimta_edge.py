@@ -1,12 +1,12 @@
 import time
 
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase
 
 from slimta.edge import Edge, EdgeServer
 
 
-class TestEdge(unittest.TestCase, MoxTestBase):
+class TestEdge(MoxTestBase, unittest.TestCase):
 
     def test_handoff(self):
         self.mox.StubOutWithMock(time, 'time')
@@ -36,7 +36,7 @@ class TestEdge(unittest.TestCase, MoxTestBase):
         edge.kill()
 
 
-class TestEdgeServer(unittest.TestCase, MoxTestBase):
+class TestEdgeServer(MoxTestBase, unittest.TestCase):
 
     def test_edge_interface(self):
         edge = EdgeServer(('127.0.0.1', 0), None)

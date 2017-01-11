@@ -1,6 +1,6 @@
 from email.encoders import encode_base64
 
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent.socket import socket, error as socket_error
@@ -16,7 +16,7 @@ from slimta.relay.smtp.client import SmtpRelayClient
 from slimta.envelope import Envelope
 
 
-class TestSmtpRelayClient(unittest.TestCase, MoxTestBase):
+class TestSmtpRelayClient(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSmtpRelayClient, self).setUp()

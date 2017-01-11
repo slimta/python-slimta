@@ -1,6 +1,6 @@
 import email.utils
 
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket
 from pysasl import SASLAuth
@@ -10,7 +10,7 @@ from slimta.smtp.auth import AuthSession, ServerAuthError, \
                              InvalidMechanismError, AuthenticationCanceled
 
 
-class TestSmtpAuth(unittest.TestCase, MoxTestBase):
+class TestSmtpAuth(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSmtpAuth, self).setUp()

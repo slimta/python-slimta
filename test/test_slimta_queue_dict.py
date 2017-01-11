@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import re
 
 from slimta.queue.dict import DictStorage

@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 from slimta.envelope import Envelope
 from slimta.bounce import Bounce

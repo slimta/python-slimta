@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import errno
 import logging
 import socket

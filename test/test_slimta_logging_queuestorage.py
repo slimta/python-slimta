@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 import uuid
 
 from testfixtures import log_capture

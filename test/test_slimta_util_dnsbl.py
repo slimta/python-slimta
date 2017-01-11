@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 from mox3.mox import MoxTestBase
 from pycares.errno import ARES_ENOTFOUND
@@ -23,7 +23,7 @@ class FakeAsyncResult(object):
         return self.answers
 
 
-class TestDnsbl(unittest.TestCase, MoxTestBase):
+class TestDnsbl(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestDnsbl, self).setUp()

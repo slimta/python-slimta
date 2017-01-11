@@ -1,5 +1,5 @@
 
-import unittest2 as unittest
+import unittest
 
 from slimta.smtp.datasender import DataSender
 

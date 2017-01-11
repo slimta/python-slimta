@@ -1,11 +1,11 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 
 from slimta.relay.smtp.static import StaticSmtpRelay
 from slimta.relay.smtp.client import SmtpRelayClient
 
 
-class TestStaticSmtpRelay(unittest.TestCase, MoxTestBase):
+class TestStaticSmtpRelay(MoxTestBase, unittest.TestCase):
 
     def test_add_client(self):
         static = StaticSmtpRelay('testhost')

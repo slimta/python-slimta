@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
@@ -11,7 +11,7 @@ from slimta.smtp import ConnectionLost, MessageTooBig
 from slimta.smtp.client import Client
 
 
-class TestEdgeSmtp(unittest.TestCase, MoxTestBase):
+class TestEdgeSmtp(MoxTestBase, unittest.TestCase):
 
     def test_call_validator(self):
         mock = self.mox.CreateMockAnything()

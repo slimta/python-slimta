@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase
 from pycares.errno import ARES_ENOTFOUND, ARES_ENODATA
 
@@ -45,7 +45,7 @@ class FakeAAnswer(object):
         return iter(self.rdata)
 
 
-class TestMxSmtpRelay(unittest.TestCase, MoxTestBase):
+class TestMxSmtpRelay(MoxTestBase, unittest.TestCase):
 
     def test_get_rcpt_domain(self):
         env = Envelope('sender@example.com', ['rcpt@Example.com'])

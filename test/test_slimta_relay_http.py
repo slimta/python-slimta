@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.event import AsyncResult
 from gevent import Timeout
@@ -11,7 +11,7 @@ from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.relay.http import HttpRelay, HttpRelayClient
 
 
-class TestHttpRelay(unittest.TestCase, MoxTestBase):
+class TestHttpRelay(MoxTestBase, unittest.TestCase):
 
     def test_add_client(self):
         static = HttpRelay('http://testurl')
@@ -19,7 +19,7 @@ class TestHttpRelay(unittest.TestCase, MoxTestBase):
         self.assertIsInstance(ret, HttpRelayClient)
 
 
-class TestHttpRelayClient(unittest.TestCase, MoxTestBase):
+class TestHttpRelayClient(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestHttpRelayClient, self).setUp()

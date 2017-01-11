@@ -1,18 +1,18 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase
 from gevent import socket
 
 from slimta.http import HTTPConnection, HTTPSConnection, get_connection
 
 
-class TestHTTPConnection(unittest.TestCase, MoxTestBase):
+class TestHTTPConnection(MoxTestBase, unittest.TestCase):
 
     def test_init(self):
         conn = HTTPConnection('testhost', 8025, timeout=7)
         self.assertEqual(conn._create_connection, socket.create_connection)
 
 
-class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
+class TestHTTPSConnection(MoxTestBase, unittest.TestCase):
 
     def test_close(self):
         conn = HTTPSConnection('testhost', 8025)
@@ -23,7 +23,7 @@ class TestHTTPSConnection(unittest.TestCase, MoxTestBase):
         conn.close()
 
 
-class TestGetConnection(unittest.TestCase, MoxTestBase):
+class TestGetConnection(MoxTestBase, unittest.TestCase):
 
     def test_get_connection(self):
         conn = get_connection('http://localhost')

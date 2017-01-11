@@ -1,6 +1,5 @@
 pytest
 pytest-cov
-unittest2
 mox3
 testfixtures
 flake8

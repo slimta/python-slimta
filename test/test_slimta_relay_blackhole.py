@@ -1,5 +1,5 @@
 
-import unittest2 as unittest
+import unittest
 
 from slimta.relay.blackhole import BlackholeRelay
 from slimta.envelope import Envelope

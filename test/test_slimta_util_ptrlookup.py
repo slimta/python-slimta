@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 import gevent
 from gevent import socket
@@ -7,7 +7,7 @@ from mox3.mox import MoxTestBase
 from slimta.util.ptrlookup import PtrLookup
 
 
-class TestPtrLookup(unittest.TestCase, MoxTestBase):
+class TestPtrLookup(MoxTestBase, unittest.TestCase):
 
     def test_from_getpeername(self):
         sock = self.mox.CreateMockAnything()

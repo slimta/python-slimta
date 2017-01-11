@@ -1,5 +1,5 @@
 
-import unittest2 as unittest
+import unittest
 
 from mox3.mox import MoxTestBase
 from gevent.socket import socket, SHUT_WR
@@ -8,7 +8,7 @@ from slimta.policy.spamassassin import SpamAssassin, SpamAssassinError
 from slimta.envelope import Envelope
 
 
-class TestSpamAssassin(unittest.TestCase, MoxTestBase):
+class TestSpamAssassin(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSpamAssassin, self).setUp()

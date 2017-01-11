@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 from slimta.policy.split import RecipientSplit, RecipientDomainSplit
 from slimta.envelope import Envelope

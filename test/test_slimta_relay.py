@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 
 from slimta.relay import Relay, PermanentRelayError, TransientRelayError
@@ -6,7 +6,7 @@ from slimta.policy import RelayPolicy
 from slimta.envelope import Envelope
 
 
-class TestRelay(unittest.TestCase, MoxTestBase):
+class TestRelay(MoxTestBase, unittest.TestCase):
 
     def test_default_replies(self):
         perm = PermanentRelayError('test msg')

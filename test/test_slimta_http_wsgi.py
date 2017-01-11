@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 import gevent
 from gevent.pywsgi import WSGIServer as GeventWSGIServer
@@ -6,7 +6,7 @@ from gevent.pywsgi import WSGIServer as GeventWSGIServer
 from slimta.http.wsgi import WsgiServer, log
 
 
-class TestWsgiServer(unittest.TestCase, MoxTestBase):
+class TestWsgiServer(MoxTestBase, unittest.TestCase):
 
     def test_build_server(self):
         w = WsgiServer()

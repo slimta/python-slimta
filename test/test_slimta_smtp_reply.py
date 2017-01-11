@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 
 from slimta.smtp.reply import Reply
 from slimta.smtp.io import IO

@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket
 
@@ -7,7 +7,7 @@ from slimta.smtp import BadReply, ConnectionLost
 from slimta.smtp.reply import Reply
 
 
-class TestSmtpIO(unittest.TestCase, MoxTestBase):
+class TestSmtpIO(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSmtpIO, self).setUp()

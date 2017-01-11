@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent import Timeout
 from gevent import subprocess
@@ -8,7 +8,7 @@ from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.envelope import Envelope
 
 
-class TestPipeRelay(unittest.TestCase, MoxTestBase):
+class TestPipeRelay(MoxTestBase, unittest.TestCase):
 
     def test_exec_process(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -84,7 +84,7 @@ class TestPipeRelay(unittest.TestCase, MoxTestBase):
             m.attempt(env, 0)
 
 
-class TestMaildropRelay(unittest.TestCase, MoxTestBase):
+class TestMaildropRelay(MoxTestBase, unittest.TestCase):
 
     def test_extra_args(self):
         m = MaildropRelay(extra_args=['-t', 'test'])
@@ -98,7 +98,7 @@ class TestMaildropRelay(unittest.TestCase, MoxTestBase):
             m.raise_error(13, 'message', '')
 
 
-class TestDovecotLdaRelay(unittest.TestCase, MoxTestBase):
+class TestDovecotLdaRelay(MoxTestBase, unittest.TestCase):
 
     def test_extra_args(self):
         m = DovecotLdaRelay(extra_args=['-t', 'test'])

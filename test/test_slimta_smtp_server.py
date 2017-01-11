@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket, SSLContext, SSLError
 from pysasl import SASLAuth
@@ -8,7 +8,7 @@ from slimta.smtp.auth import AuthSession
 from slimta.smtp import ConnectionLost
 
 
-class TestSmtpServer(unittest.TestCase, MoxTestBase):
+class TestSmtpServer(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSmtpServer, self).setUp()

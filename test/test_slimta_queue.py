@@ -1,7 +1,7 @@
 import sys
 from functools import wraps
 
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 import gevent
 from gevent.pool import Pool
@@ -27,7 +27,7 @@ def _redirect_stderr(f):
     return wrapper
 
 
-class TestQueue(unittest.TestCase, MoxTestBase):
+class TestQueue(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestQueue, self).setUp()

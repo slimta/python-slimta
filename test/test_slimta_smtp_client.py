@@ -1,4 +1,4 @@
-import unittest2 as unittest
+import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket
 from gevent.ssl import SSLContext
@@ -7,7 +7,7 @@ from slimta.smtp.client import Client, LmtpClient
 from slimta.smtp.reply import Reply
 
 
-class TestSmtpClient(unittest.TestCase, MoxTestBase):
+class TestSmtpClient(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestSmtpClient, self).setUp()
@@ -224,7 +224,7 @@ class TestSmtpClient(unittest.TestCase, MoxTestBase):
         self.assertEqual(b'QUIT', reply.command)
 
 
-class TestLmtpClient(unittest.TestCase, MoxTestBase):
+class TestLmtpClient(MoxTestBase, unittest.TestCase):
 
     def setUp(self):
         super(TestLmtpClient, self).setUp()
