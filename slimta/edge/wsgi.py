@@ -156,6 +156,23 @@ class WsgiEdge(Edge, WsgiServer):
             self.uri_pattern = re.compile(uri_pattern)
         else:
             self.uri_pattern = uri_pattern
+        self.server = None
+
+    def start_server(self, listener, pool=None, ssl_args=None):
+        """Constructs and starts a WSGI server engine.
+
+        .. seealso:: :meth:`~slimta.http.wsgi.build_server`
+
+        """
+        if self.server:
+            self.server.close()
+        self.server = self.build_server(listener, pool, ssl_args)
+        self.server.start()
+
+    def kill(self):
+        if self.server:
+            self.server.close()
+            self.server = None
 
     def __call__(self, environ, start_response):
         ptr_lookup = PtrLookup(environ.get('REMOTE_ADDR', '0.0.0.0'))
