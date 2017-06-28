@@ -111,7 +111,7 @@ def _build_http_response(smtp_reply):
         return WsgiResponse('500 Internal Server Error', headers)
 
 
-class WsgiEdge(Edge, EdgeServer, WsgiServer):
+class WsgiEdge(EdgeServer, WsgiServer):
     """This class is intended to be instantiated and used as an app on top of a
     WSGI server engine such as :class:`gevent.pywsgi.WSGIServer`. It will only
     acccept ``POST`` requests that provide a ``message/rfc822`` payload.
@@ -163,7 +163,7 @@ class WsgiEdge(Edge, EdgeServer, WsgiServer):
 
     def __init__(self, queue, hostname=None, validator_class=None,
                  uri_pattern=None, listener=None, pool=None, context=None):
-        super(WsgiEdge, self).__init__(queue, hostname)
+        super(WsgiEdge, self).__init__(None, queue, hostname=hostname)
         self.validator_class = validator_class
         if isinstance(uri_pattern, str):
             self.uri_pattern = re.compile(uri_pattern)
