@@ -58,7 +58,8 @@ class WsgiServer(object):
         :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
                      use for new greenlets.
         :param ssl_args: Optional dictionary of TLS settings, causing sockets
-                         to be encrypted on connection.
+                         to be encrypted on connection. See
+                         :class:`~gevent.pywsgi.WSGIServer` for details.
         :rtype: :class:`gevent.pywsgi.WSGIServer`
 
         """
