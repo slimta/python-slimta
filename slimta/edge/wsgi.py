@@ -68,7 +68,7 @@ from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from slimta.util.ptrlookup import PtrLookup
-from . import Edge
+from . import Edge, EdgeServer
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
 
@@ -111,10 +111,16 @@ def _build_http_response(smtp_reply):
         return WsgiResponse('500 Internal Server Error', headers)
 
 
-class WsgiEdge(Edge, WsgiServer):
+class WsgiEdge(EdgeServer, WsgiServer):
     """This class is intended to be instantiated and used as an app on top of a
     WSGI server engine such as :class:`gevent.pywsgi.WSGIServer`. It will only
     acccept ``POST`` requests that provide a ``message/rfc822`` payload.
+
+    .. note::
+
+        If ``listener`` is not provided, use
+        :meth:`~slimta.http.WsgiServer.build_server` to build and manage the
+        server manually.
 
     :param queue: |Queue| object used by :meth:`.handoff()` to ensure the
                   envelope is properly queued before acknowledged by the edge
@@ -127,6 +133,13 @@ class WsgiEdge(Edge, WsgiServer):
     :param uri_pattern: If given, only URI paths that match the given pattern
                         will be allowed.
     :type uri_pattern: :py:class:`~re.RegexObject` or :py:obj:`str`
+    :param listener: Usually a ``(ip, port)`` tuple defining the interface
+                     and port upon which to listen for connections.
+    :param pool: If given, defines a specific :class:`gevent.pool.Pool` to
+                 use for new greenlets.
+    :param context: Enables SSL encryption on connected sockets using the
+                    information given in the context.
+    :type context: :py:class:`~ssl.SSLContext`
 
     """
 
@@ -149,13 +162,18 @@ class WsgiEdge(Edge, WsgiServer):
     ehlo_header = 'X-Ehlo'
 
     def __init__(self, queue, hostname=None, validator_class=None,
-                 uri_pattern=None):
-        super(WsgiEdge, self).__init__(queue, hostname)
+                 uri_pattern=None, listener=None, pool=None, context=None):
+        super(WsgiEdge, self).__init__(None, queue, hostname=hostname)
         self.validator_class = validator_class
         if isinstance(uri_pattern, str):
             self.uri_pattern = re.compile(uri_pattern)
         else:
             self.uri_pattern = uri_pattern
+        if listener:
+            ssl_args = {'ssl_context': context}
+            self.server = self.build_server(listener, pool, ssl_args)
+        else:
+            self.server = None
 
     def __call__(self, environ, start_response):
         ptr_lookup = PtrLookup(environ.get('REMOTE_ADDR', '0.0.0.0'))
