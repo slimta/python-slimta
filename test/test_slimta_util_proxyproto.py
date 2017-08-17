@@ -202,11 +202,11 @@ class TestProxyProtocolV2(MoxTestBase):
         self.assertEqual(61680, addr_len)
 
     def test_parse_pp_addresses(self):
-        data = bytearray(b'\x00\x00\x00\x00\x7f\x00\x00\x01\x00\x00\x19\x00')
+        data = bytearray(b'\x00\x00\x00\x00\x7f\x00\x00\x01\x00\x00\x00\x19')
         src_addr, dst_addr = self.pp._ProxyProtocolV2__parse_pp_addresses(socket.AF_INET, data)
         self.assertEqual(('0.0.0.0', 0), src_addr)
         self.assertEqual(('127.0.0.1', 25), dst_addr)
-        data = bytearray((b'\x00'*15 + b'\x01')*2 + b'\x00\x00\x19\x00')
+        data = bytearray((b'\x00'*15 + b'\x01')*2 + b'\x00\x00\x00\x19')
         src_addr, dst_addr = self.pp._ProxyProtocolV2__parse_pp_addresses(socket.AF_INET6, data)
         self.assertEqual(('::1', 0), src_addr)
         self.assertEqual(('::1', 25), dst_addr)

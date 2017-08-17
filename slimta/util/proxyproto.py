@@ -32,6 +32,7 @@ import struct
 
 from gevent import socket
 
+from slimta.edge import EdgeServer
 from slimta.logging import getSocketLogger
 
 __all__ = ['ProxyProtocol', 'ProxyProtocolV1', 'ProxyProtocolV2']
@@ -157,6 +158,22 @@ class ProxyProtocolV1(object):
         log.recv(sock, line)
         return cls.parse_pp_line(line)
 
+    @classmethod
+    def mixin(cls, edge):
+        """Dynamically mix-in the :class:`ProxyProtocolV1` class as a base of
+        the given edge object. Use with caution.
+
+        :param edge: the edge object to use proxy protocol on.
+        :type edge: :class:`~slimta.edge.EdgeServer`
+        :raises: ValueError
+
+        """
+        if not isinstance(edge, EdgeServer):
+            raise ValueError(edge)
+        old_class = edge.__class__
+        new_class_name = cls.__name__ + old_class.__name__
+        edge.__class__ = type(new_class_name, (cls, old_class), {})
+
     def handle(self, sock, addr):
         """Intercepts calls to :meth:`~slimta.edge.EdgeServer.handle`, reads
         the proxy protocol header, and then resumes the original call.
@@ -209,32 +226,32 @@ class ProxyProtocolV2(object):
     def __parse_pp_data(cls, data):
         assert data[0:12] == b'\r\n\r\n\x00\r\nQUIT\n', \
             'Invalid proxy protocol v2 signature'
-        assert data[13] & 0xf0 == 0x20, 'Invalid proxy protocol version'
+        assert data[12] & 0xf0 == 0x20, 'Invalid proxy protocol version'
         command = cls.__commands.get(data[12] & 0x0f)
         family = cls.__families.get(data[13] & 0xf0)
         protocol = cls.__protocols.get(data[13] & 0x0f)
-        addr_len = struct.unpack('<H', data[14:16])[0]
+        addr_len = struct.unpack('!H', data[14:16])[0]
         return command, family, protocol, addr_len
 
     @classmethod
     def __parse_pp_addresses(cls, family, addr_data):
         if family == socket.AF_INET:
             src_ip, dst_ip, src_port, dst_port = \
-                struct.unpack('<4s4sHH', addr_data)
+                struct.unpack('!4s4sHH', addr_data)
             src_addr = (socket.inet_ntop(family, src_ip), src_port)
             dst_addr = (socket.inet_ntop(family, dst_ip), dst_port)
             return src_addr, dst_addr
         elif family == socket.AF_INET6:
             src_ip, dst_ip, src_port, dst_port = \
-                struct.unpack('<16s16sHH', addr_data)
+                struct.unpack('!16s16sHH', addr_data)
             src_addr = (socket.inet_ntop(family, src_ip), src_port)
             dst_addr = (socket.inet_ntop(family, dst_ip), dst_port)
             return src_addr, dst_addr
         elif family == socket.AF_UNIX:
-            src_addr, dst_addr = struct.unpack('<108s108s', addr_data)
+            src_addr, dst_addr = struct.unpack('!108s108s', addr_data)
             return src_addr.rstrip(b'\x00'), dst_addr.rstrip(b'\x00')
         else:
-            return unknown_pp_source_address,  unknown_pp_dest_address
+            return unknown_pp_source_address, unknown_pp_dest_address
 
     @classmethod
     def process_pp_v2(cls, sock, initial):
@@ -248,6 +265,22 @@ class ProxyProtocolV2(object):
             return ret
         except struct.error:
             raise AssertionError('Invalid proxy protocol data')
+
+    @classmethod
+    def mixin(cls, edge):
+        """Dynamically mix-in the :class:`ProxyProtocolV2` class as a base of
+        the given edge object. Use with caution.
+
+        :param edge: the edge object to use proxy protocol on.
+        :type edge: :class:`~slimta.edge.EdgeServer`
+        :raises: ValueError
+
+        """
+        if not isinstance(edge, EdgeServer):
+            raise ValueError(edge)
+        old_class = edge.__class__
+        new_class_name = cls.__name__ + old_class.__name__
+        edge.__class__ = type(new_class_name, (cls, old_class), {})
 
     def handle(self, sock, addr):
         """Intercepts calls to :meth:`~slimta.edge.EdgeServer.handle`, reads
@@ -290,6 +323,22 @@ class ProxyProtocol(object):
             assert read_n, 'Received EOF during proxy protocol header'
             read = memoryview(buf)[0:len(read)+read_n].tobytes()
         return read
+
+    @classmethod
+    def mixin(cls, edge):
+        """Dynamically mix-in the :class:`ProxyProtocol` class as a base of the
+        given edge object. Use with caution.
+
+        :param edge: the edge object to use proxy protocol on.
+        :type edge: :class:`~slimta.edge.EdgeServer`
+        :raises: ValueError
+
+        """
+        if not isinstance(edge, EdgeServer):
+            raise ValueError(edge)
+        old_class = edge.__class__
+        new_class_name = cls.__name__ + old_class.__name__
+        edge.__class__ = type(new_class_name, (cls, old_class), {})
 
     def handle(self, sock, addr):
         """Intercepts calls to :meth:`~slimta.edge.EdgeServer.handle`, reads
