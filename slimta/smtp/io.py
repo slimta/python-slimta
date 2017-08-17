@@ -72,6 +72,8 @@ class IO(object):
         if self.encrypted:
             try:
                 self.socket.unwrap()
+            except ValueError:
+                pass
             except SSLWantReadError:
                 pass
             except socket_error as e:

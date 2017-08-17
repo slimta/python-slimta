@@ -248,7 +248,7 @@ class SmtpEdge(EdgeServer):
         smtp_server = None
         try:
             handlers = SmtpSession(address, self.validator_class, self.handoff)
-            smtp_server = Server(socket, handlers, self.auth,
+            smtp_server = Server(socket, handlers, address, self.auth,
                                  self.context, self.tls_immediately,
                                  command_timeout=self.command_timeout,
                                  data_timeout=self.data_timeout)

@@ -75,6 +75,7 @@ class Server(object):
                      corresponding SMTP commands are received. These methods
                      can modify the |Reply| before the command response is
                      sent.
+    :param address: The address of the connected client.
     :param auth: If True, enable authentication with default mechanisms. May
                  also be given as a list of SASL mechanism names to support,
                  e.g. ``['PLAIN', 'LOGIN', 'CRAM-MD5']``.
@@ -90,13 +91,13 @@ class Server(object):
 
     """
 
-    def __init__(self, socket, handlers, auth=False,
+    def __init__(self, socket, handlers, address=None, auth=False,
                  context=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None):
         self.handlers = handlers
         self.extensions = Extensions()
 
-        self.io = IO(socket)
+        self.io = IO(socket, address)
 
         self.bannered = False
         self.have_mailfrom = None
