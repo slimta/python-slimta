@@ -97,7 +97,7 @@ class Edge(object):
 class EdgeServer(Edge, gevent.Greenlet):
     """This class implements a :class:`~gevent.Greenlet` serving a
     :class:`~gevent.server.StreamServer` until killed. Connections are accepted
-    on the socket and passed to :meth:`.handle()`, which should be overriden
+    on the socket and passed to :meth:`.handle()`, which should be overridden
     by implementers of this base class. The socket will be closed
     automatically.
 

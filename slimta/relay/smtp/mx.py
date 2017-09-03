@@ -181,7 +181,7 @@ class MxSmtpRelay(Relay):
 
     def new_static_relay(self, destination, port):
         """Return a new :class:`~slimta.relay.smtp.static.StaticSmtpRelay`
-        object for the given destination. This method can be overriden to
+        object for the given destination. This method can be overridden to
         provide extra arguments, such as limiting the number of concurrent
         connections.
 
@@ -194,7 +194,7 @@ class MxSmtpRelay(Relay):
     def choose_mx(self, records, attempts):
         """Chooses a record based on the number of delivery attempts on the
         message. As provided, this method cycle through the records trying
-        each one once, but this method can be overriden.
+        each one once, but this method can be overridden.
 
         :param records: List of tuples ``(pref, host)`` sorted by preference.
         :param attempts: The number of delivery attempts this message has

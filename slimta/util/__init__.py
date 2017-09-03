@@ -64,7 +64,7 @@ def create_connection_ipv4(address, timeout=None, source_address=None,
     for res in socket.getaddrinfo(host, port, socket.AF_INET):
         _, _, _, _, sockaddr = res
         try:
-            return socket.create_connection(sockaddr,  timeout, source_address)
+            return socket.create_connection(sockaddr, timeout, source_address)
         except socket.error as exc:
             last_exc = exc
     if last_exc is not None:

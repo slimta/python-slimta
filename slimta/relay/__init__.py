@@ -94,7 +94,7 @@ class Relay(object):
         return self.attempt(envelope, attempts)
 
     def attempt(self, envelope, attempts):
-        """This method must be overriden by sub-classes in order to be passed
+        """This method must be overridden by sub-classes in order to be passed
         in to the |Queue| constructor.
 
         The result of a successful relay attempt is either ``None`` or a

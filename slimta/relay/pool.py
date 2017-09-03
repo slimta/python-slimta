@@ -134,11 +134,11 @@ class RelayPoolClient(Greenlet):
             self.idle = False
 
     def _run(self):
-        """This method must be overriden by sub-classes to handle processing of
-        delivery requests. It should call :meth:`poll` when it is ready for new
-        delivery requests. The result of the delivery attempt should be written
-        to the :class:`~gevent.event.AsyncResult` object provided in the
-        request.
+        """This method must be overridden by sub-classes to handle processing
+        of delivery requests. It should call :meth:`poll` when it is ready for
+        new delivery requests. The result of the delivery attempt should be
+        written to the :class:`~gevent.event.AsyncResult` object provided in
+        the request.
 
         """
         raise NotImplementedError()
