@@ -92,8 +92,7 @@ class AuthSession(object):
     def __str__(self):
         available = self.server_mechanisms
         if available:
-            return ' '.join(sorted([mech.name.decode('ascii')
-                                    for mech in available]))
+            return ' '.join([mech.name.decode('ascii') for mech in available])
         else:
             raise ValueError('No mechanisms available')
 
