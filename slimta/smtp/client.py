@@ -23,7 +23,10 @@
 
 from __future__ import absolute_import
 
-from gevent import ssl, Timeout
+import re
+import binascii
+
+from gevent import Timeout
 from gevent.socket import wait_read
 
 from pysasl import SASLAuth
@@ -35,6 +38,8 @@ from .reply import Reply
 from .datasender import DataSender
 
 __all__ = ['Client', 'LmtpClient']
+
+xtext_pattern = re.compile(br'[^\x21-\x2A\x2C-\x3C\x3E-\x7E]')
 
 
 class Client(object):
@@ -79,6 +84,14 @@ class Client(object):
             return thing.encode('utf-8')
         else:
             return thing.encode('ascii')
+
+    def _xtext_repl(self, match):
+        letter = match.group(0)
+        return b'+' + binascii.hexlify(letter).upper()
+
+    def _xtext(self, thing):
+        encoded = self._encode(thing)
+        return re.sub(xtext_pattern, self._xtext_repl, encoded)
 
     def has_reply_waiting(self):
         """Checks if the underlying socket has data waiting to be received,
@@ -241,7 +254,7 @@ class Client(object):
         auth = AuthSession(SASLAuth(), self.io)
         return auth.client_attempt(authcid, secret, authzid, mechanism)
 
-    def mailfrom(self, address, data_size=None):
+    def mailfrom(self, address, data_size=None, auth=None):
         """Sends the MAIL command with the ``address`` and possibly the message
         size. The message size is sent if the server supports the SIZE
         extension. If the server does *not* support PIPELINING, the returned
@@ -249,6 +262,10 @@ class Client(object):
 
         :param address: The sender address to send.
         :param data_size: Optional size of the message body.
+        :param auth: Optionally indicates the message was originally submitted
+                     using the given authentication. Use ``False`` if
+                     authentication was missing or unknown.
+        :type auth: str
         :returns: |Reply| object that will be populated with the response
                   once a non-pipelined command is called, or if the server does
                   not support PIPELINING.
@@ -259,7 +276,10 @@ class Client(object):
 
         command = b''.join((b'MAIL FROM:<', self._encode(address), b'>'))
         if data_size is not None and 'SIZE' in self.extensions:
-            command += b' SIZE='+str(data_size).encode()
+            command += b' SIZE='+self._encode(str(data_size))
+        if auth is not None and 'AUTH' in self.extensions:
+            authed = b'<>' if auth is False else self._xtext(auth)
+            command += b' AUTH=' + authed
         self.io.send_command(command)
 
         if 'PIPELINING' not in self.extensions:
