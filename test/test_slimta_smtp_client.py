@@ -144,10 +144,18 @@ class TestSmtpClient(MoxTestBase, unittest.TestCase):
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('SIZE', 100)
-        reply = client.mailfrom('test', 10)
-        self.assertEqual('250', reply.code)
-        self.assertEqual('2.0.0 Ok', reply.message)
-        self.assertEqual(b'MAIL', reply.command)
+        client.mailfrom('test', data_size=10)
+
+    def test_mailfrom_auth(self):
+        self.sock.sendall(b'MAIL FROM:<test> AUTH=<>\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
+        self.sock.sendall(b'MAIL FROM:<test> AUTH=1+2B1+3D2\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 2.0.0 Ok\r\n')
+        self.mox.ReplayAll()
+        client = Client(self.sock)
+        client.extensions.add('AUTH', True)
+        client.mailfrom('test', auth=False)
+        client.mailfrom('test', auth='1+1=2')
 
     def test_rcptto(self):
         self.sock.sendall(b'RCPT TO:<test>\r\n')

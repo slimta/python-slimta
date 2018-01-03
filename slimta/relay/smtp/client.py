@@ -154,7 +154,7 @@ class SmtpRelayClient(RelayPoolClient):
     @current_command(b'MAIL')
     def _mailfrom(self, sender):
         with Timeout(self.command_timeout):
-            mailfrom = self.client.mailfrom(sender)
+            mailfrom = self.client.mailfrom(sender, auth=False)
         if mailfrom and mailfrom.is_error():
             raise SmtpRelayError.factory(mailfrom)
         return mailfrom

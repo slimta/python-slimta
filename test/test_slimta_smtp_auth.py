@@ -22,7 +22,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
 
     def test_bytes(self):
         auth = AuthSession(SASLAuth(), self.io)
-        self.assertEqual('CRAM-MD5 LOGIN PLAIN', str(auth))
+        self.assertEqual('PLAIN LOGIN CRAM-MD5', str(auth))
 
     def test_invalid_mechanism(self):
         auth = AuthSession(SASLAuth(), self.io)
