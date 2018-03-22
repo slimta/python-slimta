@@ -63,6 +63,8 @@ class LmtpRelayClient(SmtpRelayClient):
             if reply.is_error():
                 rcpt_results[rcpt] = SmtpRelayError.factory(reply)
                 had_errors = True
+            else:
+                rcpt_results[rcpt] = reply
         result.set(rcpt_results)
         if had_errors:
             self._rset()

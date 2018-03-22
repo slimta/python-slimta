@@ -11,6 +11,7 @@ from slimta.smtp import ConnectionLost
 from slimta.relay import TransientRelayError, PermanentRelayError
 from slimta.relay.smtp.lmtpclient import LmtpRelayClient
 from slimta.envelope import Envelope
+from slimta.smtp.reply import Reply
 
 
 class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
@@ -52,7 +53,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         self.sock.recv(IsA(int)).AndReturn(b'354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test \x81\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set({'rcpt@example.com': None})
+        result.set({'rcpt@example.com': Reply('250', 'Ok')})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there')
         client._connect()
@@ -86,7 +87,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n250 Ok\r\n550 Nope\r\n250 Ok\r\n354 Go ahead\r\n')
         self.sock.sendall(b'From: sender@example.com\r\n\r\ntest test\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n450 Yikes\r\n')
-        result.set({'rcpt1@example.com': None,
+        result.set({'rcpt1@example.com': Reply('250', 'Ok'),
                     'rcpt2@example.com': IsA(PermanentRelayError),
                     'rcpt3@example.com': IsA(TransientRelayError)})
         self.sock.sendall(b'RSET\r\n')
@@ -145,7 +146,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         else:
             self.sock.sendall(b'From: sender@example.com\r\nContent-Transfer-Encoding: base64\r\n\r\ndGVzdCB0ZXN0IIENCg==\r\n.\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        result.set({'rcpt@example.com': None})
+        result.set({'rcpt@example.com': Reply('250', 'Ok')})
         self.mox.ReplayAll()
         client = LmtpRelayClient('addr', self.queue, socket_creator=self._socket_creator, ehlo_as='there', binary_encoder=encode_base64)
         client._connect()
