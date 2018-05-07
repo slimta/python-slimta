@@ -227,14 +227,18 @@ class SmtpEdge(EdgeServer):
                          is not tricked by the client sending data.
     :param hostname: String identifying the local machine. See |Edge| for more
                      details.
+    :param session_class: Optional :class:`SmtpSession` sub-class to be used
+                          instead of the default one.
 
     """
+
+    _default_session_class = SmtpSession
 
     def __init__(self, listener, queue, pool=None, max_size=None,
                  validator_class=None, auth=False,
                  context=None, tls_immediately=False,
                  command_timeout=None, data_timeout=None,
-                 hostname=None):
+                 hostname=None, session_class=None):
         super(SmtpEdge, self).__init__(listener, queue, pool, hostname)
         self.max_size = max_size
         self.command_timeout = command_timeout
@@ -243,11 +247,13 @@ class SmtpEdge(EdgeServer):
         self.auth = auth
         self.context = context
         self.tls_immediately = tls_immediately
+        self.session_class = session_class or self._default_session_class
 
     def handle(self, socket, address):
         smtp_server = None
         try:
-            handlers = SmtpSession(address, self.validator_class, self.handoff)
+            handlers = self.session_class(
+                address, self.validator_class, self.handoff)
             smtp_server = Server(socket, handlers, address, self.auth,
                                  self.context, self.tls_immediately,
                                  command_timeout=self.command_timeout,
