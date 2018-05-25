@@ -84,41 +84,45 @@ class PipeRelay(Relay):
         self.timeout = timeout
         self.popen_kwargs = popen_kwargs
 
-    def _process_args(self, env):
-        macros = {'sender': env.sender,
-                  'recipient': env.recipients[0],
-                  'message_id': env.headers.get('Message-Id', ''),
-                  'client_ip': env.client.get('ip', ''),
-                  'client_host': env.client.get('host', ''),
-                  'client_ehlo': env.client.get('name', ''),
-                  'client_protocol': env.client.get('protocol', ''),
-                  'client_auth': env.client.get('auth', '')}
+    def _process_args(self, macros):
         return [arg.format(**macros) for arg in self.args]
 
     def _exec_process(self, envelope):
         header_data, message_data = envelope.flatten()
         stdin = b''.join((header_data, message_data))
-        with Timeout(self.timeout):
-            args = self._process_args(envelope)
-            p = subprocess.Popen(args, stdin=subprocess.PIPE,
+        macros = {'sender': envelope.sender,
+                  'message_id': envelope.headers.get('Message-Id', ''),
+                  'client_ip': envelope.client.get('ip', ''),
+                  'client_host': envelope.client.get('host', ''),
+                  'client_ehlo': envelope.client.get('name', ''),
+                  'client_protocol': envelope.client.get('protocol', ''),
+                  'client_auth': envelope.client.get('auth', '')}
+        results = []
+        for recipient in envelope.recipients:
+            with Timeout(self.timeout):
+                macros['recipient'] = recipient
+                args = self._process_args(macros)
+                p = subprocess.Popen(args, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  **self.popen_kwargs)
-            log.popen(p, args)
-            stdout, stderr = p.communicate(stdin)
-        log.stdio(p, stdin, stdout, stderr)
-        log.exit(p)
-        return p.returncode, stdout, stderr
+                log.popen(p, args)
+                stdout, stderr = p.communicate(stdin)
+            log.stdio(p, stdin, stdout, stderr)
+            log.exit(p)
+            results.append((p.returncode, stdout, stderr))
+        return results
 
     def _try_pipe(self, envelope):
         try:
-            status, stdout, stderr = self._exec_process(envelope)
+            results = self._exec_process(envelope)
         except Timeout:
             msg = 'Delivery timed out'
             reply = Reply('450', msg)
             raise TransientRelayError(msg, reply)
-        if status != 0:
-            self.raise_error(status, stdout, stderr)
+        for (status, stdout, stderr) in results:
+            if status != 0:
+                self.raise_error(status, stdout, stderr)
 
     def raise_error(self, status, stdout, stderr):
         """This method may be over-ridden by sub-classes if you need to control
