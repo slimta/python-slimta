@@ -24,10 +24,11 @@ class TestPipeRelay(MoxTestBase, unittest.TestCase):
         pmock.returncode = 0
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
-        status, stdout, stderr = m._exec_process(env)
-        self.assertEqual(0, status)
-        self.assertEqual('testout', stdout)
-        self.assertEqual('testerr', stderr)
+        results = m._exec_process(env)
+        for (status, stdout, stderr) in results:
+            self.assertEqual(0, status)
+            self.assertEqual('testout', stdout)
+            self.assertEqual('testerr', stderr)
 
     def test_exec_process_error(self):
         pmock = self.mox.CreateMock(subprocess.Popen)
@@ -43,16 +44,17 @@ class TestPipeRelay(MoxTestBase, unittest.TestCase):
         pmock.returncode = 1337
         self.mox.ReplayAll()
         m = PipeRelay(['relaytest', '-f', '{sender}'])
-        status, stdout, stderr = m._exec_process(env)
-        self.assertEqual(1337, status)
-        self.assertEqual('', stdout)
-        self.assertEqual('', stderr)
+        results = m._exec_process(env)
+        for (status, stdout, stderr) in results:
+            self.assertEqual(1337, status)
+            self.assertEqual('', stdout)
+            self.assertEqual('', stderr)
 
     def test_attempt(self):
         env = Envelope()
         m = PipeRelay(['relaytest'])
         self.mox.StubOutWithMock(m, '_exec_process')
-        m._exec_process(env).AndReturn((0, '', ''))
+        m._exec_process(env).AndReturn([(0, '', '')])
         self.mox.ReplayAll()
         m.attempt(env, 0)
 
@@ -60,7 +62,7 @@ class TestPipeRelay(MoxTestBase, unittest.TestCase):
         env = Envelope()
         m = PipeRelay(['relaytest'])
         self.mox.StubOutWithMock(m, '_exec_process')
-        m._exec_process(env).AndReturn((1337, 'transient failure', ''))
+        m._exec_process(env).AndReturn([(1337, 'transient failure', '')])
         self.mox.ReplayAll()
         with self.assertRaises(TransientRelayError):
             m.attempt(env, 0)
@@ -78,7 +80,7 @@ class TestPipeRelay(MoxTestBase, unittest.TestCase):
         env = Envelope()
         m = PipeRelay(['relaytest'])
         self.mox.StubOutWithMock(m, '_exec_process')
-        m._exec_process(env).AndReturn((13, '5.0.0 permanent failure', ''))
+        m._exec_process(env).AndReturn([(13, '5.0.0 permanent failure', '')])
         self.mox.ReplayAll()
         with self.assertRaises(PermanentRelayError):
             m.attempt(env, 0)
