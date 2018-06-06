@@ -40,7 +40,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
             client._ehlo()
 
     def test_deliver(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -61,7 +61,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         client._deliver(result, env)
 
     def test_deliver_badpipeline(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -78,7 +78,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         client._deliver(result, env)
 
     def test_deliver_multircpt(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt1@example.com', 'rcpt2@example.com', 'rcpt3@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -99,7 +99,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         client._deliver(result, env)
 
     def test_deliver_badrcpts(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -116,7 +116,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         client._deliver(result, env)
 
     def test_deliver_rset_exception(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -134,7 +134,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
             client._deliver(result, env)
 
     def test_deliver_conversion(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO there\r\n')
@@ -154,7 +154,7 @@ class TestLmtpRelayClient(MoxTestBase, unittest.TestCase):
         client._deliver(result, env)
 
     def test_deliver_conversion_failure(self):
-        result = self.mox.CreateMock(AsyncResult)
+        result = self.mox.CreateMockAnything()
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test \x81\r\n')
         self.sock.sendall(b'LHLO there\r\n')
