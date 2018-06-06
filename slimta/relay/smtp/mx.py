@@ -179,7 +179,7 @@ class MxSmtpRelay(Relay):
         except ValueError:
             raise NoDomainError(rcpt)
 
-    def new_static_relay(self, destination, port):
+    def new_static_relay(self, destination, port, **kwargs):
         """Return a new :class:`~slimta.relay.smtp.static.StaticSmtpRelay`
         object for the given destination. This method can be overridden to
         provide extra arguments, such as limiting the number of concurrent
@@ -187,6 +187,8 @@ class MxSmtpRelay(Relay):
 
         :param destination: The hostname to relay to.
         :param port: The delivery port on the destination.
+        :param kwargs: Other optional arguments that may be passed on from
+                       attempt() method
 
         """
         return StaticSmtpRelay(destination, port=port, **self._client_kwargs)
@@ -217,7 +219,7 @@ class MxSmtpRelay(Relay):
         """
         self._force_mx[domain.lower()] = (destination, port)
 
-    def attempt(self, envelope, attempts):
+    def attempt(self, envelope, attempts, **new_relay_kwargs):
         domain = self._get_rcpt_domain(envelope)
         if domain in self._force_mx:
             dest, port = self._force_mx[domain]
@@ -238,7 +240,7 @@ class MxSmtpRelay(Relay):
         try:
             relayer = self._relayers[(dest, port)]
         except KeyError:
-            relayer = self.new_static_relay(dest, port)
+            relayer = self.new_static_relay(dest, port, **new_relay_kwargs)
             self._relayers[(dest, port)] = relayer
         return relayer.attempt(envelope, attempts)
 
