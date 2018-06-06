@@ -251,7 +251,7 @@ class TestQueue(MoxTestBase, unittest.TestCase):
 
     def test_wait_store(self):
         queue = Queue(self.store, self.relay, relay_pool=5)
-        queue.wake = self.mox.CreateMock(AsyncResult)
+        queue.wake = self.mox.CreateMockAnything()
         self.store.wait().AndReturn([(1234567890, '1234')])
         queue.wake.set()
         self.store.wait().AndReturn([])

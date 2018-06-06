@@ -37,7 +37,7 @@ class TestHttpRelayClient(MoxTestBase, unittest.TestCase):
             timeout = 10.0
             idle_timeout = 10.0
         self.client = HttpRelayClient(FakeRelay())
-        self.result = self.mox.CreateMock(AsyncResult)
+        self.result = self.mox.CreateMockAnything()
         self.env = Envelope('sender@example.com', ['rcpt1@example.com', 'rcpt2@example.com'])
         self.env.parse(b'Header: value\r\n\r\ntest message\r\n')
 
