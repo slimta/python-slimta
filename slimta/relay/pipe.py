@@ -84,9 +84,9 @@ class PipeRelay(Relay):
         self.timeout = timeout
         self.popen_kwargs = popen_kwargs
 
-    def _process_args(self, env):
+    def _process_args(self, env, rcpt):
         macros = {'sender': env.sender,
-                  'recipient': env.recipients[0],
+                  'recipient': rcpt,
                   'message_id': env.headers.get('Message-Id', ''),
                   'client_ip': env.client.get('ip', ''),
                   'client_host': env.client.get('host', ''),
@@ -95,30 +95,51 @@ class PipeRelay(Relay):
                   'client_auth': env.client.get('auth', '')}
         return [arg.format(**macros) for arg in self.args]
 
-    def _exec_process(self, envelope):
-        header_data, message_data = envelope.flatten()
-        stdin = b''.join((header_data, message_data))
-        with Timeout(self.timeout):
-            args = self._process_args(envelope)
-            p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 **self.popen_kwargs)
-            log.popen(p, args)
-            stdout, stderr = p.communicate(stdin)
+    def _exec_process(self, args, stdin):
+        p = subprocess.Popen(args, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE,
+                             **self.popen_kwargs)
+        log.popen(p, args)
+        stdout, stderr = p.communicate(stdin)
         log.stdio(p, stdin, stdout, stderr)
         log.exit(p)
-        return p.returncode, stdout, stderr
+        if p.returncode != 0:
+            try:
+                self.raise_error(p.returncode, stdout, stderr)
+            except (PermanentRelayError, TransientRelayError) as exc:
+                return exc
+        return None
 
-    def _try_pipe(self, envelope):
+    def _try_pipe_all_rcpts(self, envelope):
+        header_data, message_data = envelope.flatten()
+        stdin = b''.join((header_data, message_data))
+        results = {}
         try:
-            status, stdout, stderr = self._exec_process(envelope)
+            with Timeout(self.timeout):
+                for rcpt in envelope.recipients:
+                    args = self._process_args(envelope, rcpt)
+                    results[rcpt] = self._exec_process(args, stdin)
+        except Timeout:
+            for rcpt in envelope.recipients:
+                if rcpt not in results:
+                    msg = 'Delivery timed out'
+                    reply = Reply('450', '4.4.2 ' + msg)
+                    results[rcpt] = TransientRelayError(msg, reply)
+        return results
+
+    def _try_pipe_one_rcpt(self, envelope):
+        header_data, message_data = envelope.flatten()
+        stdin = b''.join((header_data, message_data))
+        rcpt = envelope.recipients[0]
+        try:
+            with Timeout(self.timeout):
+                args = self._process_args(envelope, rcpt)
+                return self._exec_process(args, stdin)
         except Timeout:
             msg = 'Delivery timed out'
-            reply = Reply('450', msg)
+            reply = Reply('450', '4.4.2 ' + msg)
             raise TransientRelayError(msg, reply)
-        if status != 0:
-            self.raise_error(status, stdout, stderr)
 
     def raise_error(self, status, stdout, stderr):
         """This method may be over-ridden by sub-classes if you need to control
@@ -150,7 +171,7 @@ class PipeRelay(Relay):
             raise TransientRelayError(error_msg, reply)
 
     def attempt(self, envelope, attempts):
-        self._try_pipe(envelope)
+        return self._try_pipe_all_rcpts(envelope)
 
 
 class MaildropRelay(PipeRelay):
@@ -187,6 +208,9 @@ class MaildropRelay(PipeRelay):
         else:
             reply = Reply('550', error_msg)
             raise PermanentRelayError(error_msg, reply)
+
+    def attempt(self, envelope, attempts):
+        return self._try_pipe_one_rcpt(envelope)
 
 
 class DovecotLdaRelay(PipeRelay):
