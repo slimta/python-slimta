@@ -4,13 +4,13 @@ import sys
 import logging
 import os.path
 
-from gevent import ssl
-
 # The following lines replace many standard library modules with versions that
 # use gevent for concurrency. This is NOT required by slimta, but may help
 # you avoid mistakes that can have harsh performance implications!
 from gevent import monkey
 monkey.patch_all()
+
+from gevent import ssl
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
