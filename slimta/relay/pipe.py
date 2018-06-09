@@ -76,7 +76,10 @@ class PipeRelay(Relay):
 
     """
 
-    permanent_error_pattern = re.compile(r'^5\.\d+\.\d+\s')
+    _permanent_error_pattern = re.compile(r'^5\.\d+\.\d+\s')
+
+    #: If ``True``, the process will be executed once per recipient.
+    per_recipient = True
 
     def __init__(self, args, timeout=None, **popen_kwargs):
         super(PipeRelay, self).__init__()
@@ -163,7 +166,7 @@ class PipeRelay(Relay):
 
         """
         error_msg = stdout.rstrip() or stderr.rstrip() or 'Delivery failed'
-        if self.permanent_error_pattern.match(error_msg):
+        if self._permanent_error_pattern.match(error_msg):
             reply = Reply('550', error_msg)
             raise PermanentRelayError(error_msg, reply)
         else:
@@ -171,7 +174,10 @@ class PipeRelay(Relay):
             raise TransientRelayError(error_msg, reply)
 
     def attempt(self, envelope, attempts):
-        return self._try_pipe_all_rcpts(envelope)
+        if self.per_recipient:
+            return self._try_pipe_all_rcpts(envelope)
+        else:
+            return self._try_pipe_one_rcpt(envelope)
 
 
 class MaildropRelay(PipeRelay):
@@ -189,6 +195,7 @@ class MaildropRelay(PipeRelay):
     """
 
     EX_TEMPFAIL = 75
+    per_recipient = False
 
     def __init__(self, path=None, timeout=None, extra_args=None):
         args = [path or 'maildrop', '-f', '{sender}']
@@ -208,9 +215,6 @@ class MaildropRelay(PipeRelay):
         else:
             reply = Reply('550', error_msg)
             raise PermanentRelayError(error_msg, reply)
-
-    def attempt(self, envelope, attempts):
-        return self._try_pipe_one_rcpt(envelope)
 
 
 class DovecotLdaRelay(PipeRelay):
