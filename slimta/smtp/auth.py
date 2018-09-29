@@ -164,6 +164,8 @@ class AuthSession(object):
         return None, ret
 
     def client_attempt(self, authcid, secret, authzid, mech_name):
+        if not mech_name:
+            raise InvalidMechanismError()
         mechanism = self.auth.get(mech_name)
         if not mechanism:
             raise InvalidMechanismError()

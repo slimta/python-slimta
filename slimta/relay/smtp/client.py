@@ -58,7 +58,8 @@ class SmtpRelayClient(RelayPoolClient):
     _client_class = Client
 
     def __init__(self, address, queue, socket_creator=None, ehlo_as=None,
-                 context=None, tls_immediately=False, tls_required=False,
+                 context=None, auth_mechanism=None,
+                 tls_immediately=False, tls_required=False,
                  connect_timeout=10.0, command_timeout=10.0,
                  data_timeout=None, idle_timeout=None,
                  credentials=None, binary_encoder=None):
@@ -69,6 +70,7 @@ class SmtpRelayClient(RelayPoolClient):
         self.client = None
         self.ehlo_as = ehlo_as or hostname
         self.context = context
+        self.auth_mechanism = auth_mechanism
         self.tls_immediately = tls_immediately
         self.tls_required = tls_required
         self.connect_timeout = connect_timeout
@@ -128,7 +130,8 @@ class SmtpRelayClient(RelayPoolClient):
         except TypeError:
             credentials = self.credentials
         with Timeout(self.command_timeout):
-            auth = self.client.auth(*credentials)
+            auth = self.client.auth(*credentials,
+                                    mechanism=self.auth_mechanism)
         if auth.is_error():
             raise SmtpRelayError.factory(auth)
 

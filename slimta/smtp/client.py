@@ -34,7 +34,7 @@ from pysasl import SASLAuth
 from .io import IO
 from .auth import AuthSession
 from .extensions import Extensions
-from .reply import Reply
+from .reply import Reply, unknown_command
 from .datasender import DataSender
 
 __all__ = ['Client', 'LmtpClient']
@@ -235,7 +235,7 @@ class Client(object):
             self.encrypt(context)
         return reply
 
-    def auth(self, authcid, secret, authzid=None, mechanism=b'PLAIN'):
+    def auth(self, authcid, secret, authzid=None, mechanism=None):
         """Negotiates authentication for the current SMTP session. This
         transaction may involve several back-and-forth packets to the server,
         depending on the SASL mechanism used, and this function will only
@@ -245,13 +245,20 @@ class Client(object):
         :param secret: The secret (i.e. password) string to send for the given
                        authentication and authorization identities.
         :param authzid: The authorization identity, if applicable.
-        :param mechanism: SASL mechanism name to use for authentication.
+        :param mechanism: SASL mechanism name to use instead of the best
+                          available.
         :type mechanism: str
         :returns: |Reply| object populated with the response.
 
         """
         self._flush_pipeline()
-        auth = AuthSession(SASLAuth(), self.io)
+        if 'AUTH' not in self.extensions:
+            return unknown_command
+        advertised = [self._encode(mech_name) for mech_name in
+                      self.extensions.getparam('AUTH').split()]
+        auth = AuthSession(SASLAuth(advertised), self.io)
+        if not mechanism and auth.client_mechanisms:
+            mechanism = auth.client_mechanisms[0].name
         return auth.client_attempt(authcid, secret, authzid, mechanism)
 
     def mailfrom(self, address, data_size=None, auth=None):

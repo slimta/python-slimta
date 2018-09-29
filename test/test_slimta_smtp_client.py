@@ -1,8 +1,9 @@
 import unittest
 from mox3.mox import MoxTestBase, IsA
 from gevent.socket import socket
-from gevent.ssl import SSLContext
+from gevent.ssl import SSLContext, SSLSocket
 
+from slimta.smtp.auth import InvalidMechanismError
 from slimta.smtp.client import Client, LmtpClient
 from slimta.smtp.reply import Reply
 
@@ -70,7 +71,7 @@ class TestSmtpClient(MoxTestBase, unittest.TestCase):
         self.assertEqual(b'HELO', reply.command)
 
     def test_starttls(self):
-        sock = self.mox.CreateMockAnything()
+        sock = self.mox.CreateMock(SSLSocket)
         sock.fileno = lambda: -1
         sock.getpeername = lambda: ('test', 0)
         sock.sendall(b'STARTTLS\r\n')
@@ -94,21 +95,32 @@ class TestSmtpClient(MoxTestBase, unittest.TestCase):
         self.assertEqual(b'STARTTLS', reply.command)
 
     def test_auth(self):
-        self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
-        self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
+        sock = self.mox.CreateMock(SSLSocket)
+        sock.fileno = lambda: -1
+        sock.getpeername = lambda: ('test', 0)
+        sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
+        sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        client = Client(self.sock)
-        client.extensions.add('AUTH', b'PLAIN')
+        client = Client(sock)
+        client.extensions.add('AUTH', 'PLAIN')
         reply = client.auth('test@example.com', 'asdf')
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
         self.assertEqual(b'AUTH', reply.command)
+
+    def test_auth_insecure(self):
+        self.mox.ReplayAll()
+        client = Client(self.sock)
+        client.extensions.add('AUTH', 'PLAIN')
+        self.assertRaises(InvalidMechanismError, client.auth,
+                          'test@example.com', 'asdf')
 
     def test_auth_force_mechanism(self):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
         client = Client(self.sock)
+        client.extensions.add('AUTH', 'PLAIN')
         reply = client.auth('test@example.com', 'asdf', mechanism=b'PLAIN')
         self.assertEqual('535', reply.code)
         self.assertEqual('5.0.0 Nope!', reply.message)
