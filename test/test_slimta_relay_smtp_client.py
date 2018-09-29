@@ -101,7 +101,7 @@ class TestSmtpRelayClient(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there', auth_mechanism=b'PLAIN')
         client._connect()
         client._handshake()
 
@@ -115,17 +115,9 @@ class TestSmtpRelayClient(MoxTestBase, unittest.TestCase):
         def yield_creds():
             yield 'test@example.com'
             yield 'passwd'
-        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=yield_creds, ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=yield_creds, ehlo_as='there', auth_mechanism=b'PLAIN')
         client._connect()
         client._handshake()
-
-    def test_rset(self):
-        self.sock.sendall(b'RSET\r\n')
-        self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
-        self.mox.ReplayAll()
-        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
-        client._connect()
-        client._rset()
 
     def test_handshake_authenticate_badcreds(self):
         self.sock.recv(IsA(int)).AndReturn(b'220 Welcome\r\n')
@@ -134,10 +126,18 @@ class TestSmtpRelayClient(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AcGFzc3dk\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there')
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator, credentials=('test@example.com', 'passwd'), ehlo_as='there', auth_mechanism=b'PLAIN')
         client._connect()
         with self.assertRaises(PermanentRelayError):
             client._handshake()
+
+    def test_rset(self):
+        self.sock.sendall(b'RSET\r\n')
+        self.sock.recv(IsA(int)).AndReturn(b'250 Ok\r\n')
+        self.mox.ReplayAll()
+        client = SmtpRelayClient(('addr', 0), self.queue, socket_creator=self._socket_creator)
+        client._connect()
+        client._rset()
 
     def test_mailfrom(self):
         self.sock.sendall(b'MAIL FROM:<sender>\r\n')

@@ -49,6 +49,9 @@ class StaticSmtpRelay(RelayPool):
     :param context: Used to wrap sockets with SSL encryption, rather than the
                     default context.
     :type context: :py:class:`~ssl.SSLContext`
+    :param auth_mechanism: Force the use of the given ``AUTH`` mechanism,
+                           instead of the best available.
+    :type auth_mechanism: bytes
     :param tls_immediately: If True, the socket will be encrypted
                             immediately on connection rather than looking for
                             the ``STARTTLS`` extension.
