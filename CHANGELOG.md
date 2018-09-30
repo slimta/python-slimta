@@ -1,11 +1,30 @@
 
 # Change Log
 
-## Unreleased
+## 4.1 - _Unreleased_
+
+### Added
+
+- New [`create_listeners`][10] function for creating IP sockets on both IPv4
+  and IPv6, if available.
+- New `mixin` functions in the [`proxyproto`][12] classes.
+- Support for `AUTH=` parameter to `MAIL FROM` command.
+- Allow providing custom [`SmtpSession`][8] class to [`SmtpEdge`][9].
+
+### Changed
+
+- [`WsgiEdge`][11] listener creation was made more consistent with other edges.
+- [`StaticLmtpRelay`][13] now returns success (250) responses as well.
+- Multi-recipient messages to [`pipe`][14] with `per_recipient` flag set will
+  execute once per recipient with partial delivery responses.
 
 ### Fixed
 
 - The result of the reverse IP lookup was never consumed in [`SmtpEdge`][9].
+- Fix various issues in the [`proxyproto`][12] implementations.
+- Corrected sorting of AUTH mechanisms.
+- Fix SMTP client always choosing `PLAIN` AUTH mechanism even if it is not
+  advertised, instead of best available.
 
 ## [4.0] - 2016-11-13
 
@@ -123,11 +142,16 @@
 [2]: https://github.com/saghul/pycares
 [3]: http://www.dnspython.org/
 [4]: https://pythonhosted.org/six/
-[5]: https://docs.slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
-[6]: https://docs.slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
+[5]: https://slimta.org/en/latest/api/slimta.logging.html#slimta.logging.parseline
+[6]: https://slimta.org/en/latest/api/slimta.logging.socket.html#slimta.logging.socket.socket_error_log_level
 [7]: https://docs.python.org/2.7/library/ssl.html#ssl.SSLContext
-[8]: https://docs.slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpValidators.session
-[9]: https://docs.slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpEdge
+[8]: https://slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpValidators.session
+[9]: https://slimta.org/en/latest/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpEdge
+[10]: http://slimta.org/en/latest/api/slimta.util.html#slimta.util.create_connection_ipv4
+[11]: http://slimta.org/en/latest/api/slimta.edge.wsgi.html#slimta.edge.wsgi.WsgiEdge
+[12]: http://slimta.org/en/latest/api/slimta.util.proxyproto.html
+[13]: http://slimta.org/en/latest/api/slimta.relay.smtp.static.html#slimta.relay.smtp.static.StaticLmtpRelay
+[14]: http://slimta.org/en/latest/api/slimta.relay.pipe.html
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2
