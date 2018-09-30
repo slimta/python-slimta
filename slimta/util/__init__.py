@@ -28,7 +28,8 @@ from __future__ import absolute_import
 
 from gevent import socket
 
-__all__ = ['build_ipv4_socket_creator', 'create_connection_ipv4']
+__all__ = ['build_ipv4_socket_creator', 'create_connection_ipv4',
+           'create_listeners']
 
 
 def build_ipv4_socket_creator(only_ports=None):
