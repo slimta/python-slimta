@@ -128,23 +128,24 @@ class AuthSession(object):
 
     def server_attempt(self, arg):
         mechanism_name, mechanism_arg = self._parse_arg(arg)
-        for mechanism in self.server_mechanisms:
-            if mechanism.name == mechanism_name:
-                insecure = getattr(mechanism, 'insecure', False)
-                if insecure and not self.io.encrypted:
-                    raise InsecureMechanismError()
-                responses = []
-                while True:
-                    try:
-                        return mechanism.server_attempt(responses)
-                    except AuthenticationError as exc:
-                        raise UnexpectedAuthError(exc)
-                    except ServerChallenge as chal:
-                        resp = self._server_challenge(chal.challenge,
-                                                      mechanism_arg)
-                        mechanism_arg = None
-                        chal.set_response(resp)
-                        responses.append(chal)
+        mechanism = self.auth.get_server(mechanism_name)
+        if mechanism:
+            insecure = getattr(mechanism, 'insecure', False)
+            if insecure and not self.io.encrypted:
+                raise InsecureMechanismError()
+            responses = []
+            while True:
+                try:
+                    creds, _ = mechanism.server_attempt(responses)
+                    return creds
+                except AuthenticationError as exc:
+                    raise UnexpectedAuthError(exc)
+                except ServerChallenge as chal:
+                    resp = self._server_challenge(chal.challenge,
+                                                  mechanism_arg)
+                    mechanism_arg = None
+                    chal.set_response(resp)
+                    responses.append(chal)
         raise InvalidMechanismError()
 
     def _client_respond(self, mech, response, first=False):
@@ -166,7 +167,7 @@ class AuthSession(object):
     def client_attempt(self, authcid, secret, authzid, mech_name):
         if not mech_name:
             raise InvalidMechanismError()
-        mechanism = self.auth.get(mech_name)
+        mechanism = self.auth.get_client(mech_name)
         if not mechanism:
             raise InvalidMechanismError()
         creds = AuthenticationCredentials(authcid, secret, authzid)
