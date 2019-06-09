@@ -131,7 +131,7 @@ class Envelope(object):
         uses a deep-copying so internal datastructures are not shared.
 
         :param new_rcpts: If given, overwrite the :attr:`.recipients` list with
-                          this value inthe new object.
+                          this value in the new object.
         :returns: An exact, deep copy of the current object.
 
         """
