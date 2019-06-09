@@ -49,8 +49,10 @@ class DNSError(Exception):
     """
 
     def __init__(self, errno):
-        msg = '{0} [{1}]'.format(pycares.errno.strerror(errno),
-                                 pycares.errno.errorcode[errno])
+        str_error = pycares.errno.strerror(errno)
+        if isinstance(str_error, bytes):
+            str_error = str_error.decode('utf-8')
+        msg = '{0} [{1}]'.format(str_error, pycares.errno.errorcode[errno])
         super(DNSError, self).__init__(msg)
         self.errno = errno
 
