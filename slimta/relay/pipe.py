@@ -166,6 +166,8 @@ class PipeRelay(Relay):
 
         """
         error_msg = stdout.rstrip() or stderr.rstrip() or 'Delivery failed'
+        if isinstance(error_msg, bytes):
+            error_msg = error_msg.decode('utf-8')
         if self._permanent_error_pattern.match(error_msg):
             reply = Reply('550', error_msg)
             raise PermanentRelayError(error_msg, reply)
