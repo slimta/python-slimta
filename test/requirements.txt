@@ -4,3 +4,4 @@ mox3
 testfixtures
 flake8
 twine
+dkimpy

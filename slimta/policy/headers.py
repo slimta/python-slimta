@@ -30,11 +30,18 @@ import uuid
 from time import strftime, gmtime, localtime
 from math import floor
 from socket import getfqdn
+import logging
 
+import slimta.logging
 from slimta.core import __version__ as VERSION
 from . import QueuePolicy
+try:
+    from dkim import dkim_sign, DKIMException
+except ModuleNotFoundError:
+    dkim_sign = None
 
-__all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader']
+
+__all__ = ['AddDateHeader', 'AddMessageIdHeader', 'AddReceivedHeader', 'AddDKIMHeader']
 
 
 class AddDateHeader(QueuePolicy):
@@ -130,6 +137,64 @@ class AddReceivedHeader(QueuePolicy):
         data = ' '.join(parts) + '; ' + date
 
         envelope.prepend_header('Received', data)
+
+
+class AddDKIMHeader(QueuePolicy):
+    """Adds a Domain Key Identified Mail header
+       will by default sign all the headers (except the ones marked
+       as SHOULD NOT SIGN as stated in dkimpy doc)
+       if this is not the last header added, the following ones
+       will not be signed.
+       :param dkim: Dict of dicts indexed by domain (example.com)
+                    - privkey: private key: PEM file loaded in a string
+                    - selector: selector setup in DNS for the domain
+                    - signature_algorithm: (default rsa-sha256)
+                    - include-headers: headers to sign (by default, all
+                    except the ones marked as SHOULD NOT SIGN see
+                    dkimpy doc)
+       Refs:
+       https://www.dkim.org
+       https://gathman.org/pydkim/
+       https://launchpad.net/dkimpy
+    """
+
+    def __init__(self, dkim):
+        if not dkim_sign:
+            raise ImportError('dkimpy is not installed')
+        self.dkim = dkim
+        self.logger = logging.getLogger(__name__)
+
+    def apply(self, envelope):
+        h, m = envelope.flatten()
+        wm = h + m
+        dom = envelope.sender
+        if not '@' in dom:
+            slimta.logging.logline(self.logger.error, __name__, id(self),
+                    'DKIM: invalid sender', **dict(sender=envelope.sender) )
+            return
+        dom = dom.split('@')[1]
+        if dom not in self.dkim:
+            slimta.logging.logline(self.logger.debug, __name__, id(self),
+                    "DKIM: domain :'" + dom + "' is not setup, ignore")
+            return
+        domk = self.dkim[dom]
+        pk = domk['privkey'].encode('utf-8')
+        sel = domk['selector'].encode('utf-8')
+        algo = domk['signature_algorithm'] or 'rsa-sha256'
+        algo = algo.encode('utf-8')
+        flds = domk['include_headers']
+        if flds: flds = [x.encode('utf-8') for x in flds]
+        dom = dom.encode('utf-8')
+        try:
+            hd = dkim_sign(message=wm, selector=sel, domain=dom, privkey=pk,
+                    signature_algorithm=algo, include_headers=flds)
+        except DKIMException as e:
+            slimta.logging.logline(self.logger.error, __name__, id(self),
+                    'DKIM: exception:' + str(e),
+                    **dict(sender=envelope.sender,domain=dom) )
+            return
+        data = hd.replace(b'\r\n',b'').decode('utf-8').split(':',1)[1]
+        envelope.prepend_header('DKIM-Signature', data)  # RFC 6376 par. 5.6
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
