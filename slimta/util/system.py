@@ -86,9 +86,9 @@ def redirect_stdio(stdout=None, stderr=None, stdin=None):
     # Redirect all standard I/O to /dev/null.
     sys.stdout.flush()
     sys.stderr.flush()
-    si = open(stdin or nullfile, 'r')
-    so = open(stdout or nullfile, 'a+')
-    se = open(stderr or nullfile, 'a+', 0)
+    si = open(stdin or nullfile, 'rb')
+    so = open(stdout or nullfile, 'ab+')
+    se = open(stderr or nullfile, 'ab+', 0)
     os.dup2(si.fileno(), sys.stdin.fileno())
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())

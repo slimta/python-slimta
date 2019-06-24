@@ -7,6 +7,7 @@ dist/
 .coverage
 nosetests.xml
 coverage.xml
+.mypy_cache/
 examples/cert.pem
 *.pyc
 *.pyo
