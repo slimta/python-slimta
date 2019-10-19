@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='python-slimta',
-      version='4.0.8',
+      version='4.0.9',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries.',
@@ -32,7 +32,7 @@ setup(name='python-slimta',
       packages=find_packages(),
       namespace_packages=['slimta'],
       install_requires=['gevent >= 1.1rc',
-                        'pysasl >= 0.4.0',
+                        'pysasl >= 0.4.0, < 0.5',
                         'pycares < 3.0.0; python_version < "3.0"',
                         'pycares >= 1; python_version >= "3.0"'],
       classifiers=['Development Status :: 3 - Alpha',
