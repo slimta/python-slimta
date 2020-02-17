@@ -21,11 +21,11 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.make_msgid = email.utils.make_msgid = lambda: '<test@example.com>'
 
     def test_bytes(self):
-        auth = AuthSession(SASLAuth(), self.io)
-        self.assertEqual('PLAIN LOGIN CRAM-MD5', str(auth))
+        auth = AuthSession(SASLAuth.defaults(), self.io)
+        self.assertEqual('PLAIN LOGIN', str(auth))
 
     def test_invalid_mechanism(self):
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         with self.assertRaises(InvalidMechanismError):
             auth.server_attempt(b'TEST')
         with self.assertRaises(InvalidMechanismError):
@@ -35,7 +35,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 \r\n')
         self.sock.recv(IsA(int)).AndReturn(b'dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'PLAIN')
         self.assertEqual(u'testuser', result.authcid)
         self.assertEqual(u'testpassword', result.secret)
@@ -43,7 +43,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
 
     def test_plain(self):
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
         self.assertEqual(u'testuser', result.authcid)
         self.assertEqual(u'testpassword', result.secret)
@@ -53,7 +53,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 \r\n')
         self.sock.recv(IsA(int)).AndReturn(b'*\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         with self.assertRaises(AuthenticationCanceled):
             auth.server_attempt(b'PLAIN')
         with self.assertRaises(AuthenticationCanceled):
@@ -65,7 +65,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 UGFzc3dvcmQ6\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'LOGIN')
         self.assertEqual(u'testuser', result.authcid)
         self.assertEqual(u'testpassword', result.secret)
@@ -75,7 +75,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 UGFzc3dvcmQ6\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'dGVzdHBhc3N3b3Jk\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'LOGIN dGVzdHVzZXI=')
         self.assertEqual(u'testuser', result.authcid)
         self.assertEqual(u'testpassword', result.secret)
@@ -85,7 +85,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'dGVzdHVzZXIgNDkzMzA1OGU2ZjgyOTRkZTE0NDJkMTYxOTI3ZGI5NDQ=\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.named([b'CRAM-MD5']), self.io)
         result = auth.server_attempt(b'CRAM-MD5')
         self.assertEqual(u'testuser', result.authcid)
         self.assertTrue(result.check_secret(u'testpassword'))
@@ -96,7 +96,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'334 PHRlc3RAZXhhbXBsZS5jb20+\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'bWFsZm9ybWVk\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.named([b'CRAM-MD5']), self.io)
         with self.assertRaises(ServerAuthError):
             auth.server_attempt(b'CRAM-MD5')
 
@@ -104,7 +104,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'AUTH LOGIN\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
         self.assertEqual('535', reply.code)
@@ -114,7 +114,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'AUTH PLAIN amtsAHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf', u'jkl',
                                     b'PLAIN')
         self.assertEqual('235', reply.code)
@@ -128,7 +128,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'YXNkZg==\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
         self.assertEqual('235', reply.code)
@@ -140,7 +140,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'dGVzdEBleGFtcGxlLmNvbQ==\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.defaults(), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'LOGIN')
         self.assertEqual('535', reply.code)
@@ -152,7 +152,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'dGVzdEBleGFtcGxlLmNvbSA1Yzk1OTBjZGE3ZTgxMDY5Mzk2ZjhiYjlkMzU1MzE1Yg==\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth(), self.io)
+        auth = AuthSession(SASLAuth.named([b'CRAM-MD5']), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'CRAM-MD5')
         self.assertEqual('235', reply.code)
@@ -162,7 +162,7 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'235 Ok\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth([b'XOAUTH2']), self.io)
+        auth = AuthSession(SASLAuth.named([b'XOAUTH2']), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'XOAUTH2')
         self.assertEqual('235', reply.code)
@@ -170,11 +170,9 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
 
     def test_client_xoauth2_error(self):
         self.sock.sendall(b'AUTH XOAUTH2 dXNlcj10ZXN0QGV4YW1wbGUuY29tAWF1dGg9QmVhcmVyYXNkZgEB\r\n')
-        self.sock.recv(IsA(int)).AndReturn(b'334 eyJzdGF0dXMiOiI0MDEiLCJzY2hlbWVzIjoiYmVhcmVyIG1hYyIsInNjb3BlIjoiaHR0cHM6Ly9tYWlsLmdvb2dsZS5jb20vIn0K\r\n')
-        self.sock.sendall(b'\r\n')
         self.sock.recv(IsA(int)).AndReturn(b'535 Nope!\r\n')
         self.mox.ReplayAll()
-        auth = AuthSession(SASLAuth([b'XOAUTH2']), self.io)
+        auth = AuthSession(SASLAuth.named([b'XOAUTH2']), self.io)
         reply = auth.client_attempt(u'test@example.com', u'asdf',
                                     None, b'XOAUTH2')
         self.assertEqual('535', reply.code)

@@ -256,7 +256,7 @@ class Client(object):
             return unknown_command
         advertised = [self._encode(mech_name) for mech_name in
                       self.extensions.getparam('AUTH').split()]
-        auth = AuthSession(SASLAuth(advertised), self.io)
+        auth = AuthSession(SASLAuth.named(advertised), self.io)
         if not mechanism and auth.client_mechanisms:
             mechanism = auth.client_mechanisms[0].name
         return auth.client_attempt(authcid, secret, authzid, mechanism)

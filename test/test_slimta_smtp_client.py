@@ -108,12 +108,12 @@ class TestSmtpClient(MoxTestBase, unittest.TestCase):
         self.assertEqual('2.0.0 Ok', reply.message)
         self.assertEqual(b'AUTH', reply.command)
 
-    def test_auth_insecure(self):
+    def test_auth_invalid(self):
         self.mox.ReplayAll()
         client = Client(self.sock)
         client.extensions.add('AUTH', 'PLAIN')
         self.assertRaises(InvalidMechanismError, client.auth,
-                          'test@example.com', 'asdf')
+                          'test@example.com', 'asdf', mechanism='BAD')
 
     def test_auth_force_mechanism(self):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')
