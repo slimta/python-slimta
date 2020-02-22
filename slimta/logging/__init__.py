@@ -116,7 +116,7 @@ def log_exception(name, **kwargs):
     data = kwargs.copy()
     data['message'] = str(value)
     data['args'] = value.args
-    tb_str = traceback.format_exception(type, value, tb)
+    tb_str = ''.join(traceback.format_exception(type, value, tb))
     data_str = ' '.join(['='.join((key, log_repr.repr(val)))
                          for key, val in sorted(data.items())])
     logger.error('exception:{0}:unhandled {1} traceback={2}'.format(
@@ -125,6 +125,7 @@ def log_exception(name, **kwargs):
 
 log_repr = reprlib.Repr()
 log_repr.maxstring = 100
+log_repr.maxother = 100
 
 
 def logline(log, type, typeid, operation, **data):
