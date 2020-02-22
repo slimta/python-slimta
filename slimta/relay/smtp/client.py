@@ -21,7 +21,7 @@
 
 from __future__ import absolute_import
 
-from socket import getfqdn, error as socket_error
+import socket
 from functools import wraps
 
 from gevent import Timeout
@@ -37,7 +37,6 @@ from . import SmtpRelayError
 __all__ = ['SmtpRelayClient']
 
 log = logging.getSocketLogger(__name__)
-hostname = getfqdn()
 
 
 def current_command(cmd):
@@ -68,7 +67,7 @@ class SmtpRelayClient(RelayPoolClient):
         self.socket_creator = socket_creator or create_connection
         self.socket = None
         self.client = None
-        self.ehlo_as = ehlo_as or hostname
+        self.ehlo_as = ehlo_as or socket.getfqdn()
         self.context = context
         self.auth_mechanism = auth_mechanism
         self.tls_immediately = tls_immediately
@@ -298,7 +297,7 @@ class SmtpRelayClient(RelayPoolClient):
                               address=self.address).copy(timed_out)
                 relay_error = SmtpRelayError.factory(reply)
                 result.set_exception(relay_error)
-        except socket_error as exc:
+        except socket.error as exc:
             log.error(self.socket, exc, self.address)
             if not result.ready():
                 reply = Reply(command=self.current_command,
