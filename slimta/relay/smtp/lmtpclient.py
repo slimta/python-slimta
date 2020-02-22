@@ -21,8 +21,6 @@
 
 from __future__ import absolute_import
 
-from socket import getfqdn
-
 from gevent import Timeout
 
 from slimta.smtp.client import LmtpClient
@@ -30,8 +28,6 @@ from .client import SmtpRelayClient
 from . import SmtpRelayError
 
 __all__ = ['LmtpRelayClient']
-
-hostname = getfqdn()
 
 
 class LmtpRelayClient(SmtpRelayClient):

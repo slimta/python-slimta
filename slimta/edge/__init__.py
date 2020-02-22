@@ -26,8 +26,8 @@ a listening socket under various protocols.
 
 from __future__ import absolute_import
 
+import socket
 import time
-from socket import getfqdn
 
 import gevent
 from gevent.server import StreamServer
@@ -51,14 +51,14 @@ class Edge(object):
                      received message in its
                      :attr:`~slimta.envelope.Envelope.receiver` attribute for
                      use in headers and bounce messages. By default, the return
-                     value of :func:`~gevent.socket.getfqdn()` is used.
+                     value of :func:`~socket.getfqdn()` is used.
 
     """
 
     def __init__(self, queue, hostname=None):
         super(Edge, self).__init__()
         self.queue = queue
-        self.hostname = hostname or getfqdn()
+        self.hostname = hostname or socket.getfqdn()
 
     def handoff(self, envelope):
         """This method may be called manually or by whatever mechanism a

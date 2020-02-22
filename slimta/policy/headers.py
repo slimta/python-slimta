@@ -26,10 +26,10 @@ standard RFC headers.
 
 from __future__ import absolute_import
 
+import socket
 import uuid
 from time import strftime, gmtime, localtime
 from math import floor
-from socket import getfqdn
 
 from slimta.core import __version__ as VERSION
 from . import QueuePolicy
@@ -67,12 +67,12 @@ class AddMessageIdHeader(QueuePolicy):
     adding it if it does not exist.
 
     :param hostname: The hostname to use in the generated headers. By default,
-                     :func:`~gevent.socket.getfqdn()` is used.
+                     :func:`~socket.getfqdn()` is used.
 
     """
 
     def __init__(self, hostname=None):
-        self.hostname = hostname or getfqdn()
+        self.hostname = hostname or socket.getfqdn()
 
     def apply(self, envelope):
         if 'message-id' not in envelope.headers:

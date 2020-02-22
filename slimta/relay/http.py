@@ -29,7 +29,7 @@ for exchanging mail.
 from __future__ import absolute_import
 
 import re
-from socket import getfqdn
+import socket
 from base64 import b64encode
 
 import gevent
@@ -206,7 +206,7 @@ class HttpRelay(RelayPool):
         super(HttpRelay, self).__init__(pool_size)
         self.url = urlparse.urlsplit(url, 'http')
         self.context = context
-        self.ehlo_as = ehlo_as or getfqdn()
+        self.ehlo_as = ehlo_as or socket.getfqdn()
         self.timeout = timeout
         self.idle_timeout = idle_timeout
 
