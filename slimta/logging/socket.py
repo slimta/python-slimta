@@ -28,6 +28,8 @@ from functools import partial
 
 from gevent.socket import SHUT_WR, SHUT_RD
 
+from .log import logline
+
 __all__ = ['socket_error_log_level', 'SocketLogger']
 
 #: The log level for logging :py:exc:`socket.error` exceptions. The default log
@@ -45,7 +47,6 @@ class SocketLogger(object):
     """
 
     def __init__(self, logger):
-        from slimta.logging import logline
         self.logger = logger
         self.log = partial(logline, logger.debug, 'fd')
         self.log_error = partial(logline, self._log_error, 'fd')

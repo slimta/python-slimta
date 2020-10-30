@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Ian C. Good
+# Copyright (c) 2014 Ian C. Good
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,44 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
-"""Utilities to make logging consistent and easy for any any subprocess
-operations.
-
-"""
-
-from __future__ import absolute_import
-
-from functools import partial
-
-from .log import logline
-
-__all__ = ['SubprocessLogger']
-
-
-class SubprocessLogger(object):
-    """Provides a limited set of log methods that :mod:`slimta` packages may
-    use. This prevents free-form logs from mixing in with standard, machine-
-    parseable logs.
-
-    :param log: :py:class:`logging.Logger` object to log through.
-
-    """
-
-    def __init__(self, log):
-        self.log = partial(logline, log.debug, 'pid')
-
-    def popen(self, process, args):
-        self.log(process.pid, 'popen', args=args)
-
-    def stdio(self, process, stdin, stdout, stderr):
-        self.log(process.pid, 'stdio',
-                 stdin=stdin,
-                 stdout=stdout,
-                 stderr=stderr)
-
-    def exit(self, process):
-        self.log(process.pid, 'exit', returncode=process.returncode)
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

@@ -28,6 +28,8 @@ from __future__ import absolute_import
 
 from functools import partial
 
+from .log import logline
+
 __all__ = ['QueueStorageLogger']
 
 
@@ -41,7 +43,6 @@ class QueueStorageLogger(object):
     """
 
     def __init__(self, log):
-        from slimta.logging import logline
         self.log = partial(logline, log.debug, 'queue')
 
     def write(self, id, envelope):

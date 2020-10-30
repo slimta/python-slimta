@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='python-slimta',
-      version='4.0.11',
+      version='4.1.0',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries.',
@@ -35,6 +35,12 @@ setup(name='python-slimta',
                         'pysasl >= 0.4.0, < 0.5',
                         'pycares < 3.0.0; python_version < "3.0"',
                         'pycares >= 1; python_version >= "3.0"'],
+      extras_require={'spf': ['pyspf', 'py3dns; python_version >= "3.0"',
+                              'pydns; python_version < "3.0"',
+                              'ipaddr; python_version < "3.0"'],
+                      'redis': ['redis'],
+                      'aws': ['boto'],
+                      'disk': ['pyaio >= 0.4; platform_system == "Linux"']},
       classifiers=['Development Status :: 3 - Alpha',
                    'Topic :: Communications :: Email :: Mail Transport Agents',
                    'Intended Audience :: Developers',
@@ -42,9 +48,10 @@ setup(name='python-slimta',
                    'License :: OSI Approved :: MIT License',
                    'Programming Language :: Python',
                    'Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 3.4',
                    'Programming Language :: Python :: 3.5',
-                   'Programming Language :: Python :: 3.6'])
+                   'Programming Language :: Python :: 3.6',
+                   'Programming Language :: Python :: 3.7',
+                   'Programming Language :: Python :: 3.8'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

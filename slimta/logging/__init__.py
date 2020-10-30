@@ -31,11 +31,12 @@ import re
 import logging
 from ast import literal_eval
 
-from slimta.util.pycompat import reprlib
+from .log import log_repr
 from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger
 from .http import HttpLogger
+from ..util.pycompat import reprlib
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
            'getHttpLogger', 'log_exception', 'parseline']
@@ -121,20 +122,6 @@ def log_exception(name, **kwargs):
                          for key, val in sorted(data.items())])
     logger.error('exception:{0}:unhandled {1} traceback={2}'.format(
         type.__name__, data_str, tb_repr.repr(tb_str)))
-
-
-log_repr = reprlib.Repr()
-log_repr.maxstring = 100
-log_repr.maxother = 100
-
-
-def logline(log, type, typeid, operation, **data):
-    if not data:
-        log('{0}:{1}:{2}'.format(type, typeid, operation))
-    else:
-        data_str = ' '.join(['='.join((key, log_repr.repr(val)))
-                             for key, val in sorted(data.items())])
-        log('{0}:{1}:{2} {3}'.format(type, typeid, operation, data_str))
 
 
 parseline_pattern = re.compile(r'^([^:]+):([^:]+):(\S+) ?')

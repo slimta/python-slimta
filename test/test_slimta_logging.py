@@ -2,7 +2,8 @@ import unittest
 
 from testfixtures import log_capture
 
-from slimta.logging import logline, parseline, log_exception
+from slimta.logging import parseline, log_exception
+from slimta.logging.log import logline
 
 
 class TestLogging(unittest.TestCase):
