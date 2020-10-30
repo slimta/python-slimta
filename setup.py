@@ -28,7 +28,7 @@ with open('LICENSE.md') as f:
     license = f.read()
 
 setup(name='python-slimta',
-      version='4.1.0',
+      version='4.1.1',
       author='Ian Good',
       author_email='icgood@gmail.com',
       description='Lightweight, asynchronous SMTP libraries.',
@@ -36,6 +36,7 @@ setup(name='python-slimta',
       long_description_content_type='text/markdown',
       license='MIT',
       url='http://slimta.org/',
+      include_package_data=True,
       packages=find_packages(),
       namespace_packages=['slimta'],
       install_requires=['gevent >= 1.1rc',
