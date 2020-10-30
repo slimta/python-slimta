@@ -41,7 +41,7 @@ class BytesFormat(object):
     :py:func:`str.format`.
 
     During construction, the template string is scanned for matching ``{...}``
-    pairs that contain only characters that match the ``\w`` regular
+    pairs that contain only characters that match the ``\\w`` regular
     expression.  In the :meth:`.format` method, these ``{...}`` are replaced
     with a matching argument's value, if an argument matches, or the action
     specified by ``mode`` happens when it does not match

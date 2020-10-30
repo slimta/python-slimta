@@ -82,16 +82,18 @@ class ProxyProtocolV1(object):
         buf[0:len(initial)] = initial
         read = initial
         while len(read) < 8:
-            where = memoryview(buf)[len(read):]
+            where = memoryview(buf)[len(read):]  # type: ignore
             read_n = sock.recv_into(where, 8-len(read))
             assert read_n, 'Received EOF during proxy protocol header'
-            read = memoryview(buf)[0:len(read)+read_n].tobytes()
+            read_view = memoryview(buf)[0:len(read)+read_n]  # type: ignore
+            read = read_view.tobytes()
         while len(read) < len(buf):
-            where = memoryview(buf)[len(read):]
+            where = memoryview(buf)[len(read):]  # type: ignore
             try_read = min(len(where), 1 if read.endswith(b'\r') else 2)
             read_n = sock.recv_into(where, try_read)
             assert read_n, 'Received EOF during proxy protocol header'
-            read = memoryview(buf)[0:len(read)+read_n].tobytes()
+            read_view = memoryview(buf)[0:len(read)+read_n]  # type: ignore
+            read = read_view.tobytes()
             if read.endswith(b'\r\n'):
                 break
         return read
@@ -186,7 +188,8 @@ class ProxyProtocolV1(object):
             src_addr = invalid_pp_source_address
         else:
             log.proxyproto_success(sock, src_addr)
-        return super(ProxyProtocolV1, self).handle(sock, src_addr)
+        super_obj = super(ProxyProtocolV1, self)
+        super_obj.handle(sock, src_addr)  # type: ignore
 
 
 class ProxyProtocolV2(object):
@@ -216,10 +219,11 @@ class ProxyProtocolV2(object):
         buf[0:len(initial)] = initial
         read = initial
         while len(read) < len(buf):
-            where = memoryview(buf)[len(read):]
+            where = memoryview(buf)[len(read):]  # type: ignore
             read_n = sock.recv_into(where, len(buf)-len(read))
             assert read_n, 'Received EOF during proxy protocol header'
-            read = memoryview(buf)[0:len(read)+read_n].tobytes()
+            read_view = memoryview(buf)[0:len(read)+read_n]  # type: ignore
+            read = read_view.tobytes()
         return bytearray(read)
 
     @classmethod
@@ -237,18 +241,19 @@ class ProxyProtocolV2(object):
     def __parse_pp_addresses(cls, family, addr_data):
         if family == socket.AF_INET:
             src_ip, dst_ip, src_port, dst_port = \
-                struct.unpack('!4s4sHH', addr_data)
+                struct.unpack('!4s4sHH', addr_data[0:12])
             src_addr = (socket.inet_ntop(family, src_ip), src_port)
             dst_addr = (socket.inet_ntop(family, dst_ip), dst_port)
             return src_addr, dst_addr
         elif family == socket.AF_INET6:
             src_ip, dst_ip, src_port, dst_port = \
-                struct.unpack('!16s16sHH', addr_data)
+                struct.unpack('!16s16sHH', addr_data[0:36])
             src_addr = (socket.inet_ntop(family, src_ip), src_port)
             dst_addr = (socket.inet_ntop(family, dst_ip), dst_port)
             return src_addr, dst_addr
         elif family == socket.AF_UNIX:
-            src_addr, dst_addr = struct.unpack('!108s108s', addr_data)
+            addr_data = addr_data[0:216]
+            src_addr, dst_addr = struct.unpack('!108s108s', addr_data[0:216])
             return src_addr.rstrip(b'\x00'), dst_addr.rstrip(b'\x00')
         else:
             return unknown_pp_source_address, unknown_pp_dest_address
@@ -297,7 +302,8 @@ class ProxyProtocolV2(object):
             src_addr = invalid_pp_source_address
         else:
             log.proxyproto_success(sock, src_addr)
-        return super(ProxyProtocolV2, self).handle(sock, src_addr)
+        super_obj = super(ProxyProtocolV2, self)
+        super_obj.handle(sock, src_addr)  # type: ignore
 
 
 class ProxyProtocol(object):
@@ -318,10 +324,11 @@ class ProxyProtocol(object):
         buf = bytearray(8)
         read = b''
         while len(read) < len(buf):
-            where = memoryview(buf)[len(read):]
+            where = memoryview(buf)[len(read):]  # type: ignore
             read_n = sock.recv_into(where, 8-len(read))
             assert read_n, 'Received EOF during proxy protocol header'
-            read = memoryview(buf)[0:len(read)+read_n].tobytes()
+            read_view = memoryview(buf)[0:len(read)+read_n]  # type: ignore
+            read = read_view.tobytes()
         return read
 
     @classmethod
@@ -361,7 +368,8 @@ class ProxyProtocol(object):
             src_addr = invalid_pp_source_address
         else:
             log.proxyproto_success(sock, src_addr)
-        return super(ProxyProtocol, self).handle(sock, src_addr)
+        super_obj = super(ProxyProtocol, self)
+        super_obj.handle(sock, src_addr)  # type: ignore
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4

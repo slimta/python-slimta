@@ -31,7 +31,7 @@ import pycares
 import pycares.errno
 import gevent
 from gevent import select
-from gevent.event import AsyncResult
+from gevent.event import AsyncResult  # type: ignore
 
 from slimta import logging
 

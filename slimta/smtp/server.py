@@ -37,7 +37,8 @@ from .datareader import DataReader
 from .io import IO
 from .extensions import Extensions
 from .auth import ServerAuthError, AuthSession
-from .reply import *  # NOQA
+from .reply import Reply, tls_failure, unknown_command, bad_arguments, \
+    unhandled_error, timed_out, bad_sequence, unknown_parameter
 
 __all__ = ['Server']
 
@@ -60,7 +61,7 @@ def find_outside_quotes(haystack, needle, start_i=0, quotes=b'"'):
                     quoted = quote
                     break
         elif haystack[i] == quoted:
-                quoted = None
+            quoted = None
     return -1
 
 

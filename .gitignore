@@ -12,3 +12,4 @@ examples/cert.pem
 *.pyc
 *.pyo
 .*.swp
+.pytype/

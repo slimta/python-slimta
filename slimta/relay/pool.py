@@ -26,7 +26,7 @@
 from __future__ import absolute_import
 
 from gevent import Greenlet, Timeout
-from gevent.event import AsyncResult
+from gevent.event import AsyncResult  # type: ignore
 
 from slimta.util.deque import BlockingDeque
 from . import Relay

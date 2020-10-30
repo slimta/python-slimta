@@ -34,6 +34,10 @@ __all__ = ['PermanentRelayError', 'TransientRelayError', 'Relay']
 
 
 class RelayError(SlimtaError):
+
+    _default_code = None
+    _default_esc = None
+
     def __init__(self, msg, reply=None):
         super(RelayError, self).__init__(msg)
         if reply:

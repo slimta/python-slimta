@@ -68,7 +68,7 @@ from slimta.smtp.reply import Reply
 from slimta.queue import QueueError
 from slimta.relay import RelayError
 from slimta.util.ptrlookup import PtrLookup
-from . import Edge, EdgeServer
+from . import EdgeServer
 
 __all__ = ['WsgiResponse', 'WsgiEdge', 'WsgiValidators']
 

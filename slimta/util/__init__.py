@@ -119,11 +119,11 @@ def create_listeners(address,
 def _init_socket(sock, sockaddr):
     try:
         sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-    except socket.error as exc:
+    except socket.error:
         pass
     try:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    except socket.error as exc:
+    except socket.error:
         pass
     sock.setblocking(0)
     sock.bind(sockaddr)

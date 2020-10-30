@@ -30,15 +30,8 @@ import re
 import copy
 from io import BytesIO
 
-try:
-    from email.parser import BytesParser
-    from email.generator import BytesGenerator
-    from email.policy import SMTP
-except ImportError:
-    from email.parser import Parser
-    from email.generator import Generator
-
 from slimta.util import pycompat
+from slimta.util.pycompat import generator_class, parser_class
 
 __all__ = ['Envelope']
 
@@ -94,18 +87,14 @@ class Envelope(object):
         self.timestamp = None
 
     def _parse_data(self, data, *extra):
-        if pycompat.PY3:
-            return BytesParser(policy=SMTP).parse(BytesIO(data), *extra)
-        else:
-            return Parser().parse(BytesIO(data), *extra)
+        return parser_class().parse(BytesIO(data), *extra)
 
     def _msg_generator(self, msg):
         outfp = BytesIO()
+        generator_class(outfp).flatten(msg, False)
         if pycompat.PY3:
-            BytesGenerator(outfp, policy=SMTP).flatten(msg, False)
             return outfp.getvalue()
         else:
-            Generator(outfp).flatten(msg, False)
             return re.sub(_LINE_BREAK, b'\r\n', outfp.getvalue())
 
     def _merge_payloads(self, headers, payload):
@@ -119,12 +108,19 @@ class Envelope(object):
             return payload
 
     def prepend_header(self, name, value):
-        """This method allows prepending a header to the message. The
-        :attr:`.headers` object does not directly support header prepending
-        because the Python implementation only provides appending.
+        """This method allows prepending a header to the message.
+
+        .. note::
+
+           This method uses undocumented Python API because the
+           :attr:`.headers` object does not directly support header
+           prepending.
+
+        :param name: The header name.
+        :param value: The header value string.
 
         """
-        self.headers._headers.insert(0, (name, value))
+        self.headers._headers.insert(0, (name, value))  # type: ignore
 
     def copy(self, new_rcpts=None):
         """Builds and returns an exact copy if the current object. This method

@@ -1,6 +1,9 @@
 pytest >= 4
 pytest-cov
+pytype
 mox3
 testfixtures
 flake8
 twine
+
+.[spf,redis,aws,disk]

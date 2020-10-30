@@ -104,7 +104,7 @@ class StaticSmtpRelay(RelayPool):
 
     def add_client(self):
         return self._client_class((self.host, self.port), self.queue,
-                                 **self._client_kwargs)
+                                  **self._client_kwargs)
 
 
 class StaticLmtpRelay(StaticSmtpRelay):

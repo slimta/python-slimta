@@ -33,14 +33,9 @@ import bisect
 import collections
 from itertools import repeat
 
-try:
-    from itertools import imap
-except ImportError:
-    imap = map
-
 import gevent
 from gevent import Greenlet
-from gevent.event import Event
+from gevent.event import Event  # type: ignore
 from gevent.lock import Semaphore
 from gevent.pool import Pool
 
@@ -50,6 +45,7 @@ from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.smtp.reply import Reply
 from slimta.bounce import Bounce
 from slimta.policy import QueuePolicy
+from slimta.util.pycompat import map
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
@@ -292,7 +288,7 @@ class Queue(Greenlet):
 
     def _pool_imap(self, which, func, *iterables):
         pool = getattr(self, which+'_pool', gevent)
-        threads = imap(pool.spawn, repeat(func), *iterables)
+        threads = map(pool.spawn, repeat(func), *iterables)
         ret = []
         for thread in threads:
             thread.join()

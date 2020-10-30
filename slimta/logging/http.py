@@ -28,6 +28,8 @@ from __future__ import absolute_import
 
 from functools import partial
 
+from .log import logline
+
 __all__ = ['HttpLogger']
 
 
@@ -41,7 +43,6 @@ class HttpLogger(object):
     """
 
     def __init__(self, log):
-        from slimta.logging import logline
         self.log = partial(logline, log.debug, 'http')
 
     def _get_method_from_environ(self, environ):
