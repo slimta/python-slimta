@@ -162,6 +162,7 @@ class Server(object):
         if not self.io.encrypt_socket_server(self.context):
             return False
         self._call_custom_handler('TLSHANDSHAKE')
+        self._call_custom_handler('TLSHANDSHAKE2', self.io.socket)
         return True
 
     def _check_close_code(self, reply):

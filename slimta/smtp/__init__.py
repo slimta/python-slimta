@@ -64,7 +64,12 @@ class BadReply(SmtpError):
     """
 
     def __init__(self, data):
-        super(BadReply, self).__init__('Bad SMTP reply from server.')
+        if data:
+            data_str = data.decode('utf-8', 'replace')
+            msg = 'Bad SMTP reply from server:\r\n' + data_str
+        else:
+            msg = 'Bad SMTP reply from server.'
+        super(BadReply, self).__init__(msg)
         self.data = data
 
 
