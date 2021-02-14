@@ -66,6 +66,8 @@ class SmtpValidators(object):
     - ``handle_rset(reply)``: Called before replying to an RSET command.
     - ``handle_tls()``: Called after a successful TLS handshake. This may be at
       the beginning of the session or after a `STARTTLS` command.
+    - ``handle_tls2(ssl_socket)``: Identical to ``handle_tls()`` except the new
+      :class:`~ssl.SSLSocket` is passed in as an argument.
 
     :param session: When sub-classes are instantiated, instances are passed
                     this object, stored and described in :attr:`session` below,
@@ -137,8 +139,9 @@ class SmtpSession(object):
             self.ehlo_as = helo_as
             self.envelope = None
 
-    def TLSHANDSHAKE(self):
+    def TLSHANDSHAKE2(self, ssl_socket):
         self._call_validator('tls')
+        self._call_validator('tls2', ssl_socket)
         self.security = 'TLS'
 
     def AUTH(self, reply, creds):

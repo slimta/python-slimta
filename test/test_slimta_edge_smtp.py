@@ -2,6 +2,7 @@ import unittest
 from mox3.mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
+from gevent.ssl import SSLSocket
 
 from slimta.edge.smtp import SmtpEdge, SmtpSession
 from slimta.envelope import Envelope
@@ -47,17 +48,19 @@ class TestEdgeSmtp(MoxTestBase, unittest.TestCase):
         creds = self.mox.CreateMockAnything()
         creds.authcid = 'testuser'
         creds.authzid = 'testzid'
+        ssl_sock = self.mox.CreateMock(SSLSocket)
         mock = self.mox.CreateMockAnything()
         mock.__call__(IsA(SmtpSession)).AndReturn(mock)
         mock.handle_banner(IsA(Reply), ('127.0.0.1', 0))
         mock.handle_ehlo(IsA(Reply), 'there')
         mock.handle_tls()
+        mock.handle_tls2(IsA(SSLSocket))
         mock.handle_auth(IsA(Reply), creds)
         self.mox.ReplayAll()
         h = SmtpSession(('127.0.0.1', 0), mock, None)
         h.BANNER_(Reply('220'))
         h.EHLO(Reply('250'), 'there')
-        h.TLSHANDSHAKE()
+        h.TLSHANDSHAKE2(ssl_sock)
         h.AUTH(Reply('235'), creds)
         self.assertEqual('there', h.ehlo_as)
         self.assertTrue(h.extended_smtp)

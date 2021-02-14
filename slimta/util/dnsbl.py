@@ -91,7 +91,6 @@ class DnsBlocklist(object):
                 if exc.errno == ARES_ENOTFOUND:
                     return False
                 logging.log_exception(__name__, query=query)
-                return not strict
             else:
                 return True
         return strict

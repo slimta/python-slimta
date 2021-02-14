@@ -25,6 +25,7 @@
 
 from __future__ import absolute_import
 
+from collections import OrderedDict
 from functools import partial
 
 import pycares
@@ -109,23 +110,58 @@ class DNSResolver(object):
             result.set(answer)
 
     @classmethod
+    def _distinct(cls, read_fds, write_fds):
+        seen = set()
+        for fd in read_fds:
+            if fd not in seen:
+                yield fd
+                seen.add(fd)
+        for fd in write_fds:
+            if fd not in seen:
+                yield fd
+                seen.add(fd)
+
+    @classmethod
+    def _register_fds(cls, poll, prev_fds_map):
+        # we must mimic the behavior of pycares sock_state_cb to maintain
+        # compatibility with custom DNSResolver.channel objects.
+        fds_map = OrderedDict()
+        _read_fds, _write_fds = cls._channel.getsock()
+        read_fds = set(_read_fds)
+        write_fds = set(_write_fds)
+        for fd in cls._distinct(_read_fds, _write_fds):
+            event = 0
+            if fd in read_fds:
+                event |= select.POLLIN
+            if fd in write_fds:
+                event |= select.POLLOUT
+            fds_map[fd] = event
+            prev_event = prev_fds_map.pop(fd, 0)
+            if event != prev_event:
+                poll.register(fd, event)
+        for fd in prev_fds_map:
+            poll.unregister(fd)
+        return fds_map
+
+    @classmethod
     def _wait_channel(cls):
+        poll = select.poll()
+        fds_map = OrderedDict()
         try:
             while True:
-                read_fds, write_fds = cls._channel.getsock()
-                if not read_fds and not write_fds:
+                fds_map = cls._register_fds(poll, fds_map)
+                if not fds_map:
                     break
                 timeout = cls._channel.timeout()
                 if not timeout:
                     cls._channel.process_fd(pycares.ARES_SOCKET_BAD,
                                             pycares.ARES_SOCKET_BAD)
                     continue
-                rlist, wlist, xlist = select.select(
-                    read_fds, write_fds, [], timeout)
-                for fd in rlist:
-                    cls._channel.process_fd(fd, pycares.ARES_SOCKET_BAD)
-                for fd in wlist:
-                    cls._channel.process_fd(pycares.ARES_SOCKET_BAD, fd)
+                for fd, event in poll.poll(timeout):
+                    if event & (select.POLLIN | select.POLLPRI):
+                        cls._channel.process_fd(fd, pycares.ARES_SOCKET_BAD)
+                    if event & select.POLLOUT:
+                        cls._channel.process_fd(pycares.ARES_SOCKET_BAD, fd)
         except Exception:
             logging.log_exception(__name__)
             cls._channel.cancel()
