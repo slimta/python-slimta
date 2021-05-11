@@ -58,7 +58,8 @@ setup(name='python-slimta',
                    'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3.6',
                    'Programming Language :: Python :: 3.7',
-                   'Programming Language :: Python :: 3.8'])
+                   'Programming Language :: Python :: 3.8',
+                   'Programming Language :: Python :: 3.9'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
