@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Ian C. Good
+# Copyright (c) 2021 Ian C. Good
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,9 +28,9 @@ with open('LICENSE.md') as f:
     license = f.read()
 
 setup(name='python-slimta',
-      version='4.2.0',
+      version='4.2.1',
       author='Ian Good',
-      author_email='icgood@gmail.com',
+      author_email='ian@icgood.net',
       description='Lightweight, asynchronous SMTP libraries.',
       long_description=readme + license,
       long_description_content_type='text/markdown',

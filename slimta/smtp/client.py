@@ -205,6 +205,20 @@ class Client(object):
 
         return helo
 
+    def lhlo(self, lhlo_as):
+        """Sends the LHLO command with identifier string and waits for the
+        reply. When this method returns, the ``self.extensions`` object will
+        also be populated with the SMTP extensions the server supports.
+
+        .. note::
+           This method is only available on :class:`LmtpClient` objecsts.
+
+        :param lhlo_as: LHLO identifier string, usually an FQDN.
+        :returns: |Reply| object populated with the response.
+
+        """
+        raise NotImplementedError()
+
     def encrypt(self, context=None):
         """Encrypts the underlying socket. This call should only be used
         directly against servers that expect to be immediately encrypted. If
@@ -413,14 +427,6 @@ class LmtpClient(Client):
         raise NotImplementedError()
 
     def lhlo(self, lhlo_as):
-        """Sends the LHLO command with identifier string and waits for the
-        reply. When this method returns, the ``self.extensions`` object will
-        also be populated with the SMTP extensions the server supports.
-
-        :param lhlo_as: LHLO identifier string, usually an FQDN.
-        :returns: |Reply| object populated with the response.
-
-        """
         lhlo = Reply(command=b'LHLO')
         lhlo.enhanced_status_code = False
         self.reply_queue.append(lhlo)

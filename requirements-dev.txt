@@ -6,4 +6,4 @@ testfixtures
 flake8
 twine
 
-.[spf,redis,aws,disk]
+-r requirements-all.txt
