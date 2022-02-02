@@ -1,5 +1,5 @@
 
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 
 from slimta.queue import QueueError
 from slimta.envelope import Envelope

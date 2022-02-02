@@ -31,13 +31,13 @@ from __future__ import absolute_import
 import re
 import socket
 from base64 import b64encode
+from urllib import parse as urlparse
 
 import gevent
 
 from slimta import logging
 from slimta.smtp.reply import Reply
 from slimta.http import get_connection
-from slimta.util.pycompat import urlparse
 from . import PermanentRelayError, TransientRelayError
 from .pool import RelayPool, RelayPoolClient
 from .smtp import SmtpRelayError
@@ -95,6 +95,7 @@ class HttpRelayClient(RelayPoolClient):
         method = self.relay.http_verb
         if not self.conn:
             self._new_conn()
+            assert self.conn is not None
         with gevent.Timeout(self.relay.timeout):
             msg_headers, msg_body = envelope.flatten()
             headers = self._build_headers(envelope, msg_headers, msg_body)

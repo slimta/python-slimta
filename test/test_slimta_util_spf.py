@@ -2,7 +2,7 @@
 import unittest
 import threading
 
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 import gevent.monkey
 import spf
 

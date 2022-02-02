@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 from gevent.socket import socket
 
 from slimta.smtp.io import IO

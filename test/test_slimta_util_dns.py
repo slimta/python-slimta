@@ -1,5 +1,5 @@
 
-from mox3.mox import MoxTestBase, IgnoreArg
+from mox import MoxTestBase, IgnoreArg
 
 import pycares
 import pycares.errno

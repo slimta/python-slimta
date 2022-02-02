@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket, SSLContext, SSLError
 from pysasl import SASLAuth
 
@@ -219,7 +219,7 @@ class TestSmtpServer(MoxTestBase, unittest.TestCase):
         self.mox.ReplayAll()
         s = Server(self.sock, None)
         s.extensions.reset()
-        s.extensions.add('AUTH', AuthSession(SASLAuth([b'PLAIN']), s.io))
+        s.extensions.add('AUTH', AuthSession(SASLAuth.named([b'PLAIN']), s.io))
         s.handle()
         self.assertTrue(s.authed)
 

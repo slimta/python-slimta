@@ -268,9 +268,11 @@ class Client(object):
         self._flush_pipeline()
         if 'AUTH' not in self.extensions:
             return unknown_command
-        advertised = [self._encode(mech_name) for mech_name in
-                      self.extensions.getparam('AUTH').split()]
-        auth = AuthSession(SASLAuth(advertised), self.io)
+        auth_ext = self.extensions.getparam('AUTH')
+        assert auth_ext is not None
+        advertised = [self._encode(mech_name)
+                      for mech_name in auth_ext.split()]
+        auth = AuthSession(SASLAuth.named(advertised), self.io)
         if not mechanism and auth.client_mechanisms:
             mechanism = auth.client_mechanisms[0].name
         return auth.client_attempt(authcid, secret, authzid, mechanism)

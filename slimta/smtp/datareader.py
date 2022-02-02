@@ -112,6 +112,7 @@ class DataReader(object):
         return not self.EOD
 
     def return_all(self):
+        assert self.EOD is not None
         data_lines = self.lines[:self.EOD]
         after_data_lines = self.lines[self.EOD+1:]
 

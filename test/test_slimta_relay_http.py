@@ -1,11 +1,11 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from urllib import parse as urlparse
+from mox import MoxTestBase, IsA
 from gevent.event import AsyncResult
 from gevent import Timeout
 
 from slimta.envelope import Envelope
 from slimta.util.deque import BlockingDeque
-from slimta.util.pycompat import urlparse
 from slimta.smtp.reply import Reply
 from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.relay.http import HttpRelay, HttpRelayClient

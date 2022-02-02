@@ -158,6 +158,7 @@ class DnsBlocklistGroup(object):
         """
         matches = set()
         group = Group()
+        assert self.pool is not None
         with gevent.Timeout(timeout, None):
             for dnsbl in self.dnsbls:
                 thread = self.pool.spawn(self._run_dnsbl_get,
@@ -180,6 +181,7 @@ class DnsBlocklistGroup(object):
         """
         reasons = dict.fromkeys(matches)
         group = Group()
+        assert self.pool is not None
         with gevent.Timeout(timeout, None):
             for dnsbl in self.dnsbls:
                 if dnsbl.address in matches:

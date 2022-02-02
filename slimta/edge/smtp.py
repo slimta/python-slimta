@@ -160,6 +160,7 @@ class SmtpSession(object):
     def RCPT(self, reply, address, params):
         self._call_validator('rcpt', reply, address, params)
         if reply.code == '250':
+            assert self.envelope is not None
             self.envelope.recipients.append(address)
 
     def DATA(self, reply):
@@ -179,6 +180,7 @@ class SmtpSession(object):
 
         if self._ptr_lookup is not None:
             self.reverse_address = self._ptr_lookup.finish()
+        assert self.envelope is not None
         self.envelope.client['ip'] = self.address[0]
         self.envelope.client['host'] = self.reverse_address
         self.envelope.client['name'] = self.ehlo_as

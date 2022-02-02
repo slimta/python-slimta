@@ -121,6 +121,7 @@ class PtrLookup(gevent.Greenlet):
         :returns: The PTR lookup results (a hostname string) or ``None``.
 
         """
+        assert self.start_time is not None
         try:
             if runtime is None:
                 result = self.get(block=False)

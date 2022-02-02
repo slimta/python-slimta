@@ -138,6 +138,7 @@ class IO(object):
         self.send_buffer = BytesIO()
 
     def recv_reply(self):
+        body = None
         code = None
         message_lines = []
         incomplete = True
@@ -173,6 +174,8 @@ class IO(object):
                 input = self.recv_buffer
             body = b'\r\n'.join(message_lines)
 
+        assert body is not None
+        assert code is not None
         try:
             return code.decode('ascii'), body.decode('utf-8')
         except UnicodeDecodeError:

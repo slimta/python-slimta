@@ -1,5 +1,5 @@
 
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 from gevent import socket
 
 from slimta.util.proxyproto import ProxyProtocol, \
@@ -110,7 +110,7 @@ class TestProxyProtocolV1(MoxTestBase):
 
     def test_read_pp_line_eof(self):
         sock = self.mox.CreateMock(socket.socket)
-        sock.recv_into(IsA(memoryview), 2).AndReturn(0)
+        sock.recv_into(IsA(memoryview), IsA(int)).AndReturn(0)
         self.mox.ReplayAll()
         with self.assertRaises(AssertionError):
             self.pp._ProxyProtocolV1__read_pp_line(sock, b'')

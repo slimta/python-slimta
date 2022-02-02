@@ -35,10 +35,12 @@ class LmtpRelayClient(SmtpRelayClient):
     _client_class = LmtpClient
 
     def _ehlo(self):
+        assert self.ehlo_as is not None
         try:
-            ehlo_as = self.ehlo_as(self.address)
+            ehlo_as = self.ehlo_as(self.address)  # type: ignore
         except TypeError:
             ehlo_as = self.ehlo_as
+        assert self.client is not None
         with Timeout(self.command_timeout):
             lhlo = self.client.lhlo(ehlo_as)
         if lhlo.is_error():
@@ -55,7 +57,7 @@ class LmtpRelayClient(SmtpRelayClient):
             self._rset()
             return
         had_errors = False
-        for rcpt, reply in data_results:
+        for rcpt, reply in data_results:  # type: ignore
             if reply.is_error():
                 rcpt_results[rcpt] = SmtpRelayError.factory(reply)
                 had_errors = True

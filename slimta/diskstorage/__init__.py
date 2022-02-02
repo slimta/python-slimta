@@ -33,10 +33,9 @@ from __future__ import absolute_import
 import os
 import uuid
 import os.path
+import pickle
 from tempfile import mkstemp
 from functools import partial
-
-from six.moves import cPickle
 
 from pyaio import aio_read, aio_write  # type: ignore
 import gevent
@@ -79,6 +78,7 @@ class AioFile(object):
         try:
             cls._keep_awake_refs -= 1
             if cls._keep_awake_refs <= 0:
+                assert cls._keep_awake_thread is not None
                 cls._keep_awake_thread.kill()
                 cls._keep_awake_thread = None
         finally:
@@ -127,7 +127,7 @@ class AioFile(object):
             self._stop_keep_awake_thread()
 
     def pickle_dump(self, obj):
-        return self.dump(cPickle.dumps(obj, cPickle.HIGHEST_PROTOCOL))
+        return self.dump(pickle.dumps(obj, pickle.HIGHEST_PROTOCOL))
 
     def _read_callback(self, event, buf, ret, errno):
         if ret > 0:
@@ -163,7 +163,7 @@ class AioFile(object):
         raise RuntimeError()
 
     def pickle_load(self):
-        return cPickle.loads(self.load())
+        return pickle.loads(self.load())
 
 
 class DiskOps(object):

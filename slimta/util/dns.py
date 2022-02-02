@@ -123,6 +123,7 @@ class DNSResolver(object):
 
     @classmethod
     def _register_fds(cls, poll, prev_fds_map):
+        assert cls._channel is not None
         # we must mimic the behavior of pycares sock_state_cb to maintain
         # compatibility with custom DNSResolver.channel objects.
         fds_map = OrderedDict()
@@ -145,6 +146,7 @@ class DNSResolver(object):
 
     @classmethod
     def _wait_channel(cls):
+        assert cls._channel is not None
         poll = select.poll()
         fds_map = OrderedDict()
         try:

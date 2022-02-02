@@ -43,6 +43,7 @@ class RelayError(SlimtaError):
         if reply:
             self.reply = reply
         else:
+            assert self._default_esc is not None
             reply_msg = ' '.join((self._default_esc, msg))
             self.reply = Reply(self._default_code, reply_msg)
 

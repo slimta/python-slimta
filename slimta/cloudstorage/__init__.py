@@ -22,8 +22,6 @@
 """Package containing a module for the different cloud service providers along
 with any necessary helper modules.
 
-.. _Cloud Files: http://www.rackspace.com/cloud/files/
-.. _Cloud Queues: http://www.rackspace.com/cloud/queues/
 .. _S3: http://aws.amazon.com/s3/
 .. _SQS: http://aws.amazon.com/sqs/
 
@@ -49,21 +47,18 @@ class CloudStorageError(QueueError):
 class CloudStorage(QueueStorage):
     """This class implements a :class:`~slimta.queue.QueueStorage` backend that
     uses cloud services to store messages. It coordinates the storage of
-    messages and metadata (using `Cloud Files`_ or `S3`_) with the optional
-    message queue mechanisms (using `Cloud Queues`_ or `SQS`_) that can alert
-    other *slimta* processes that a new message is available in the object
-    store.
+    messages and metadata (using `S3`_) with the optional message queue
+    mechanisms (using `SQS`_) that can alert other *slimta* processes that a
+    new message is available in the object store.
 
     :param object_store: The object used as the backend for storing message
                          contents and metadata in the cloud. Currently this can
                          be an instance of
-                         :class:`~rackspace.RackspaceCloudFiles` or
                          :class:`~aws.SimpleStorageService`.
     :param message_queue: The optional object used
                           as the backend for alerting other processes that a
                           new message is in the object store. Currently this
                           can be an instance of
-                          :class:`~rackspace.RackspaceCloudQueues` or
                           :class:`~aws.SimpleQueueService`.
 
     """

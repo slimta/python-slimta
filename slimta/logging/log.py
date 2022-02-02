@@ -21,7 +21,7 @@
 
 from __future__ import absolute_import
 
-from slimta.util.pycompat import reprlib
+import reprlib
 
 __all__ = ['log_repr', 'logline']
 

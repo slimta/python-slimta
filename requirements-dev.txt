@@ -1,7 +1,7 @@
 pytest >= 4
 pytest-cov
-pytype
-mox3
+pyright
+pymox
 testfixtures
 flake8
 twine

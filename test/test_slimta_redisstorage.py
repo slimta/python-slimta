@@ -1,7 +1,7 @@
 
 import re
 
-from mox3.mox import MoxTestBase, IsA, Func
+from mox import MoxTestBase, IsA, Func
 from six.moves import cPickle
 from redis import StrictRedis
 

@@ -29,6 +29,7 @@ import sys
 import traceback
 import re
 import logging
+import reprlib
 from ast import literal_eval
 
 from .log import log_repr
@@ -36,12 +37,11 @@ from .socket import SocketLogger
 from .subprocess import SubprocessLogger
 from .queuestorage import QueueStorageLogger
 from .http import HttpLogger
-from ..util.pycompat import reprlib
 
 __all__ = ['getSocketLogger', 'getSubprocessLogger', 'getQueueStorageLogger',
            'getHttpLogger', 'log_exception', 'parseline']
 
-threading._DummyThread._Thread__stop = lambda x: 42
+threading._DummyThread._Thread__stop = lambda x: 42  # type: ignore
 
 
 def getSocketLogger(name):
@@ -109,7 +109,7 @@ def log_exception(name, **kwargs):
 
     """
     type, value, tb = sys.exc_info()
-    if not value:
+    if not value or not type:
         return
     tb_repr = reprlib.Repr()
     tb_repr.maxstring = 10000

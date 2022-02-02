@@ -30,7 +30,7 @@ from __future__ import absolute_import
 
 import time
 import bisect
-import collections
+import collections.abc
 from itertools import repeat
 
 import gevent
@@ -45,7 +45,6 @@ from slimta.relay import PermanentRelayError, TransientRelayError
 from slimta.smtp.reply import Reply
 from slimta.bounce import Bounce
 from slimta.policy import QueuePolicy
-from slimta.util.pycompat import map
 
 __all__ = ['QueueError', 'Queue', 'QueueStorage']
 
@@ -288,6 +287,7 @@ class Queue(Greenlet):
 
     def _pool_imap(self, which, func, *iterables):
         pool = getattr(self, which+'_pool', gevent)
+        assert pool is not None
         threads = map(pool.spawn, repeat(func), *iterables)
         ret = []
         for thread in threads:
@@ -297,6 +297,7 @@ class Queue(Greenlet):
 
     def _pool_spawn(self, which, func, *args, **kwargs):
         pool = getattr(self, which+'_pool', gevent)
+        assert pool is not None
         return pool.spawn(func, *args, **kwargs)
 
     def _add_queued(self, entry):
@@ -382,6 +383,7 @@ class Queue(Greenlet):
             return True
 
     def _attempt(self, id, envelope, attempts):
+        assert self.relay is not None
         try:
             results = self.relay._attempt(envelope, attempts)
         except TransientRelayError as e:
@@ -394,9 +396,9 @@ class Queue(Greenlet):
             self._pool_spawn('store', self._retry_later, id, envelope, reply)
             raise
         else:
-            if isinstance(results, collections.Mapping):
+            if isinstance(results, collections.abc.Mapping):
                 self._handle_partial_relay(id, envelope, attempts, results)
-            elif isinstance(results, collections.Sequence):
+            elif isinstance(results, collections.abc.Sequence):
                 results = dict(zip(envelope.recipients, results))
                 self._handle_partial_relay(id, envelope, attempts, results)
             else:
