@@ -117,7 +117,7 @@ class Server(object):
             self.extensions.add('STARTTLS')
         if auth:
             if isinstance(auth, list):
-                auth_obj = SASLAuth(auth)
+                auth_obj = SASLAuth.named(auth)
             else:
                 auth_obj = SASLAuth.defaults()
             auth_session = AuthSession(auth_obj, self.io)
