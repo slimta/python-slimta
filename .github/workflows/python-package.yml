@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
+        python-version: ['3.6', '3.7', '3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
@@ -28,9 +28,9 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 slimta
-    - name: Type checking with pytype
+    - name: Type checking with pyright
       run: |
-        pytype -k
+        pyright slimta
     - name: Test with pytest
       run: |
         py.test --cov=slimta

@@ -30,11 +30,11 @@ similar interface to other slimta libraries that use SSL/TLS.
 
 from __future__ import absolute_import
 
+from http import client as httplib
 from socket import error as socket_error
+from urllib import parse as urlparse
 
 from gevent import socket
-
-from slimta.util.pycompat import httplib, urlparse
 
 __all__ = ['HTTPConnection', 'HTTPSConnection', 'get_connection']
 
@@ -82,11 +82,15 @@ def get_connection(url, context=None):
     :type context: :py:class:`~ssl.SSLContext`
 
     """
-    if isinstance(url, (str, bytes)):
-        url = urlparse.urlsplit(url, 'http')
-    host = url.netloc or 'localhost'
+    if isinstance(url, bytes):
+        url = url.decode('ascii')
+    if isinstance(url, str):
+        parsed = urlparse.urlsplit(url, scheme='http')
+    else:
+        parsed = url
+    host = parsed.netloc or 'localhost'
 
-    if url.scheme == 'https':
+    if parsed.scheme == 'https':
         conn = HTTPSConnection(host, context=context)
     else:
         conn = HTTPConnection(host)

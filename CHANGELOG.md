@@ -1,10 +1,18 @@
 
 # Change Log
 
-## 4.1 - _Unreleased_
+## 5.0 - Change Logs have moved to [Releases][18]
+
+## 4.2 - 2021-02-14
+
+- New `handle_tls2(ssl_socket)` validator on [`SmtpValidators`][16].
+- Switch to [`select.poll()`][17] for DNS lookups.
+
+## 4.1 - 2020-10-29
 
 ### Added
 
+- [**Extension Consolidation**][15].
 - New [`create_listeners`][10] function for creating IP sockets on both IPv4
   and IPv6, if available.
 - New `mixin` functions in the [`proxyproto`][12] classes.
@@ -152,6 +160,10 @@
 [12]: http://slimta.org/en/latest/api/slimta.util.proxyproto.html
 [13]: http://slimta.org/en/latest/api/slimta.relay.smtp.static.html#slimta.relay.smtp.static.StaticLmtpRelay
 [14]: http://slimta.org/en/latest/api/slimta.relay.pipe.html
+[15]: https://www.slimta.org/blog/2020-10-30.html
+[16]: https://www.slimta.org/api/slimta.edge.smtp.html#slimta.edge.smtp.SmtpValidators
+[17]: https://docs.python.org/3/library/select.html#select.poll
+[18]: https://github.com/slimta/python-slimta/releases
 [3.0]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.0
 [3.1]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.1
 [3.2]: https://github.com/slimta/python-slimta/issues?q=milestone%3A3.2

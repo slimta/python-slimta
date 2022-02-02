@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 import gevent
 from gevent.pywsgi import WSGIServer as GeventWSGIServer
 

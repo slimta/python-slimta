@@ -112,7 +112,7 @@ def create_listeners(address,
         else:
             listeners.append(sock)
     if last_exc and not listeners:
-        raise last_exc
+        raise last_exc  # type: ignore
     return listeners
 
 

@@ -1,7 +1,7 @@
 
 import json
 
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 from six.moves import cPickle
 import gevent
 

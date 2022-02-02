@@ -62,8 +62,7 @@ from __future__ import absolute_import
 
 import uuid
 import json
-
-from six.moves import cPickle
+import pickle
 
 import gevent
 from boto.s3.key import Key
@@ -105,7 +104,7 @@ class SimpleStorageService(object):
     def write_message(self, envelope, timestamp):
         key = self.Key(self.bucket)
         key.key = self.prefix+str(uuid.uuid4())
-        envelope_raw = cPickle.dumps(envelope, cPickle.HIGHEST_PROTOCOL)
+        envelope_raw = pickle.dumps(envelope, pickle.HIGHEST_PROTOCOL)
         with gevent.Timeout(self.timeout):
             key.set_metadata('timestamp', json.dumps(timestamp))
             key.set_metadata('attempts', '')
@@ -137,7 +136,7 @@ class SimpleStorageService(object):
             timestamp_raw = key.get_metadata('timestamp')
             attempts_raw = key.get_metadata('attempts')
             delivered_raw = key.get_metadata('delivered_indexes')
-        envelope = cPickle.loads(envelope_raw)
+        envelope = pickle.loads(envelope_raw)
         meta = {'timestamp': json.loads(timestamp_raw)}
         if attempts_raw:
             meta['attempts'] = json.loads(attempts_raw)

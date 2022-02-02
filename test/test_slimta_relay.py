@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 
 from slimta.relay import Relay, PermanentRelayError, TransientRelayError
 from slimta.policy import RelayPolicy

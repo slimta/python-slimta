@@ -30,8 +30,6 @@ from __future__ import absolute_import
 
 import re
 
-from slimta.util import pycompat
-
 __all__ = ['Reply', 'unknown_command', 'unknown_parameter', 'bad_sequence',
                     'bad_arguments', 'timed_out', 'unhandled_error',
                     'connection_failed', 'tls_failure', 'invalid_credentials']
@@ -135,12 +133,6 @@ class Reply(object):
             return substr in bytes(self)
         else:
             return substr in str(self)
-
-    # Python 2 compat.
-    if pycompat.PY2:
-        __nonzero__ = __bool__
-        __unicode__ = __str__
-        __str__ = __bytes__
 
     def copy(self, reply):
         """Direct-copies the given reply code and message into the current

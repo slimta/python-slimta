@@ -1,9 +1,8 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase, IsA
 from gevent.socket import socket
 from gevent.ssl import SSLContext, SSLSocket
 
-from slimta.smtp.auth import InvalidMechanismError
 from slimta.smtp.client import Client, LmtpClient
 from slimta.smtp.reply import Reply
 
@@ -107,13 +106,6 @@ class TestSmtpClient(MoxTestBase, unittest.TestCase):
         self.assertEqual('235', reply.code)
         self.assertEqual('2.0.0 Ok', reply.message)
         self.assertEqual(b'AUTH', reply.command)
-
-    def test_auth_insecure(self):
-        self.mox.ReplayAll()
-        client = Client(self.sock)
-        client.extensions.add('AUTH', 'PLAIN')
-        self.assertRaises(InvalidMechanismError, client.auth,
-                          'test@example.com', 'asdf')
 
     def test_auth_force_mechanism(self):
         self.sock.sendall(b'AUTH PLAIN AHRlc3RAZXhhbXBsZS5jb20AYXNkZg==\r\n')

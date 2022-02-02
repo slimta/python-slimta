@@ -88,6 +88,7 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'[BANNER]')
     def _banner(self):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             banner = self.client.get_banner()
         if banner.is_error():
@@ -95,10 +96,12 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'EHLO')
     def _ehlo(self):
+        assert self.ehlo_as is not None
         try:
-            ehlo_as = self.ehlo_as(self.address)
+            ehlo_as = self.ehlo_as(self.address)  # type: ignore
         except TypeError:
             ehlo_as = self.ehlo_as
+        assert self.client is not None
         with Timeout(self.command_timeout):
             ehlo = self.client.ehlo(ehlo_as)
         if ehlo.is_error():
@@ -109,6 +112,7 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'HELO')
     def _helo(self, ehlo_as):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             helo = self.client.helo(ehlo_as)
         if helo.is_error():
@@ -117,6 +121,7 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'STARTTLS')
     def _starttls(self):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             starttls = self.client.starttls(self.context)
         if starttls.is_error() and self.tls_required:
@@ -124,10 +129,12 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'AUTH')
     def _authenticate(self):
+        assert self.credentials is not None
         try:
-            credentials = self.credentials()
+            credentials = self.credentials()  # type: ignore
         except TypeError:
             credentials = self.credentials
+        assert self.client is not None
         with Timeout(self.command_timeout):
             auth = self.client.auth(*credentials,
                                     mechanism=self.auth_mechanism)
@@ -135,6 +142,7 @@ class SmtpRelayClient(RelayPoolClient):
             raise SmtpRelayError.factory(auth)
 
     def _handshake(self):
+        assert self.client is not None
         if self.tls_immediately:
             self.client.encrypt(self.context)
             self._banner()
@@ -150,11 +158,13 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'RSET')
     def _rset(self):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             self.client.rset()
 
     @current_command(b'MAIL')
     def _mailfrom(self, sender):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             mailfrom = self.client.mailfrom(sender, auth=False)
         if mailfrom and mailfrom.is_error():
@@ -163,11 +173,13 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'RCPT')
     def _rcptto(self, rcpt):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             return self.client.rcptto(rcpt)
 
     @current_command(b'DATA')
     def _data(self):
+        assert self.client is not None
         with Timeout(self.command_timeout):
             return self.client.data()
 
@@ -184,12 +196,14 @@ class SmtpRelayClient(RelayPoolClient):
 
     @current_command(b'[SEND_DATA]')
     def _send_empty_data(self):
+        assert self.client is not None
         with Timeout(self.data_timeout):
             self.client.send_empty_data()
 
     @current_command(b'[SEND_DATA]')
     def _send_message_data(self, envelope):
         header_data, message_data = envelope.flatten()
+        assert self.client is not None
         with Timeout(self.data_timeout):
             send_data = self.client.send_data(
                 header_data, message_data)
@@ -199,6 +213,7 @@ class SmtpRelayClient(RelayPoolClient):
         return send_data
 
     def _handle_encoding(self, envelope):
+        assert self.client is not None
         if '8BITMIME' not in self.client.extensions:
             try:
                 envelope.encode_7bit(self.binary_encoder)
@@ -240,6 +255,7 @@ class SmtpRelayClient(RelayPoolClient):
             result.set(rcpt_results)
 
     def _check_server_timeout(self):
+        assert self.client is not None
         try:
             if self.client.has_reply_waiting():
                 with Timeout(self.command_timeout):
@@ -250,6 +266,7 @@ class SmtpRelayClient(RelayPoolClient):
         return False
 
     def _disconnect(self):
+        assert self.client is not None
         try:
             with Timeout(self.command_timeout):
                 self.client.quit()
@@ -260,8 +277,10 @@ class SmtpRelayClient(RelayPoolClient):
                 self.client.io.close()
 
     def _get_error_reply(self, exc):
+        assert self.client is not None
         try:
-            if self.client.last_error.code == '421':
+            if self.client.last_error is not None and \
+                    self.client.last_error.code == '421':
                 return self.client.last_error
         except Exception:
             pass

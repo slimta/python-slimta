@@ -28,10 +28,10 @@ from __future__ import absolute_import
 
 import re
 import copy
+from email.generator import BytesGenerator
+from email.parser import BytesParser
+from email.policy import SMTP
 from io import BytesIO
-
-from slimta.util import pycompat
-from slimta.util.pycompat import generator_class, parser_class
 
 __all__ = ['Envelope']
 
@@ -87,15 +87,12 @@ class Envelope(object):
         self.timestamp = None
 
     def _parse_data(self, data, *extra):
-        return parser_class().parse(BytesIO(data), *extra)
+        return BytesParser(policy=SMTP).parse(BytesIO(data), *extra)
 
     def _msg_generator(self, msg):
         outfp = BytesIO()
-        generator_class(outfp).flatten(msg, False)
-        if pycompat.PY3:
-            return outfp.getvalue()
-        else:
-            return re.sub(_LINE_BREAK, b'\r\n', outfp.getvalue())
+        BytesGenerator(outfp, policy=SMTP).flatten(msg, False)
+        return outfp.getvalue()
 
     def _merge_payloads(self, headers, payload):
         if headers.get_payload():
@@ -142,6 +139,7 @@ class Envelope(object):
         :returns: Tuple of two bytestrings: ``(header_data, message_data)``
 
         """
+        assert self.message is not None
         header_data = self._msg_generator(self.headers)
         return header_data, self.message
 
@@ -177,6 +175,7 @@ class Envelope(object):
         :raises: UnicodeDecodeError
 
         """
+        assert self.message is not None
         try:
             self.message.decode('ascii')
         except UnicodeDecodeError:

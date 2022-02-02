@@ -119,7 +119,7 @@ class Server(object):
             if isinstance(auth, list):
                 auth_obj = SASLAuth(auth)
             else:
-                auth_obj = SASLAuth()
+                auth_obj = SASLAuth.defaults()
             auth_session = AuthSession(auth_obj, self.io)
             self.extensions.add('AUTH', auth_session)
 
@@ -327,6 +327,7 @@ class Server(object):
             bad_sequence.send(self.io)
             return
         auth = self.extensions.getparam('AUTH')
+        assert auth is not None
 
         try:
             result = auth.server_attempt(arg)

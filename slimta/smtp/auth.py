@@ -24,8 +24,8 @@ from __future__ import absolute_import
 import re
 import base64
 
-from pysasl import AuthenticationError, ServerChallenge, \
-    AuthenticationCredentials
+from pysasl import AuthenticationError, ServerChallenge, ChallengeResponse
+from pysasl.creds import AuthenticationCredentials
 
 from . import SmtpError
 from .reply import Reply
@@ -107,12 +107,11 @@ class AuthSession(object):
 
     @property
     def server_mechanisms(self):
-        return [mech for mech in self.auth.server_mechanisms]
+        return self.auth.server_mechanisms
 
     @property
     def client_mechanisms(self):
-        return [mech for mech in self.auth.client_mechanisms
-                if self.io.encrypted or not getattr(mech, 'insecure', False)]
+        return self.auth.client_mechanisms
 
     def _server_challenge(self, challenge, response=None):
         if not response:
@@ -141,11 +140,9 @@ class AuthSession(object):
                 except AuthenticationError as exc:
                     raise UnexpectedAuthError(exc)
                 except ServerChallenge as chal:
-                    resp = self._server_challenge(chal.challenge,
-                                                  mechanism_arg)
+                    resp = self._server_challenge(chal.data, mechanism_arg)
                     mechanism_arg = None
-                    chal.set_response(resp)
-                    responses.append(chal)
+                    responses.append(ChallengeResponse(chal.data, resp))
         raise InvalidMechanismError()
 
     def _client_respond(self, mech, response, first=False):
@@ -171,15 +168,14 @@ class AuthSession(object):
         if not mechanism:
             raise InvalidMechanismError()
         creds = AuthenticationCredentials(authcid, secret, authzid)
-        resp = mechanism.client_attempt(creds, [])
+        responses = []
+        resp = mechanism.client_attempt(creds, responses)
         chal, reply = self._client_respond(
-            mechanism, resp.get_response(), True)
-        responses = [resp]
+            mechanism, resp.response, True)
         while chal is not None:
-            resp.set_challenge(chal)
+            responses.append(ServerChallenge(chal))
             resp = mechanism.client_attempt(creds, responses)
-            responses.append(resp)
-            chal, reply = self._client_respond(mechanism, resp.get_response())
+            chal, reply = self._client_respond(mechanism, resp.response)
         return reply
 
 

@@ -125,6 +125,7 @@ class EdgeServer(Edge, gevent.Greenlet):
             self.server = None
 
     def _handle(self, socket, address):
+        assert self.server is not None
         log.accept(self.server.socket, socket, address)
         try:
             self.handle(socket, address)
@@ -145,9 +146,11 @@ class EdgeServer(Edge, gevent.Greenlet):
         raise NotImplementedError()
 
     def kill(self):
+        assert self.server is not None
         self.server.stop()
 
     def _run(self):
+        assert self.server is not None
         self.server.start()
         self.server.serve_forever()
 

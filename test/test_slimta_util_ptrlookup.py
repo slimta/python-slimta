@@ -2,7 +2,7 @@ import unittest
 
 import gevent
 from gevent import socket
-from mox3.mox import MoxTestBase
+from mox import MoxTestBase
 
 from slimta.util.ptrlookup import PtrLookup
 
@@ -45,7 +45,7 @@ class TestPtrLookup(MoxTestBase, unittest.TestCase):
         self.mox.StubOutWithMock(socket, 'gethostbyaddr')
         socket.gethostbyaddr('127.0.0.1').AndRaise(gevent.GreenletExit)
         self.mox.ReplayAll()
-        ptr = PtrLookup('abcd')
+        ptr = PtrLookup('127.0.0.1')
         self.assertIsInstance(ptr, gevent.Greenlet)
         self.assertIsNone(ptr._run())
 

@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase
+from mox import MoxTestBase
 from gevent import socket
 
 from slimta.http import HTTPConnection, HTTPSConnection, get_connection

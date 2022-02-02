@@ -37,7 +37,7 @@ https://docs.python.org/2/library/stdtypes.html#context-manager-types
 from __future__ import absolute_import
 
 import sqlite3
-from collections import Mapping
+from collections.abc import Mapping
 from contextlib import contextmanager
 
 from . import LookupBase
@@ -92,6 +92,7 @@ class DBAPI2Lookup(LookupBase):
         if self.query_param_order is not None:
             params = [kwargs[key] for key in self.query_param_order]
         with self.conn_ctxmgr() as conn:
+            assert conn is not None
             cur = conn.cursor()
             try:
                 cur.execute(self.query, params)
@@ -103,6 +104,7 @@ class DBAPI2Lookup(LookupBase):
                         result_order = row.keys()
                     except AttributeError:
                         result_order = self.result_order
+                    assert result_order is not None
                     ret = {}
                     for i, key in enumerate(result_order):
                         ret[key] = row[i]

@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA, IgnoreArg
+from mox import MoxTestBase, IsA, IgnoreArg
 import gevent
 from gevent.socket import create_connection
 from gevent.ssl import SSLSocket

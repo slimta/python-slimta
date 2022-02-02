@@ -28,7 +28,9 @@ __all__ = ['DataSender']
 
 class DataSender(object):
     """Class that writes multi-line message data, taking care of dot marker
+
     """
+
     def __init__(self, *parts):
         self.parts = parts
         self._calc_end_marker()
@@ -50,9 +52,6 @@ class DataSender(object):
             self.end_marker = b'\r\n.\r\n'
 
     def _process_part(self, part):
-        """
-        :type part: bytes
-        """
         part_len = len(part)
         i = 0
         if part_len > 0 and part[0:1] == b'.':
@@ -68,9 +67,8 @@ class DataSender(object):
                 i = index+2
 
     def __iter__(self):
-        iterables = [self._process_part(part) for part in self.parts]
-        iterables.append((self.end_marker, ))
-        return chain.from_iterable(iterables)
+        parts = [self._process_part(part) for part in self.parts]
+        return chain(chain.from_iterable(parts), (self.end_marker, ))
 
     def send(self, io):
         for piece in self:

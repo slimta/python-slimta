@@ -29,8 +29,7 @@ from __future__ import absolute_import
 
 import uuid
 import time
-
-from six.moves import cPickle
+import pickle
 
 import redis
 from gevent import socket
@@ -85,13 +84,13 @@ class RedisStorage(QueueStorage):
         return self.prefix + id
 
     def write(self, envelope, timestamp):
-        envelope_raw = cPickle.dumps(envelope, cPickle.HIGHEST_PROTOCOL)
+        envelope_raw = pickle.dumps(envelope, pickle.HIGHEST_PROTOCOL)
         while True:
             id = uuid.uuid4().hex
             key = self._get_key(id)
             if self.redis.hsetnx(key, 'envelope', envelope_raw):
-                queue_raw = cPickle.dumps((timestamp, id),
-                                          cPickle.HIGHEST_PROTOCOL)
+                queue_raw = pickle.dumps((timestamp, id),
+                                         pickle.HIGHEST_PROTOCOL)
                 pipe = self.redis.pipeline()
                 pipe.hmset(key, {'timestamp': timestamp,
                                  'attempts': 0})
@@ -113,9 +112,9 @@ class RedisStorage(QueueStorage):
         current = self.redis.hget(self._get_key(id), 'delivered_indexes')
         new_indexes = rcpt_indexes
         if current:
-            new_indexes = cPickle.loads(current) + rcpt_indexes
+            new_indexes = pickle.loads(current) + rcpt_indexes
         self.redis.hset(self._get_key(id), 'delivered_indexes',
-                        cPickle.dumps(new_indexes, cPickle.HIGHEST_PROTOCOL))
+                        pickle.dumps(new_indexes, pickle.HIGHEST_PROTOCOL))
         log.update_meta(id, delivered_indexes=rcpt_indexes)
 
     def load(self):
@@ -131,10 +130,10 @@ class RedisStorage(QueueStorage):
                              'delivered_indexes')
         if not envelope_raw:
             raise KeyError(id)
-        envelope = cPickle.loads(envelope_raw)
+        envelope = pickle.loads(envelope_raw)
         del envelope_raw
         if delivered_indexes_raw:
-            delivered_indexes = cPickle.loads(delivered_indexes_raw)
+            delivered_indexes = pickle.loads(delivered_indexes_raw)
             self._remove_delivered_rcpts(envelope, delivered_indexes)
         return envelope, int(attempts or 0)
 
@@ -145,7 +144,7 @@ class RedisStorage(QueueStorage):
     def wait(self):
         ret = self.redis.blpop([self.queue_key], 0)
         if ret:
-            return [cPickle.loads(ret[1])]
+            return [pickle.loads(ret[1])]
         return []
 
 

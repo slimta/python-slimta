@@ -1,5 +1,5 @@
 import unittest
-from mox3.mox import MoxTestBase, IsA
+from mox import MoxTestBase
 from gevent import Timeout
 from gevent import subprocess
 
@@ -11,7 +11,7 @@ from slimta.envelope import Envelope
 class TestPipeRelay(MoxTestBase, unittest.TestCase):
 
     def _mock_popen(self, rcpt, returncode, stdout):
-        pmock = self.mox.CreateMock(subprocess.Popen)
+        pmock = self.mox.CreateMockAnything()
         subprocess.Popen(['relaytest', '-f', 'sender@example.com', rcpt],
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
@@ -58,7 +58,7 @@ class TestMaildropRelay(MoxTestBase, unittest.TestCase):
         self.mox.StubOutWithMock(subprocess, 'Popen')
         env = Envelope('sender@example.com', ['rcpt@example.com'])
         env.parse(b'From: sender@example.com\r\n\r\ntest test\r\n')
-        pmock = self.mox.CreateMock(subprocess.Popen)
+        pmock = self.mox.CreateMockAnything()
         subprocess.Popen(['maildrop', '-f', 'sender@example.com'],
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,

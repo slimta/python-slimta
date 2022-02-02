@@ -213,6 +213,7 @@ class WsgiEdge(EdgeServer, WsgiServer):
             self._run_validators(environ)
 
     def _run_validators(self, environ):
+        assert self.validator_class is not None
         validators = self.validator_class(environ)
         validators.validate_ehlo(self._get_ehlo(environ))
         validators.validate_sender(self._get_sender(environ))
