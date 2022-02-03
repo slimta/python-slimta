@@ -28,7 +28,7 @@ with open('LICENSE.md') as f:
     license = f.read()
 
 setup(name='python-slimta',
-      version='5.0.2',
+      version='5.0.3',
       author='Ian Good',
       author_email='ian@icgood.net',
       description='Lightweight, asynchronous SMTP libraries.',
