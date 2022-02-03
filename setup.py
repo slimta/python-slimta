@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 #
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 with open('README.md') as f:
     readme = f.read()
@@ -28,7 +28,7 @@ with open('LICENSE.md') as f:
     license = f.read()
 
 setup(name='python-slimta',
-      version='5.0.1',
+      version='5.0.2',
       author='Ian Good',
       author_email='ian@icgood.net',
       description='Lightweight, asynchronous SMTP libraries.',
@@ -37,8 +37,7 @@ setup(name='python-slimta',
       license='MIT',
       url='http://slimta.org/',
       include_package_data=True,
-      packages=find_packages(),
-      namespace_packages=['slimta'],
+      packages=find_namespace_packages(include=['slimta.*']),
       install_requires=['gevent >= 1.1rc',
                         'pysasl >= 0.5.0',
                         'pycares >= 1'],
