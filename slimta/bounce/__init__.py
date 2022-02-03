@@ -26,7 +26,7 @@ import uuid
 import time
 from io import BytesIO
 
-from .envelope import Envelope
+from slimta.envelope import Envelope
 from slimta.util.bytesformat import BytesFormat
 
 __all__ = ['Bounce']
