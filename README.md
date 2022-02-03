@@ -28,13 +28,13 @@ Getting Started
 Use a [virtualenv][2] to get started developing against `python-slimta`:
 
     $ cd python-slimta/
-    $ virtualenv .venv
+    $ python3 -m venv .venv
     $ source .venv/bin/activate
-    (.venv)$ python setup.py develop
+    (.venv)$ pip install -U pip wheel setuptools
 
 To run the suite of unit tests included with `slimta`:
 
-    (.venv)$ pip install -r test/requirements.txt
+    (.venv)$ pip install -r requirements-dev.txt
     (.venv)$ py.test
 
 Running the Example
