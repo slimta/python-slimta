@@ -1,6 +1,0 @@
-exclude-labels:
-  - 'skip-changelog'
-template: |
-  ## Change Log
-
-  $CHANGES

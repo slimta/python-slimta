@@ -10,8 +10,9 @@ from slimta.smtp.reply import Reply
 
 class FakeRdata(object):
 
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, val):
+        self.host = val
+        self.text = val
 
 
 class FakeAsyncResult(object):
@@ -39,6 +40,14 @@ class TestDnsbl(MoxTestBase, unittest.TestCase):
         self.mox.ReplayAll()
         self.assertTrue(self.dnsbl.get('1.2.3.4'))
         self.assertNotIn('5.6.7.8', self.dnsbl)
+
+    def test_dnsblocklist_get_ignore(self):
+        DNSResolver.query('4.3.2.1.test.example.com', 'A').AndReturn(FakeAsyncResult(['127.0.0.2']))
+        DNSResolver.query('8.7.6.5.test.example.com', 'A').AndReturn(FakeAsyncResult(['127.0.0.11']))
+        self.mox.ReplayAll()
+        dnsbl = DnsBlocklist('test.example.com', ['127.0.0.10/31'])
+        self.assertIn('1.2.3.4', dnsbl)
+        self.assertNotIn('5.6.7.8', dnsbl)
 
     def test_dnsblocklist_get_reason(self):
         DNSResolver.query('4.3.2.1.test.example.com', 'TXT').AndReturn(FakeAsyncResult())

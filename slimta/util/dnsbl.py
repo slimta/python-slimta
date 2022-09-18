@@ -28,6 +28,7 @@ These lists can be hugely helpful and inexpensive ways of filtering spam.
 
 from __future__ import absolute_import
 
+from ipaddress import IPv4Address, IPv4Network
 from functools import wraps
 
 import gevent
@@ -54,11 +55,13 @@ class DnsBlocklist(object):
        :meth:`.get()` or ``__contains__``.
 
     :param address: The DNSBL domain name.
+    :param ignore: List of DNSBL result codes to ignore.
 
     """
 
-    def __init__(self, address):
+    def __init__(self, address, ignore=None):
         self.address = address
+        self.ignore = [IPv4Network(ip) for ip in (ignore or [])]
 
     def _build_query(self, ip):
         one, two, three, four = ip.split('.', 3)
@@ -86,12 +89,18 @@ class DnsBlocklist(object):
         with gevent.Timeout(timeout, None):
             query = self._build_query(ip)
             try:
-                DNSResolver.query(query, 'A').get()
+                answers = DNSResolver.query(query, 'A').get()
             except DNSError as exc:
                 if exc.errno == ARES_ENOTFOUND:
                     return False
                 logging.log_exception(__name__, query=query)
             else:
+                if answers:
+                    for rdata in answers:
+                        ip = IPv4Address(rdata.host)
+                        for ignore in self.ignore:
+                            if ip in ignore:
+                                return False
                 return True
         return strict
 
