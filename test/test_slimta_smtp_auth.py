@@ -4,6 +4,7 @@ import unittest
 from mox import MoxTestBase, IsA
 from gevent.ssl import SSLSocket
 from pysasl import SASLAuth
+from pysasl.identity import ClearIdentity
 
 from slimta.smtp.io import IO
 from slimta.smtp.auth import AuthSession, \
@@ -38,16 +39,16 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'PLAIN')
         self.assertEqual(u'testuser', result.authcid)
-        self.assertEqual(u'testpassword', result.secret)
         self.assertEqual(u'testzid', result.authzid)
+        self.assertTrue(result.verify(ClearIdentity(u'testuser', u'testpassword')))
 
     def test_plain(self):
         self.mox.ReplayAll()
         auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'PLAIN dGVzdHppZAB0ZXN0dXNlcgB0ZXN0cGFzc3dvcmQ=')
         self.assertEqual(u'testuser', result.authcid)
-        self.assertEqual(u'testpassword', result.secret)
         self.assertEqual(u'testzid', result.authzid)
+        self.assertTrue(result.verify(ClearIdentity(u'testuser', u'testpassword')))
 
     def test_plain_canceled(self):
         self.sock.sendall(b'334 \r\n')
@@ -68,8 +69,8 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'LOGIN')
         self.assertEqual(u'testuser', result.authcid)
-        self.assertEqual(u'testpassword', result.secret)
-        self.assertEqual(None, result.authzid)
+        self.assertEqual(u'testuser', result.authzid)
+        self.assertTrue(result.verify(ClearIdentity(u'testuser', u'testpassword')))
 
     def test_login(self):
         self.sock.sendall(b'334 UGFzc3dvcmQ6\r\n')
@@ -78,8 +79,8 @@ class TestSmtpAuth(MoxTestBase, unittest.TestCase):
         auth = AuthSession(SASLAuth.defaults(), self.io)
         result = auth.server_attempt(b'LOGIN dGVzdHVzZXI=')
         self.assertEqual(u'testuser', result.authcid)
-        self.assertEqual(u'testpassword', result.secret)
-        self.assertEqual(None, result.authzid)
+        self.assertEqual(u'testuser', result.authzid)
+        self.assertTrue(result.verify(ClearIdentity(u'testuser', u'testpassword')))
 
     def test_client_bad_mech(self):
         self.sock.sendall(b'AUTH LOGIN\r\n')
