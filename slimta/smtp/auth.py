@@ -24,8 +24,9 @@ from __future__ import absolute_import
 import re
 import base64
 
-from pysasl import AuthenticationError, ServerChallenge, ChallengeResponse
-from pysasl.creds import AuthenticationCredentials
+from pysasl.mechanism import ServerChallenge, ChallengeResponse
+from pysasl.creds.client import ClientCredentials
+from pysasl.exception import AuthenticationError
 
 from . import SmtpError
 from .reply import Reply
@@ -167,7 +168,7 @@ class AuthSession(object):
         mechanism = self.auth.get_client(mech_name)
         if not mechanism:
             raise InvalidMechanismError()
-        creds = AuthenticationCredentials(authcid, secret, authzid)
+        creds = ClientCredentials(authcid, secret, authzid)
         responses = []
         resp = mechanism.client_attempt(creds, responses)
         chal, reply = self._client_respond(

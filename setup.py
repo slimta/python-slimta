@@ -28,7 +28,7 @@ with open('LICENSE.md') as f:
     license = f.read()
 
 setup(name='python-slimta',
-      version='5.0.4',
+      version='5.0.5',
       author='Ian Good',
       author_email='ian@icgood.net',
       description='Lightweight, asynchronous SMTP libraries.',
@@ -39,7 +39,7 @@ setup(name='python-slimta',
       include_package_data=True,
       packages=find_namespace_packages(include=['slimta.*']),
       install_requires=['gevent >= 1.1',
-                        'pysasl >= 0.5.0',
+                        'pysasl >= 1',
                         'pycares >= 1'],
       extras_require={'spf': ['pyspf', 'py3dns'],
                       'redis': ['redis'],
@@ -54,7 +54,8 @@ setup(name='python-slimta',
                    'Programming Language :: Python :: 3.7',
                    'Programming Language :: Python :: 3.8',
                    'Programming Language :: Python :: 3.9',
-                   'Programming Language :: Python :: 3.10'])
+                   'Programming Language :: Python :: 3.10',
+                   'Programming Language :: Python :: 3.11'])
 
 
 # vim:et:fdm=marker:sts=4:sw=4:ts=4
