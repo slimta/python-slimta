@@ -1,7 +1,7 @@
 pytest >= 4
 pytest-cov
 pyright
-pymox @ git+https://github.com/slimta/pymox-maint.git@0723b819d25d2d1f8507456d299ae70f864e3ea4
+pymox
 testfixtures
 flake8
 twine
