@@ -81,7 +81,7 @@ compatibility to the project!
 [2]: http://pypi.python.org/pypi/virtualenv
 [3]: http://en.wikipedia.org/wiki/Open_mail_relay
 [4]: http://opensource.org/licenses/MIT
-[5]: http://slimta.org/
+[5]: http://slimta.github.io/
 [6]: https://help.github.com/articles/using-pull-requests/
 [7]: https://github.com/slimta/python-slimta/graphs/contributors
 [8]: https://github.com/JocelynDelalande
