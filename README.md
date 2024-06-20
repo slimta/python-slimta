@@ -31,6 +31,7 @@ Use a [virtualenv][2] to get started developing against `python-slimta`:
     $ python3 -m venv .venv
     $ source .venv/bin/activate
     (.venv)$ pip install -U pip wheel setuptools
+    (.venv)$ [ "$(sudo which apt)" ] && sudo apt install -y python3-dev || sudo yum install -y python3-devel
 
 To run the suite of unit tests included with `slimta`:
 
