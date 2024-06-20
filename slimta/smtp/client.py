@@ -270,7 +270,7 @@ class Client(object):
             return unknown_command
         auth_ext = self.extensions.getparam('AUTH')
         assert auth_ext is not None
-        advertised = [self._encode(mech_name)
+        advertised = [self._encode(mech_name).strip(b'=')
                       for mech_name in auth_ext.split()]
         auth = AuthSession(SASLAuth.named(advertised), self.io)
         if not mechanism and auth.client_mechanisms:
